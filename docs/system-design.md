@@ -1,6 +1,6 @@
 # Work Site Tracking System — Product and System Design
 
-Version: 0.1 · Date: 21 October 2026 · Status: Design draft for discussion
+Version: 0.2 · Date: 21 October 2026 · Status: Updated design draft with confirmed decisions
 
 This document describes the proposed first release. Decisions explicitly confirmed in discussion are listed below. Other business rules are proposals, so they can be changed before implementation. No application or database has been implemented yet.
 
@@ -11,30 +11,41 @@ Give one manager a reliable view of work across sites, and give employees a simp
 | Area | Confirmed decision |
 | --- | --- |
 | Manager | One admin account, provisioned directly through a Python script; no registration |
-| Manager application | Web application in English |
+| Manager application | React web application in English |
+| Backend and database | Java Spring Boot backend with SQLite |
 | Employee application | Flutter application for Android and iOS, with offline work and synchronization |
 | Employee languages | English, Hindi, Gujarati; admin selects language when creating/editing an employee |
 | Assignment | At most one current employee per site; unassigned sites are allowed |
+| Employee eligibility | Multiple eligible site types per employee, selected by admin |
 | Initial scale | Approximately 50 active sites and 20 employees |
 | Site types | Configurable types, icons, and default stages with evidence requirements |
 | Stage execution | Stages may run in parallel unless an explicit dependency prevents it |
-| Completion | Employees request stage completion; admin approval completes a stage; approval of all stages completes the site |
+| Completion | Employees or admin request stage completion; admin approval completes a stage; final stage approval automatically completes the site |
+| Admin field actions | Admin can start work, add progress updates/photos, and submit stage completion or block requests |
+| Progress updates | Text, photos, audio, or any combination; at least one content item required |
+| Photo evidence | At least one photo for an evidence-required stage; camera or gallery allowed; device location mandatory when each site photo is added |
+| Offline photo location | Capture location when the photo is added; preserve it during later automatic synchronization without requesting a fresh location |
+| Employee passwords | Set and reset only by admin; employees never change passwords, including after first login |
 | Linked sites | Group sites under a project, with optional dependencies between sites |
 | Inventory | Track warehouse stock, site stock, consumption, and returns |
 | Consumption and returns | Employee records consumption and requests returns; admin confirms returned stock received |
 | Material requests | Multiple simultaneous requests allowed, including repeated requests for the same material |
 | Fulfillment | Approval and physical dispatch are separate; provide an Approve & Dispatch shortcut |
+| Work closeout | Material reconciliation remains separate after site completion |
+| Daily reporting | Notes optional; reminders after a configurable cutoff on configured working days |
+| Offline access | 7-day local unlock window after successful online authentication |
+| Warehouse model | One warehouse; return and redispatch instead of an inter-site transfer UI |
 
 ### Proposed defaults awaiting review
 
-- One organization and one warehouse in the first release.
+- One organization in the first release.
 - Business timezone: Asia/Kolkata. Dates such as “today” and due dates use this timezone.
-- An employee has one eligible site type initially, matching the requested employee form. Assignment requires a matching type. This can become multiple eligible types if employees work across specialties.
-- A stage with evidence required needs at least one successfully uploaded photo in its completion submission.
 - Overdue is a separate flag, so a site can be both Blocked and Overdue.
-- No additional site completion approval is needed after the final stage is approved.
-- Outstanding materials or requests create a closeout warning but do not prevent work completion; material reconciliation remains available afterward.
-- Daily progress notes are supported, but a daily submission is not mandatory initially.
+- Photo location accuracy/freshness thresholds, audio limits, and device-cache budgets are configurable; initial proposals are specified below.
+
+### Revision 0.2 decisions
+
+This revision confirms the Java Spring Boot / SQLite / React / Flutter stack, multiple employee site types, text/photo/audio progress updates, mandatory site-photo location, additional admin work/submission permissions, and admin-only employee password management. Previously proposed closeout, daily reporting, 7-day offline unlock, and single-warehouse rules are now confirmed rather than open questions.
 
 ## 2. Vocabulary and product model
 
@@ -45,7 +56,8 @@ Give one manager a reliable view of work across sites, and give employees a simp
 | Site | An independently assigned and tracked work package | ABC Factory — Shed |
 | Stage | A unit of work inside a site | Foundation, Structure, Inspection |
 | Dependency | A prerequisite that must be approved/completed before other work can start | Shed completed before Solar starts |
-| Completion submission | An employee's request to approve a stage, including evidence and a note | Foundation photos submitted for approval |
+| Completion submission | An employee's or admin's request to approve a stage, with required photo evidence and optional text/audio context | Foundation photos submitted for approval |
+| Progress update | Text, photos, audio, or a combination, attributed to the actual author | A Gujarati voice note with two site photos |
 | Material request | A site's request for additional material | 20 panels requested |
 | Reservation | Warehouse quantity committed to an approved request, still physically in warehouse | 20 panels reserved |
 | Dispatch | Physical movement from warehouse stock to site stock | 12 panels dispatched |
@@ -57,7 +69,7 @@ flowchart TD
     T[Site type and default stages] -->|Copy when creating| S[Site and its own stages]
     P[Project: optional grouping] --> S
     E[One current employee] -->|Assigned to| S
-    S --> U[Progress and photo evidence]
+    S --> U[Text, photo and audio updates]
     U --> A[Admin approval]
     S --> R[Material requests]
     R --> W[Warehouse reservation and dispatch]
@@ -73,9 +85,10 @@ flowchart TD
 | Assign/reassign sites | Yes | No |
 | View full site details | Every site | Currently assigned sites |
 | View linked sites | Full details | Limited project context; full details only when assigned |
-| Start work, add progress notes and photos | Can oversee | Assigned sites, subject to dependencies |
-| Submit stage completion/block requests | Can oversee | Assigned sites |
+| Start work, add text/photo/audio progress updates | Every published incomplete site, subject to dependencies | Assigned sites, subject to dependencies |
+| Submit stage completion/block requests | Every published incomplete site | Assigned sites |
 | Approve/reject completion or blocking | Yes | No |
+| Set/reset employee passwords | Yes | No, including first login |
 | Request material | Can create allocations | Assigned sites |
 | Approve, reserve, dispatch material | Yes | No |
 | Record consumption | Can correct through audited entries | Assigned sites |
@@ -88,21 +101,25 @@ Every API call and evidence download must enforce role and current assignment on
 
 Reassignment preserves the old employee's activity and historical attribution. The old employee loses access on the server immediately. Any queued offline changes from that employee are held as conflicts rather than silently applied.
 
+Admin work actions do not require assigning the admin as an employee and do not replace the current assignee. Attribute work, media, and requests to the admin who performed them. Work and evidence prerequisites apply to admin submissions as well. With one admin, an admin may approve their own submission, but submission and approval are separate explicit actions and audit events; submitting never silently approves it.
+
 ## 4. Manager web application
 
-Navigation: **Dashboard · Sites · Projects · Approvals · Site Types · Employees · Materials**. Approvals combines stage completion, block requests, material requests, and return receipts, with counts and filters.
+Navigation: **Dashboard · Sites · Projects · Approvals · Site Types · Employees · Materials · Settings**. Approvals combines stage completion, block requests, material requests, and return receipts, with counts and filters. Settings includes working days, reporting cutoff, reminders, and configurable operational limits.
 
 ### 4.1 Login and account provisioning
 
 - One admin login identifier and password; no sign-up or public admin creation endpoint.
-- Deliver `scripts/create_admin.py` during implementation after the database schema is chosen.
-- The script prompts for an identifier and password using hidden password input; it uses the same password hashing service as login.
+- Deliver `scripts/create_admin.py` during implementation against the versioned SQLite schema.
+- The script prompts for an identifier and password using hidden password input. It uses a maintained Python Argon2id implementation and the exact encoded hash contract verified by Spring Security login.
 - In one transaction, it checks that an admin does not exist and inserts the account. Enforce the single-admin constraint in the database as well.
 - Re-running it must not overwrite an existing account or silently reset its password.
 - Provide a separate explicit password reset command for recovery, with session revocation.
 - The script will store an encoded password hash containing algorithm, parameters, unique salt, and hash. It will not print or log the password.
 
 Use a maintained Argon2id password library with unique salts and deployment-tuned settings, consistent with [OWASP password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). Do not implement password hashing manually.
+
+Configure Spring Security's password encoder explicitly, including any stored algorithm identifier prefix; prove that hashes generated by the Python script authenticate through the Java application. See [Spring Security password storage](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html). The script uses an existing migrated database, enables foreign keys, verifies schema compatibility, and fails on a wrong/missing database path instead of silently creating an unrelated SQLite file.
 
 ### 4.2 Site Types
 
@@ -114,11 +131,13 @@ Saving a type changes the template for future sites. Existing sites keep a snaps
 
 ### 4.3 Employees
 
-List: name, mobile, eligible site type, preferred language, assigned site count, active/inactive. One search field matches name or normalized mobile number.
+List: name, mobile, eligible site types shown as chips, preferred language, assigned site count, active/inactive. One search field matches name or normalized mobile number.
 
-Add/Edit: name, mobile number with country code, site type, preferred language (English/Hindi/Gujarati), and password on creation or explicit reset. Phone numbers are unique login identifiers. Do not assume an India-only phone format unless confirmed.
+Add/Edit: name, mobile number with country code, **site types as a searchable multiple-select**, preferred language (English/Hindi/Gujarati), and password on creation or explicit admin reset. Require at least one active eligible site type. Phone numbers are unique login identifiers. Do not assume an India-only phone format unless confirmed.
 
-The admin may view the newly entered password to share it with the employee, as requested. After saving, it is never returned by the server or shown on the detail page. Existing passwords can only be reset. Proposed default: require the employee to choose a new password after first login.
+The admin may view the newly entered password to share it with the employee, as requested. After saving, it is never returned by the server or shown on the detail page. The admin alone sets/resets employee passwords. Employees cannot change passwords at first login or later; there is no employee change-password screen or authorized API action. A reset invalidates server sessions and requires the new password at the next online login; an offline device learns of the reset only when it reconnects or its 7-day unlock window expires.
+
+Assignment is allowed when a site's type is among the employee's eligible types. An employee may therefore hold Solar and Shed sites simultaneously, while every site still has at most one current assignee. Removing a type that is used by an active assignment requires resolving those assignments first; do not silently invalidate or unassign them.
 
 Employee detail opens in read mode, showing assigned sites with name, type, status, overdue flag, due date, and project. Every site links to its detail page. Edit changes profile fields. Deactivation requires reassignment/unassignment of active sites and invalidates sessions; historical records remain.
 
@@ -153,16 +172,18 @@ Add/Edit site fields:
 | Project | Optional existing project or create project |
 | Location | Address, district, state; coordinates optional |
 | Expected completion date | Required to publish; date interpreted in business timezone |
-| Assignee | Optional searchable dropdown filtered to active, eligible employees |
+| Assignee | Optional searchable dropdown filtered to active employees whose selected types include this site's type |
 | Stages | Copy type defaults; add/remove/reorder and configure evidence/dependencies |
 | Initial materials | Searchable material and quantity lines; planned until explicitly dispatched |
 | Notes | Optional instructions |
 
-Actions: Save Draft, Publish, Assign/Reassign, Edit, Block/Unblock with reason, and Reopen with reason. Publishing requires at least one stage, valid dependencies, and required fields. Drafts remain invisible to employees and do not reserve or dispatch stock.
+Actions: Save Draft, Publish, Assign/Reassign, Edit, Start work, Add progress update, Add photo, Request stage completion, Request block, Block/Unblock with reason, and Reopen with reason. Admin updates support text, photos, audio, or a combination. Publishing requires at least one stage, valid dependencies, and required fields. Drafts remain invisible to employees and do not reserve or dispatch stock.
 
 Initial material lines are allocations, not automatic stock deductions. At publishing, the admin can dispatch selected quantities or fulfill them later. The UI states exactly which action moves stock.
 
 Site detail tabs: **Overview · Stages & Evidence · Materials · Linked Sites · Activity**. Place pending actions near the top; material requests can be approved or declined directly here. A sticky header shows assignee, due date, progress, workflow status, and overdue/dependency indicators. Default is read mode with an explicit Edit action.
+
+Media viewers include photo location details and audio playback. Work actions remain available in read mode when permitted; changing site configuration still requires Edit. An admin can start an unassigned published site without creating an employee assignment; it then derives In Progress from recorded work.
 
 After work starts, stage changes need safeguards. Pristine stages may be added/removed with an audit entry; removing a predecessor requires resolving dependencies first. Stages with activity, evidence, submissions, or approvals cannot be silently deleted. Completed sites require explicit reopening before work structure changes.
 
@@ -200,7 +221,7 @@ Keep work status and review status separate:
 | Stage work status | Open, In Progress, Blocked, Completed |
 | Latest submission review | None, Pending, Approved, Changes Requested |
 
-An employee starts a stage when prerequisites are satisfied, uploads photos/adds notes, and selects **Request completion**. Submission from an untouched stage also records work as started. Submission is allowed without photos when evidence is not required.
+An employee on an assigned site, or the admin on any published incomplete site, starts a stage when prerequisites are satisfied, adds text/photos/audio, and selects **Request completion**. Submission from an untouched stage also records work as started. Submission is allowed without photos when evidence is not required. Audio and text never substitute for a required photo; each photo must satisfy the location and upload rules in section 7.4.
 
 A request creates a numbered, immutable submission with its own evidence references. While review is Pending, stage work stays In Progress and the UI shows Awaiting approval. Allow only one pending completion submission per stage. New general photos do not change an already submitted evidence set.
 
@@ -211,7 +232,7 @@ At final approval, the server verifies the submission version, dependencies, req
 ### 5.2 Blocking
 
 - Admin may block a published incomplete site or stage, with a reason, at any workflow point.
-- Employee may request a site or stage block, with reason and optional evidence; the request itself does not change the official status.
+- Employee or admin may request a site or stage block, with reason and optional evidence; the request itself does not change the official status. Admin may alternatively use the direct Block action.
 - Admin approves or declines, with the decision recorded. The UI prominently shows pending block requests even before approval.
 - Whole-site blocks prevent stage starts and completion submissions. Evidence, notes, and material requests remain available to explain and resolve the issue.
 - A blocked individual stage leaves independent stages available to work. Its dependencies remain held until it completes.
@@ -256,7 +277,9 @@ For each material:
 
 Confirming a return reduces site on-hand and increases warehouse on-hand in the same transaction. Pending return quantities remain in site on-hand, visibly marked committed to return, and cannot also be consumed. Partial receipt leaves the remainder pending; cancelling the remainder releases that quantity. Damaged/lost material uses an explicit adjustment/loss entry and reason; it never becomes warehouse stock.
 
-Use an append-only movement ledger with a transaction header and location-level entries. Dispatches and returns have paired source/destination entries. Correct mistakes through linked reversal/correction transactions instead of editing history. Reject negative balances and invalid decimal precision. Use database transactions and stock-level locks/conditional updates for concurrent allocations, dispatches, and consumption.
+Use an append-only movement ledger with a transaction header and location-level entries. Dispatches and returns have paired source/destination entries. Correct mistakes through linked reversal/correction transactions instead of editing history. Reject negative balances and invalid decimal precision. With SQLite, serialize short write transactions and use conditional balance/version updates; do not assume row-level locks. Reservation, balance, ledger, request, audit, and outbox changes commit together. Section 10.1 defines the concurrency policy.
+
+Represent stock quantities as scaled integers using each material's fixed precision, and use exact decimal conversion at API boundaries. For example, 1.250 kg with precision 3 is stored as 1250 base units. Do not store stock quantities as binary floating point; this preserves exact reconciliation in SQLite.
 
 ### 6.2 Requests, approval, reservation, dispatch
 
@@ -277,7 +300,7 @@ Employees record material, quantity, date, and optional stage/note. Server accep
 
 Employees request returns from available site stock. Admin confirms actual quantity received, allowing partial receipts and recording discrepancies. Stock is not added back to warehouse merely because a return was requested.
 
-Work completion and material reconciliation are separate. Completed sites still permit closeout returns and admin corrections, but new requests/dispatches/consumption require reopening. Pending material demand is highlighted for admin cancellation/review. This proposed behavior avoids preventing field completion because surplus material remains to be collected.
+Work completion and material reconciliation are separate, as confirmed. Completed sites still permit closeout returns and admin corrections, but new requests/dispatches/consumption require reopening. Pending material demand is highlighted for admin cancellation/review. Surplus awaiting collection does not prevent the final stage approval from completing a site.
 
 ## 7. Employee Flutter application
 
@@ -285,7 +308,7 @@ Navigation: **My Sites · Requests · Updates & Sync · Profile**. Site cards ar
 
 ### 7.1 Login and language
 
-Login with mobile number and admin-provided password. First login requires connectivity. Language defaults to the employee profile field; the login page also offers English/Hindi/Gujarati so a first-time employee can understand it. Proposed default: employees may change their language later in Profile.
+Login with mobile number and admin-provided password. First login requires connectivity and goes directly to My Sites after successful authentication; no password-change step is shown. Password recovery directs the employee to contact admin. Profile has no password change/reset control. Language defaults to the employee profile field; the login page also offers English/Hindi/Gujarati so a first-time employee can understand it. Proposed default: employees may change their language later in Profile.
 
 Translate interface labels, validation messages, status labels, notifications, and common action confirmations. Admin-entered site names, stage names, reasons, and notes remain as entered; automatic translation is outside this release. Locale changes do not change stored status codes, dates, or units. Use fonts and layouts tested for Hindi and Gujarati text expansion.
 
@@ -296,8 +319,8 @@ Home has name search and status chips, with overdue, approval, and sync indicato
 Site detail presents:
 
 - Overview, instructions, location, dates, project, and linked-site dependency summary.
-- Stage cards with work/review status, evidence requirement, prerequisites, photos, notes, and available actions.
-- Start work, Add update, Add photo, Request completion, and Request block, when allowed.
+- Stage cards with work/review status, evidence requirement, prerequisites, photos, text notes, audio playback, and available actions.
+- Start work, Add update, Add photo, Record audio, Request completion, and Request block, when allowed.
 - Material balances and request history; Request material, Record consumption, and Request return.
 - Activity timeline and clear feedback on approvals/rejections.
 
@@ -310,22 +333,52 @@ Use a local database behind repositories that expose cached site data and synchr
 | Action | Offline behavior |
 | --- | --- |
 | Read assigned sites/stages/materials | Previously synchronized data available; show last sync time |
-| Add notes/photos, start stage | Save locally and queue; server must still validate on sync |
+| Add text/audio updates, start stage | Save locally and queue; server must still validate on sync |
+| Add site photos | Obtain required device location at addition, persist it with the photo, then queue both; automatic sync preserves this observation |
 | Request completion/block/materials/return | Queue as a pending submission; not officially submitted until server accepts |
 | Record consumption | Queue locally; show provisional balance separately from confirmed stock |
 | Login to a new device, reset password, admin actions | Connectivity required |
 
 Every local mutation has a stable UUID operation ID. The server deduplicates retries by authenticated actor and operation ID and rejects reuse with a different payload. Local success means Saved on device; server success means Submitted/Synced. Never display an offline completion request as Approved or Completed.
 
-Persist the local change and its queue entry together. Upload images first, validate/finalize them, then submit completion with accepted evidence references. Failed uploads preserve local drafts. Support retry with backoff, manual Sync now, progress, and error explanations. Synchronize on app launch/resume and connectivity recovery; background execution is best effort and must not be the sole delivery mechanism.
+Persist the local change and its queue entry together. Upload photo/audio attachments first, validate/finalize them, then submit the update or completion with accepted media references. A site photo's location observation is saved atomically with its local attachment and travels with it unchanged. Do not replace that observation with the device's later synchronization location or request fresh location merely to retry an upload. Failed uploads preserve local drafts. Support retry with backoff, manual Sync now, progress, and error explanations. Synchronize on app launch/resume and connectivity recovery; background execution is best effort and must not be the sole delivery mechanism.
 
 Use server entity versions for mutable actions. Fetch assignment changes and deletion/archive markers before replaying work. Preserve dependent operation ordering, such as stage start before submission. Revalidate assignment, block state, dependencies, evidence, and stock at server acceptance. A stale consumption entry that exceeds available stock becomes a visible conflict rather than forcing stock negative.
 
 Additive notes can merge when access remains valid; approval, workflow, inventory, and template changes never use blind last-write-wins. Conflicts retain the employee's local input and explain the resolution required. If reassigned while offline, quarantine rejected unsynced work and provide a controlled admin-assisted recovery path instead of deleting it silently.
 
-Store device capture time and server receipt time separately. Device clocks do not determine official approval times or “updated today” dashboard counts. The app should show that work recorded yesterday arrived today when relevant.
+Store photo-added time, the device location observation time, any separately available original camera capture time, and server receipt time independently. Do not infer a gallery photo's original shooting location from the uploader's position. Device clocks do not determine official approval times or “updated today” dashboard counts. The app should show that work recorded yesterday arrived today when relevant.
 
-After a successful online login, propose an offline unlock window of 7 days using device-protected credentials; the exact duration is a policy decision. Offline unlock does not create a new server session or bypass current server authorization on reconnect. On the next successful sync after reassignment/deactivation, purge revoked cached records and downloaded media; previously cached data cannot be remotely removed while the device remains disconnected. Logout clears account data and warns about unsynced work before discarding it. Local drafts/media need an explicit storage and retention policy.
+After successful online authentication, allow local unlock for 7 days using device-protected credentials, as confirmed. Offline use alone does not extend the window. At expiry, require an online login before unlocking site data or submitting more work; retain unsynced drafts for recovery after authentication. Offline unlock does not create a new server session or bypass current server authorization on reconnect. On the next successful sync after reassignment/deactivation/password reset, enforce the current session/assignment state; purge revoked cached records and downloaded media while quarantining unsynced work for recovery. Previously cached data cannot be remotely removed while the device remains disconnected. Logout clears account data and warns about unsynced work before discarding it.
+
+Proposed initial device budgets: 500 MB for downloaded media cache, with least-recently-used eviction, and a separate 500 MB queue budget for unsynced photo/audio attachments. Keep assigned-site metadata while authorized. Never automatically evict pending work to free cache space. At the pending-media limit or insufficient device free space, stop accepting additional media with a clear message and retain existing work; text updates remain possible when storage permits. Cache/media retention durations and these configurable limits need confirmation before implementation.
+
+### 7.4 Mandatory location for site photos
+
+Location is mandatory for every photo attached to site progress, stage completion, or site/stage block evidence, whether the author is an employee or admin. Catalog material photos and site-type icons are outside this field-evidence rule. Text-only or audio-only updates do not require location; adding a photo invokes the photo rule.
+
+1. When the user takes or selects a photo, explain why location is needed, request location permission if it has not been granted, and obtain a fresh device position. Existing permission may be reused; the operating system need not show a permission prompt for every photo.
+2. Require location services and a successful fix before the photo becomes an accepted attachment. If permission is denied, services are disabled, or a fix times out, show retry/settings actions. Preserve any local selection as an unfinished draft; do not queue it as valid location-backed evidence or invent a position.
+3. Save each photo's latitude, longitude, horizontal accuracy in meters, location-observed time, photo-added time, uploader, device/client identifier, and reported provider/source when available. Save an available original capture timestamp separately. This metadata is immutable after attachment acceptance.
+4. For offline additions, acquire location from device location services and save the photo plus observation locally. GPS can obtain a fix without an internet connection when conditions allow; if no fix can be obtained, the photo remains an unfinished draft. Location is observed when successfully attached, not backdated to a failed earlier attempt.
+5. During later automatic upload/sync, submit the saved observation unchanged. Record server receipt time separately. No new GPS fix or location permission is required merely for transport, so movement between addition and synchronization does not change the recorded location.
+6. The server checks required metadata, valid coordinate ranges, nonnegative finite accuracy, media association/ownership, and idempotent upload completion. Missing or malformed location makes photo finalization fail and prevents it satisfying evidence-required completion. Flag inconsistent device timestamps for review rather than rewriting them as trusted server time.
+
+Proposed initial freshness setting: obtain an observation no more than 60 seconds old when adding a photo; request high accuracy and record the result. The acceptable accuracy threshold and low-accuracy behavior remain to be agreed. A shared fresh observation can be linked to each image in one selection batch; later additions obtain a new observation. Do not use the site's configured address, IP-derived server location, or gallery EXIF as a substitute for the uploader's live device position.
+
+The photo viewer shows **Added at [location/time]**, reported accuracy, author, and **Synced at [server time]**, with an optional map link. It does not label uploader position as the photo's original shooting location or imply verified physical presence. On the React admin web app, obtain device position over HTTPS using browser geolocation and its permission flow. Browser geolocation exposes device position but does not guarantee a hardware-GPS source; review compatibility if literal satellite-only GPS is required. See the [W3C Geolocation specification](https://www.w3.org/TR/geolocation/).
+
+Capture location only for explicit photo-add actions. Do not request continuous background tracking for this workflow. Access to photo coordinates follows the same site authorization as the photo itself.
+
+### 7.5 Text, photo, and audio progress updates
+
+Provide one progress composer in Flutter and the admin web app. An update can contain text only, photos only, audio only, or any combination. Require at least one nonempty text field or successfully finalized attachment; no mandatory text caption. Associate the update with a site and optionally a stage, and record its actual author/role and device/server times.
+
+The composer supports taking/selecting photos, recording/listening to/deleting draft audio, and reviewing attachments before submission. Ask for microphone permission when recording; denial prevents recording without preventing text/photos. Audio can contain speech in English, Hindi, Gujarati, or any language; playback is provided without automatic transcription or translation in this release.
+
+Store audio in private media storage, validate allowed types and decoded duration, and show playback controls/duration in both applications and the activity timeline. Proposed initial audio limit: 5 minutes and 10 MB per clip; audio container/codec and limits remain configurable pending Flutter/browser compatibility testing. Audio attachments never count toward a required-photo rule.
+
+Text and media references belong to one logical update. Save drafts and media upload states durably; publish the update only when its selected attachments are accepted, with retry or explicit removal of failed draft attachments. Network retries must not duplicate the update or its photos/audio. Accepted content is preserved with audit history; draft deletion before submission is allowed.
 
 ## 8. Dashboard definitions
 
@@ -343,9 +396,11 @@ Use rule-based operational intelligence first. Every metric links to the corresp
 | Waiting for admin | Pending completion submissions, block requests, material decisions, and return receipts |
 | Material attention | Low available warehouse stock, unfulfilled approvals, pending returns, unreconciled completed sites |
 
-A qualifying employee update is a progress note, accepted photo, stage start/submission, block request, material request, consumption, or return request. Logins, opening a site, synchronization without changes, and admin edits do not count. A rejected sync operation does not count. Offer a narrower work-progress-only filter if material activity should not count as progress reporting.
+A qualifying employee update is an accepted text/photo/audio progress update, accepted photo, stage start/submission, block request, material request, consumption, or return request. Logins, opening a site, synchronization without changes, and admin actions do not count toward the employee-reporting metric. A rejected sync operation does not count. Offer a narrower work-progress-only filter if material activity should not count as progress reporting.
 
-“No update today” means no update received yet; before a configured end-of-day cutoff it is not a missed obligation. Reminder schedules and non-working days are configurable follow-up decisions.
+Store/display last work activity (employee or admin) separately from last employee activity. Admin work updates are visible on the site and can change workflow/progress; they do not make an employee appear to have reported. Label employee-reporting dashboard cards and filters explicitly, and offer an actor filter for operational activity views.
+
+“No update today” means no update received yet; before the configured end-of-day cutoff it is not a missed obligation. Daily notes are optional. Admin configures working days, reporting cutoff, reminder recipients, and reminder enablement in Settings. Send reminders only on configured working days for eligible In Progress sites with no qualifying employee update, deduplicated per site/date/reminder. Do not assume working days from language or location; require the admin to save the calendar/cutoff before scheduled reminders are enabled. A reminder creates no mandatory daily-submission requirement.
 
 Workflow counts form one breakdown; overdue and blocker overlays may overlap it and must be labeled accordingly. Projects never add to site totals. A separate project summary prevents double counting linked work. Record due-date changes and prior due dates so rescheduling does not erase history.
 
@@ -353,8 +408,9 @@ Workflow counts form one breakdown; overdue and blocker overlays may overlap it 
 
 | Entity | Important fields and constraints |
 | --- | --- |
-| User | ID, role ADMIN/EMPLOYEE, login identifier, encoded password hash, active, password-change flag; single-admin constraint |
-| EmployeeProfile | User ID, name, normalized unique mobile, eligible site type, preferred language |
+| User | ID, role ADMIN/EMPLOYEE, login identifier, encoded password hash, active, credential/session version; single-admin constraint; no employee password-change flag |
+| EmployeeProfile | User ID, name, normalized unique mobile, preferred language |
+| EmployeeSiteType | Employee ID, site type ID; unique pair; multiple types per employee |
 | SiteType | ID, name, icon reference, active, template version |
 | StageTemplate | Type ID, stable key, name, evidence required, display order |
 | TemplateStageDependency | Predecessor/successor template stage IDs; acyclic within type |
@@ -364,10 +420,13 @@ Workflow counts form one breakdown; overdue and blocker overlays may overlap it 
 | SiteStage | Site ID, copied name/evidence requirement/order, work status, active, started/approved times, version |
 | StageDependency | Predecessor/successor site stage IDs; acyclic within site |
 | SiteDependency | Predecessor/successor site IDs, created by/time; acyclic within project |
-| ProgressUpdate | Site/stage ID, author, note, captured time, received time |
-| EvidenceFile | Site/stage ID, uploader, object key, type/size/checksum, capture/receipt times, validation state |
+| ProgressUpdate | Site/optional stage ID, author ID/role, optional text, local operation ID, recorded/received times; at least one content item |
+| MediaFile | Site/optional stage ID, uploader, media kind PHOTO/AUDIO, object key, content type/size/checksum, optional audio duration, original capture/added/received times, validation state |
+| ProgressUpdateMedia | Update ID, media ID, display order; photo/audio attachments belonging to one update |
+| PhotoLocation | Photo media ID, latitude/longitude, accuracy, observed time, added time, reported source, device/client ID; required per site photo and immutable across retries |
 | StageSubmission | Stage ID, attempt number, submitter, review status, stage version, decision actor/time/reason |
-| SubmissionEvidence | Submission ID and immutable evidence references |
+| SubmissionEvidence | Submission ID and immutable photo media references; validated photo location required |
+| SubmissionContextMedia | Submission ID and optional audio context references; audio is not photo evidence |
 | BlockRequest / BlockRecord | Site/optional stage, reason, requester/approver, request decision or active/resolved block timestamps |
 | Material | ID/code, name, photo, unit, quantity precision, active |
 | StockLocation | Warehouse or site; site link when applicable |
@@ -382,28 +441,50 @@ Workflow counts form one breakdown; overdue and blocker overlays may overlap it 
 | AuditEvent | Actor, action, target, before/after metadata, reason, server time, correlation ID |
 | Notification / OutboxEvent | Recipient/event, localized message parameters, delivery/read state |
 | DeviceSession / SyncOperation | Device/session, token state; operation ID, payload fingerprint, outcome, timestamps |
+| ReportingSettings | Timezone, working days, cutoff, reminder enabled/recipients, operational media/location/cache limits |
 
-Core invariants belong in database constraints and transactions as well as application validation: one admin, one current assignee per site, unique phone, one pending completion submission per stage, positive movement quantities, valid quantity precision, nonnegative usable stock, and unique operation IDs. Dependency cycle validation and state transition validation run in the transactional service layer.
+Core invariants belong in database constraints and transactions as well as application validation: one admin, one current assignee per site, unique phone, unique employee/type membership, one pending completion submission per stage, positive scaled-integer movement quantities, valid quantity precision, nonnegative usable stock, and unique operation IDs. Validate assignment type membership, nonempty progress content, required finalized photo/location relationships, dependency cycles, and state transitions in the transactional service layer. Keep photo-location metadata and media finalization in one transaction so an accepted site photo cannot exist without its required observation.
 
 Archive referenced types, employees, and materials. Preserve workflow, evidence, and inventory history; decide retention before production. Store all event timestamps in UTC and convert at the interface; expected completion is a business-local date.
 
 ## 10. Architecture and API boundaries
 
-At this scale, propose one modular backend, one transactional relational database, private object storage for photos, and a background worker for notifications/image processing. No microservices are needed to implement these workflows.
+Confirmed stack: **Java Spring Boot backend · SQLite database · React admin web app · Flutter Android/iOS app**. Use one modular backend instance, a persistent local SQLite database, private photo/audio storage, and in-process scheduled worker tasks for notifications/media processing. Validate the design against the expected 20 employees, 50 active sites, and bursts of offline sync before launch.
 
 ```mermaid
 flowchart LR
-    A[Admin web app] --> API[Shared application API]
+    A[React admin web app] --> API[Java Spring Boot API]
     F[Flutter Android / iOS app] --> API
     F <--> L[Local database and sync queue]
-    API --> DB[Relational database]
-    API --> O[Private photo storage]
+    API --> DB[SQLite on persistent local storage]
+    API --> O[Private photo and audio storage]
     API --> Q[Transactional outbox]
-    Q --> W[Background worker]
+    Q --> W[In-process background tasks]
     W --> N[In-app / push notifications]
 ```
 
-Backend modules: Identity, Configuration, Projects/Sites, Workflow/Approvals, Inventory, Evidence, Sync, Reporting, Notifications/Audit. Workflow and inventory updates share transaction boundaries where needed. Framework, web UI stack, hosting provider, and Flutter storage/state-management packages remain to be selected; Flutter itself is confirmed.
+Backend modules: Identity, Configuration, Projects/Sites, Workflow/Approvals, Inventory, Media/Location, Sync, Reporting, Notifications/Audit. Workflow and inventory updates share transaction boundaries where needed. Hosting provider, supported framework/runtime versions, React UI tooling, Flutter storage/state-management packages, map presentation, and audio/location packages remain implementation selections; the main stack is settled.
+
+### 10.1 Spring Boot and SQLite deployment contract
+
+Use Spring Security for authentication/authorization and Spring JDBC with explicit SQL repositories for SQLite persistence. [Spring JDBC](https://docs.spring.io/spring-framework/reference/data-access/jdbc/core.html) provides JDBC query/update and resource handling; use a maintained [SQLite JDBC driver](https://github.com/xerial/sqlite-jdbc) and versioned SQL migrations. Do not assume an ORM supplies SQLite-compatible locking or schema behavior without verification.
+
+SQLite permits multiple readers but only one simultaneous write transaction. WAL allows readers and a writer to operate concurrently; it does not introduce parallel writers. Keep the database on persistent local storage attached to the backend host, not a shared network filesystem. See [SQLite transactions](https://sqlite.org/lang_transaction.html) and [SQLite WAL](https://sqlite.org/wal.html).
+
+Application design rules:
+
+- Run one Spring Boot application instance with in-process jobs; route API and worker mutations through one write coordinator. Multiple employees still use the API concurrently; database write sections are short and serialized.
+- Enable WAL, configure a bounded busy timeout, and use a write transaction that acquires write intent before read-modify-write checks where needed. Integrate this with Spring's transaction management rather than issuing nested `BEGIN` statements inside an existing transaction.
+- Use conditional version/balance updates and verify affected rows. Commit the stock ledger, balances/reservations, request state, audit event, sync result, and outbox event atomically. On known rollback from lock contention, retry the complete transaction with bounded backoff; use stored operation IDs to recover uncertain responses without posting duplicates.
+- Perform photo/audio transfers, device-location acquisition, media decoding, and notification network calls outside database write transactions. Finalize references and metadata in a short transaction after validation.
+- Enable `PRAGMA foreign_keys = ON` for every application, migration, and Python-script connection. SQLite foreign-key enforcement is connection-specific; see [SQLite foreign keys](https://sqlite.org/foreignkeys.html).
+- Use scaled integers for stock, checked conversions at the API boundary, foreign keys, unique/partial indexes, and checks for core invariants. Keep SQL portable where practical and maintain explicit schema versions.
+- Pin compatible, patched Spring/JDBC/SQLite dependencies and record the SQLite version actually bundled by the driver. Exercise lock contention, concurrent final approvals, request retries, and interrupted sync against that exact runtime.
+- Back up through a consistent SQLite backup mechanism, such as the [online backup API](https://sqlite.org/backup.html), rather than copying only a live main database file while WAL data may exist. Back up referenced private media as well and test restoration.
+
+Monitor busy/locked responses, transaction duration, pending operations, disk space, database/media growth, and backup success. Horizontal backend replicas and multi-host database access are outside this first-release deployment contract; revisit the persistence architecture before introducing them. SQLite on the server is authoritative; Flutter's separate local database is a cache and operation queue accessed only by that device.
+
+### 10.2 API and synchronization boundaries
 
 Use versioned APIs, paginated lists, validated filters, consistent permission checks, structured error codes, idempotency keys, and explicit actions rather than generic status patches. Return server-derived status/progress/action availability for consistent clients.
 
@@ -411,28 +492,30 @@ Representative API surface, not a finalized OpenAPI specification:
 
 | Area | Example endpoints |
 | --- | --- |
-| Auth | `POST /v1/auth/login`, `/refresh`, `/logout`, `/change-password` |
+| Auth | `POST /v1/auth/login`, `/refresh`, `/logout`; no employee change-password endpoint |
 | Configuration | `/v1/site-types`, `/employees`, `/materials` |
+| Credentials | `POST /v1/employees/{id}/password-reset`, admin-only; employee requests are rejected |
 | Sites/projects | `/v1/sites`, `/projects`, `/sites/{id}/publish`, `/assign`, `/dependencies` |
 | Work | `/v1/stages/{id}/start`, `/submissions`, `/sites/{id}/updates`, `/block-requests` |
 | Reviews | `/v1/submissions/{id}/approve`, `/reject`, `/stages/{id}/reopen` |
 | Stock | `/v1/stock-receipts`, `/material-requests`, `/reservations`, `/dispatches`, `/consumption`, `/return-requests`, `/return-receipts` |
-| Evidence | `/v1/uploads/initiate`, `/uploads/{id}/finalize`; authorized download URLs |
+| Media/location | `/v1/uploads/initiate`, `/uploads/{id}/finalize` with media kind and required site-photo location; authorized downloads |
+| Settings | `/v1/settings/reporting` for working days, cutoff, and reminders; admin-only |
 | Reporting/sync | `/v1/dashboard`, `/approvals`, `/sync/changes?cursor=…`, `/sync/operations` |
 
-Sync changes are scoped to the employee, with assignment-revocation markers and a durable cursor. Each submitted operation has an individual result, so one conflict does not lose unrelated work. Photo binaries use upload endpoints; they do not travel in ordinary sync JSON.
+Sync changes are scoped to the employee, with assignment-revocation markers and a durable cursor. Each submitted operation has an individual result, so one conflict does not lose unrelated work. Photo/audio binaries use upload endpoints; their references and photo-location metadata travel in sync JSON. The backend accepts an otherwise valid offline photo observation that predates receipt; it does not require a new location observed during transport.
 
 Notifications cover assignments, reassignment, review decisions, material decisions/dispatches, new pending approvals, and dependency release. In-app state is authoritative; push is a prompt to refresh. Avoid sensitive details in lock-screen notifications.
 
 ## 11. Security, reliability, and service targets
 
 - Web: protected session cookies, CSRF protection, and TLS. Mobile: revocable sessions with short-lived access credentials and securely stored refresh credentials. Rate-limit login and use generic login failure messages.
-- Employee and admin password creation/reset use the same hashing service. Never return stored hashes in API responses or include credentials in audit events.
-- Evidence is private. Authorize uploads/downloads, constrain allowed image formats/size/dimensions, validate content, use generated object keys, and process uploads before accepting them as evidence. See [OWASP file upload guidance](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html).
-- Proposed initial upload limit: 10 MB per source photo; compress suitable mobile captures and preserve readable evidence. Gallery selection is allowed initially; camera-only evidence and GPS verification are separate decisions. Photo metadata is not proof of location or capture time.
+- Java employee-password operations use one Spring Security hashing service; the Python admin script follows its verified encoded-hash contract. Employee callers cannot set/reset their own passwords through profile updates or credential endpoints. Never return stored hashes or include credentials in audit events.
+- Photos, audio, and photo coordinates are private site data. Authorize uploads/downloads, constrain allowed formats/size/dimensions/duration, validate content, use generated object keys, and process files before finalization. See [OWASP file upload guidance](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html).
+- Proposed initial photo limit: 10 MB per source photo; compress suitable mobile captures and preserve readable evidence. Camera or gallery is allowed, but valid live device location at addition is mandatory for every site photo, including optional photos on evidence-optional stages. Store observed accuracy and timing; neither EXIF nor submitted coordinates alone prove original shooting location or physical presence. Do not request continuous background location access for later sync.
 - Approvals, inventory postings, and resulting domain events commit atomically. Publish notifications through a transactional outbox so a notification failure cannot undo or lose an approved action.
 - Audit assignment, due-date and stage changes, decisions, password resets, inventory corrections, and reopening. Do not log plaintext passwords, tokens, or private signed URLs.
-- Keep database and object-storage backups aligned, encrypt secrets, monitor failed jobs/sync errors, and verify restoration before launch.
+- Keep SQLite and private-media backups aligned, protect database files and secrets, monitor failed jobs/sync errors, and verify restoration before launch.
 - Proposed measurable targets, to validate during implementation: normal list/detail API p95 below 1 second at expected load, excluding media; local cached screens usable without network; durable recovery of queued work after app restart; nightly backups with a documented recovery procedure. Recovery point/time targets and production availability commitments remain to be agreed.
 
 ## 12. Essential acceptance scenarios
@@ -440,34 +523,43 @@ Notifications cover assignments, reassignment, review decisions, material decisi
 These are implementation acceptance criteria; no tests have been executed because this deliverable is a design document.
 
 1. Admin provisioning creates exactly one loginable admin; a second invocation does not replace it; no plaintext credential is persisted.
-2. Creating/editing an employee records language and eligible type. The employee logs in and sees the selected English/Hindi/Gujarati interface.
+2. Creating/editing an employee records language and multiple eligible types. An employee eligible for Solar and Shed can hold one site of each type and sees the selected English/Hindi/Gujarati interface. Removing an actively assigned type requires resolving its assignments.
 3. Site creation copies stage templates. Editing the template later leaves existing sites unchanged.
-4. A published site with no employee is New; assigning an eligible employee makes it Assigned. Only that employee can read full details and evidence.
+4. A published site with no employee is New; assigning an eligible employee makes it Assigned. Admin and the current assignee can read full details and evidence; other employees cannot.
 5. Independent stages run in parallel; unmet explicit dependencies prevent starting/submitting the dependent work.
-6. An evidence-required stage cannot be submitted with only a failed or unfinished upload. An evidence-optional stage can be submitted without a photo.
+6. An evidence-required stage cannot be submitted with only a failed/unfinished upload, an unlocated photo, text, or audio. An evidence-optional stage can be submitted without a photo; any photo attached still requires location.
 7. Rejection preserves the attempt and reason. Resubmission creates another attempt. Final valid approval completes the site exactly once.
 8. A blocked overdue site displays both conditions. Passing midnight changes overdue results without a workflow update.
 9. Linked Shed/Solar sites have independent balances and assignments. A Shed dependency holds Solar until satisfied. Employees see only permitted linked-site context.
 10. Two simultaneous approvals cannot reserve the same stock twice. Partial dispatch consumes only dispatched reservations. Ledger and balances reconcile.
 11. Multiple open material requests remain independent. Partial approval explicitly accounts for every residual quantity.
 12. Consumption reduces site stock; pending returns cannot also be consumed. Only actual admin-confirmed return receipt increases warehouse stock.
-13. Flutter offline work survives restart, remains marked unsynced, and creates one server event after repeated retries. An upload failure never produces an invalid approval submission.
+13. Flutter offline text/photo/audio work survives restart, remains marked unsynced, and creates one server event after repeated retries. An upload failure never produces an invalid approval submission.
 14. Reassignment, deactivation, a new block, or a stock conflict while offline causes a visible server conflict and preserves recoverable input.
 15. Dashboard site counts exclude drafts/projects from active denominators; employee updates and admin edits affect daily metrics differently as specified.
 16. Reopening approved work preserves the audit trail, recalculates progress, and flags downstream dependency effects.
 17. Hindi/Gujarati interfaces handle long labels, validation, empty states, and offline errors without clipping; business-entered text is preserved.
-18. Completed sites can reconcile material returns without reopening work; work mutations require reopening.
+18. Final stage approval automatically completes the site. Completed sites can reconcile material returns without reopening work; work mutations require reopening.
+19. On photo addition, permission denial, disabled location services, or failure to obtain a fix prevents acceptance as evidence and leaves a recoverable draft. Every accepted site photo has valid position, accuracy, author, and observation time.
+20. A photo added offline at location A and synchronized later from location B retains location A. Automatic sync requires no fresh location and records server receipt separately. Gallery images are labeled with addition location, not claimed original shooting location.
+21. Text-only, photo-only, audio-only, and combined progress updates work in Flutter and React. Empty updates are rejected. Required photo evidence cannot be replaced by audio. Audio playback and failed-upload retry work without duplicating updates.
+22. Admin can start work and add progress/media on assigned or unassigned published sites without becoming the assignee. Admin submissions enter Pending review; a separate explicit admin approval is required. Admin direct Block remains available.
+23. Employee first login has no password-change step. Employee password-change/reset attempts are rejected server-side; admin reset invalidates server sessions, preserves recoverable unsynced work, and requires the new password at next online authentication.
+24. Offline unlock is available within 7 days of successful online authentication and requires online login after expiry. Cache eviction never deletes unsynced media; reaching the pending-media limit gives a recoverable storage message.
+25. Reminders run only after the configured cutoff on configured working days, are deduplicated, and keep daily notes optional. Admin field updates remain distinguishable from employee reports.
+26. With SQLite, simultaneous reservations, stage approvals, and offline-sync retries preserve invariants. Foreign keys apply on every connection; an interrupted stock write leaves no partial ledger/balance/outbox posting, and a consistent backup restores with its media references.
+27. A Python-generated admin password hash authenticates through Spring Security; schema mismatch or a wrong SQLite file path fails provisioning safely.
 
 ## 13. Delivery sequence
 
 1. **Confirm product rules and screen wireframes.** Review the proposed defaults, navigation, site detail, approval inbox, inventory movement views, and Flutter field flows.
-2. **Foundation.** Choose the backend/web stack and hosting; define schema and API contracts; implement admin provisioning, authentication, localization structure, types, employees, materials, and audit records.
-3. **Work management.** Implement projects, sites, one-person assignment, stage/dependency rules, evidence, approvals, blocking, and dashboard queries.
+2. **Foundation.** Set up Java Spring Boot, SQLite migrations/JDBC, React, and Flutter; select hosting and supported versions; define schema and API contracts; implement interoperable Python admin provisioning, authentication, admin-only employee password resets, localization, multiple employee type selection, materials, and audit records.
+3. **Work management.** Implement projects, sites, one-person assignment, stage/dependency rules, mandatory photo-add location, text/photo/audio updates, employee/admin work actions and submissions, approvals, blocking, reporting settings/reminders, and dashboard queries.
 4. **Inventory.** Implement receipts, allocations, requests, reservations, partial dispatches, consumption, returns, corrections, and reconciliation.
-5. **Flutter delivery.** Implement Android/iOS screens, local persistence and durable operation queue alongside each workflow. Exercise offline conflicts throughout development, not only after online features are finished.
-6. **Pilot and release.** Run a realistic Shed + Solar project end to end, including bad connectivity, rejected evidence, partial deliveries, employee reassignment, and returns. Validate backup restoration and distribute mobile builds through the chosen channels.
+5. **Flutter delivery.** Implement Android/iOS screens, location/microphone permissions, local media persistence and durable operation queue alongside each workflow. Exercise offline conflicts, location preservation during automatic sync, 7-day unlock expiry, and media/cache limits throughout development.
+6. **Pilot and release.** Run a realistic Shed + Solar project end to end, including bad connectivity, rejected evidence, audio playback, partial deliveries, employee reassignment, and returns. Validate SQLite write contention, cross-language admin login, backup restoration, and mobile distribution.
 
-Keep all confirmed scope in the first-release design. Defer multi-admin organizations, payroll/attendance, invoicing, supplier procurement, GPS surveillance, automatic photo assessment, and automatic translation unless separately requested.
+Keep all confirmed scope in the first-release design. Defer multi-admin organizations, payroll/attendance, invoicing, supplier procurement, continuous employee tracking, automatic photo assessment, audio transcription, and automatic translation unless separately requested. Mandatory photo-add location remains included.
 
 ## 14. Remaining decisions
 
@@ -475,15 +567,12 @@ No answers are required to read or discuss this draft. Resolve these before thei
 
 | Decision | Proposed starting point |
 | --- | --- |
-| Backend/web stack and hosting | Modular backend + SQL database + private object storage; choose frameworks/provider next |
-| Employee eligibility | One site type per employee initially; confirm if employees cover several types |
-| Stage/site closeout | Final stage approval automatically completes site; material reconciliation stays separate |
-| Evidence rules | At least one photo when required; camera or gallery; no mandatory GPS |
-| Daily reporting | Optional daily notes; reminders after a configurable cutoff; confirm working days |
-| Offline access/retention | 7-day local unlock proposal; choose limits for cached data/photos and pending work |
-| Account password policy | Admin shares initial password; proposed mandatory change on first login |
-| Stock operations | One warehouse; no inter-site transfer UI initially; use return and redispatch |
+| Hosting and versions | Stack confirmed as Spring Boot / SQLite / React / Flutter; select supported runtime/package versions and one backend host with persistent local storage |
+| Location quality | Location at photo addition and preservation during automatic sync confirmed; approve freshness/accuracy thresholds and low-accuracy behavior |
+| Reporting calendar | Optional notes and configurable reminders confirmed; admin supplies working days, cutoff, and reminder recipients |
+| Media/cache limits | 7-day unlock confirmed; proposed 10 MB photos, 5-minute/10 MB audio clips, 500 MB downloaded cache and separate 500 MB pending-media budget; confirm retention and limits |
+| Admin photo location compatibility | Same mandatory location rule for site photos; browser geolocation reports position without guaranteeing a satellite-only source |
 | Distribution and notifications | Choose Android/iOS distribution method and push delivery configuration |
 | Operational data | Confirm address/district source, backup recovery targets, retention, and expected photo volume |
 
-Next design artifact: screen-by-screen wireframes backed by this workflow, followed by the database schema and API contract. The Python admin creation script will be delivered with the implemented authentication/schema so its hashes and account constraints match the application.
+Next design artifact: screen-by-screen wireframes backed by this workflow, followed by the SQLite schema and Spring Boot API contract. The Python admin creation script will be delivered with the implemented schema and verified Spring Security hash format so its account constraints and credentials match the Java application.
