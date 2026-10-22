@@ -1,7 +1,6 @@
 # સાઇટ ટ્રેકિંગ સિસ્ટમ
 
-આ પ્રોજેક્ટમાં હાલ ફક્ત નવી જરૂરિયાતની નોંધ રાખી છે.
+- [સરળ ગુજરાતી જરૂરિયાત નોંધ](docs/requirements-v0.4-working-draft.md)
+- [નવી session માટે handoff અને draw.ioનું આગળનું કામ](docs/NEXT-SESSION-HANDOFF.md)
 
-[સરળ ગુજરાતી જરૂરિયાત નોંધ વાંચો](docs/requirements-v0.4-working-draft.md)
-
-જૂની સ્ક્રીન, ડિઝાઇન, PDF, prototype, tools અને dependencies કાઢી નાખ્યાં છે. જરૂરિયાતો નક્કી થયા પછી જ નવી ડિઝાઇન અને development શરૂ થશે. અગાઉનું કામ Git historyમાં ઉપલબ્ધ છે.
+જૂની સ્ક્રીન, ડિઝાઇન અને tools કાઢી નાખ્યાં છે. હવે ફક્ત નવી જરૂરિયાતો પરથી client review માટે draw.ioમાં screen sketches તૈયાર કરવાના છે. હજી કોઈ sketch કે production application બનાવેલી નથી. `review/assets/`માં ગુજરાતી font અને તેની licenseની તૈયારી છે. અગાઉનું કામ Git historyમાં ઉપલબ્ધ છે.
