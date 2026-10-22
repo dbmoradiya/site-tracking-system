@@ -501,3 +501,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .multi-select__menu input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
 .multi-select__clear { min-height: 38px; margin-top: 4px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--accent); text-align: left; font-size: .78rem; font-weight: 700; }
 @media (max-width: 800px) { .multi-select__menu { position: static; width: 100%; margin-top: 0; box-shadow: 0 8px 20px rgba(15,23,42,.1); } .multi-select__menu label { min-height: 46px; } }
+.stage-assignment { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.stage-assignment h4 { margin: 0 0 10px; }
+.stage-assignment__readonly { padding: 12px; border: 1px solid var(--line); border-radius: 9px; display: grid; gap: 5px; }
+.stage-assignment__readonly small { color: var(--slate); }

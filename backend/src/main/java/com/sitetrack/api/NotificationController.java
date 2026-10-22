@@ -40,12 +40,12 @@ public class NotificationController {
                   select ss.id stage_id,ss.name stage_name,ss.status,ss.updated_at,s.id site_id,s.name site_name,
                          p.id project_id,p.name project_name,
                          (:isAdmin or p.coordinator_id=:employeeId) manager,
-                         exists(select 1 from site_stage_required_roles rr join site_role_assignments sra
-                           on sra.site_id=s.id and sra.role_code=rr.role_code
+                         exists(select 1 from site_stage_required_roles rr join site_stage_role_assignments sra
+                           on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
                            where rr.stage_id=ss.id and sra.employee_id=:employeeId) assigned,
                          (select count(*) from site_stage_required_roles rr where rr.stage_id=ss.id) required_count,
-                         (select count(*) from site_stage_required_roles rr left join site_role_assignments sra
-                           on sra.site_id=s.id and sra.role_code=rr.role_code
+                         (select count(*) from site_stage_required_roles rr left join site_stage_role_assignments sra
+                           on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
                            where rr.stage_id=ss.id and sra.employee_id is null) missing_count,
                          (select count(*) from evidence ev where ev.stage_id=ss.id and ev.upload_status='UPLOADED') evidence_count
                   from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id

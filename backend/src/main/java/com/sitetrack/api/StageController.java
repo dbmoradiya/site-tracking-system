@@ -77,24 +77,28 @@ public class StageController {
                     row.put("requiredRoles",requiredRoles);
                     row.put("evidenceCount",rs.getLong("evidence_count")); row.put("canManage",canManage);
                     boolean canUpload=canManage || (user.employeeId()!=null && jdbc.sql("""
-                            select count(*) from site_role_assignments where site_id=:site and employee_id=:employee
+                            select count(*) from site_stage_role_assignments where stage_id=:stage and employee_id=:employee
                             and role_code=any(:roles)
-                            """).param("site",siteId).param("employee",user.employeeId())
+                            """).param("stage",rs.getLong("id")).param("employee",user.employeeId())
                             .param("roles",requiredRoles.toArray(String[]::new)).query(Long.class).single()>0);
-                    row.put("canUpload",canUpload); return row;
+                    row.put("canUpload",canUpload);
+                    row.put("assignments",jdbc.sql("""
+                            select rr.role_code,e.id employee_id,e.name employee_name from site_stage_required_roles rr
+                            left join site_stage_role_assignments sra on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
+                            left join employees e on e.id=sra.employee_id where rr.stage_id=:stage order by rr.role_code
+                            """).param("stage",rs.getLong("id")).query((r2,n2)->{
+                                Map<String,Object> a=new LinkedHashMap<>();a.put("role",r2.getString("role_code"));
+                                a.put("employeeId",r2.getObject("employee_id"));a.put("employeeName",r2.getString("employee_name"));return a;
+                            }).list());
+                    return row;
                 }).list();
-        List<Map<String,Object>> roleAssignments=jdbc.sql("""
-                select sra.role_code,e.id employee_id,e.name employee_name from site_role_assignments sra
-                join employees e on e.id=sra.employee_id where sra.site_id=:site order by sra.role_code
-                """).param("site",siteId).query((rs,n)->Map.<String,Object>of("role",rs.getString("role_code"),
-                        "employeeId",rs.getLong("employee_id"),"employeeName",rs.getString("employee_name"))).list();
         List<Map<String,Object>> assignmentHistory=new ArrayList<>(jdbc.sql("""
-                select h.role_code,h.created_at,oe.name old_employee,ne.name new_employee,u.name changed_by
-                from site_role_assignment_history h left join employees oe on oe.id=h.old_employee_id
+                select h.role_code,h.created_at,oe.name old_employee,ne.name new_employee,u.name changed_by,hs.name stage_name
+                from site_role_assignment_history h left join site_stages hs on hs.id=h.stage_id left join employees oe on oe.id=h.old_employee_id
                 left join employees ne on ne.id=h.new_employee_id join app_users u on u.id=h.changed_by
                 where h.site_id=:site order by h.created_at desc
                 """).param("site",siteId).query((rs,n)->{
-                    Map<String,Object> row=new LinkedHashMap<>();row.put("type","ROLE");row.put("role",rs.getString("role_code"));
+                    Map<String,Object> row=new LinkedHashMap<>();row.put("type","ROLE");row.put("role",rs.getString("role_code"));row.put("stage",value(rs.getString("stage_name")));
                     row.put("oldValue",value(rs.getString("old_employee")));row.put("newValue",value(rs.getString("new_employee")));
                     row.put("changedBy",rs.getString("changed_by"));row.put("changedAt",rs.getTimestamp("created_at").toInstant());return row;
                 }).list());
@@ -105,15 +109,24 @@ public class StageController {
                 """).param("site",siteId).query((rs,n)->Map.<String,Object>of("type","TEAM","role","TEAM",
                         "oldValue",value(rs.getString("old_team")),"newValue",value(rs.getString("new_team")),
                         "changedBy",rs.getString("changed_by"),"changedAt",rs.getTimestamp("created_at").toInstant())).list());
-        site.put("canManage",canManage); site.put("roleAssignments",roleAssignments);site.put("assignmentHistory",assignmentHistory);
+        site.put("canManage",canManage); site.put("assignmentHistory",assignmentHistory);
         site.put("stages",stages); return site;
     }
 
-    @PutMapping("/sites/{siteId}/assignments")
-    public void updateAssignments(@PathVariable long siteId,@RequestBody SiteAssignmentsRequest request,
-                                  @AuthenticationPrincipal AppPrincipal user) {
+    @PutMapping("/sites/{siteId}/team")
+    public void updateTeam(@PathVariable long siteId,@RequestBody SiteTeamRequest request,
+                           @AuthenticationPrincipal AppPrincipal user) {
         workflow.requireSiteManager(siteId,user);
-        assignments.update(siteId,request.roleAssignments()==null?Map.of():request.roleAssignments(),request.teamId(),user);
+        assignments.updateTeam(siteId,request.teamId(),user);
+    }
+
+    /** Admin or the Project Coordinator assigns employees to the roles required by one Stage. */
+    @PutMapping("/sites/{siteId}/stages/{stageId}/assignments")
+    public void updateStageAssignments(@PathVariable long siteId,@PathVariable long stageId,
+                                       @RequestBody StageAssignmentsRequest request,
+                                       @AuthenticationPrincipal AppPrincipal user) {
+        workflow.requireSiteManager(siteId,user);
+        assignments.updateStage(siteId,stageId,request.roleAssignments()==null?Map.of():request.roleAssignments(),user);
     }
 
     @PostMapping(value="/stages/{stageId}/evidence",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -156,7 +169,7 @@ public class StageController {
         if(evidenceCount==0) throw new ApiException(400,"At least one successfully uploaded evidence file is required");
         long missingAssignments=jdbc.sql("""
                 select count(*) from site_stage_required_roles rr join site_stages ss on ss.id=rr.stage_id
-                left join site_role_assignments sra on sra.site_id=ss.site_id and sra.role_code=rr.role_code
+                left join site_stage_role_assignments sra on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
                 where rr.stage_id=:id and sra.employee_id is null
                 """).param("id",stageId).query(Long.class).single();
         if(missingAssignments>0) throw new ApiException(400,"Assign an employee for every required role before submitting");
@@ -263,8 +276,8 @@ public class StageController {
         boolean allowed=user.employeeId()!=null && jdbc.sql("""
                 select count(*) from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id
                 where ss.id=:id and (p.coordinator_id=:employee or exists(
-                  select 1 from site_stage_required_roles rr join site_role_assignments sra
-                    on sra.site_id=ss.site_id and sra.role_code=rr.role_code
+                  select 1 from site_stage_required_roles rr join site_stage_role_assignments sra
+                    on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
                   where rr.stage_id=ss.id and sra.employee_id=:employee))
                 """).param("id",stageId).param("employee",user.employeeId()).query(Long.class).single()>0;
         if(!allowed) throw new ApiException(403,"This Stage is not assigned to you");
@@ -273,5 +286,6 @@ public class StageController {
     private String value(String value) { return value == null ? "—" : value; }
     public record ReviewRequest(String action,String note) {}
     public record EvidenceFile(Long stageId,String storagePath,String contentType,String fileName) {}
-    public record SiteAssignmentsRequest(Map<String,Long> roleAssignments,Long teamId) {}
+    public record SiteTeamRequest(Long teamId) {}
+    public record StageAssignmentsRequest(Map<String,Long> roleAssignments) {}
 }
