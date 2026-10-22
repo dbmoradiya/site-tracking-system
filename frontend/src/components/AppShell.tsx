@@ -2,6 +2,7 @@ import { Building2, LayoutDashboard, LogOut, Menu, Settings, X } from 'lucide-re
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { hasRole } from '../lib/api'
 
 const navigation = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
@@ -14,7 +15,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
-  const links = navigation.filter(item => !item.adminOnly || user?.role === 'ADMIN')
+  const links = navigation.filter(item => !item.adminOnly || hasRole(user,'ADMIN'))
+  const roleLabel = user?.roles.map(role=>role.toLowerCase().replaceAll('_',' ')).join(', ') || ''
   useEffect(() => {
     setOpen(false)
     mainRef.current?.focus({ preventScroll: true })
@@ -24,7 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <header className="mobile-header">
       <button className="icon-button" onClick={() => setOpen(true)} aria-label="Open navigation" aria-expanded={open}><Menu aria-hidden="true" /></button>
       <Brand />
-      <span className="avatar" aria-label={`${user?.name}, ${user?.role}`}>{user?.name.slice(0, 2).toUpperCase()}</span>
+      <span className="avatar" aria-label={`${user?.name}, ${roleLabel}`}>{user?.name.slice(0, 2).toUpperCase()}</span>
     </header>
     {open && <button className="nav-scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />}
     <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
@@ -39,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
       <div className="sidebar__profile">
         <span className="avatar">{user?.name.slice(0, 2).toUpperCase()}</span>
-        <div><strong>{user?.name}</strong><span>{user?.role.toLowerCase()}</span></div>
+        <div><strong>{user?.name}</strong><span>{roleLabel}</span></div>
         <button className="icon-button" onClick={logout} aria-label="Sign out"><LogOut aria-hidden="true" /></button>
       </div>
     </aside>

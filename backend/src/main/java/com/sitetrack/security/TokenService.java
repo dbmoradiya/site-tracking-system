@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,7 +31,7 @@ public class TokenService {
             claims.put("employeeId", principal.employeeId());
             claims.put("name", principal.name());
             claims.put("email", principal.email());
-            claims.put("role", principal.role());
+            claims.put("roles", principal.roles());
             claims.put("exp", Instant.now().plusSeconds(12 * 60 * 60).getEpochSecond());
             String payload = Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(objectMapper.writeValueAsBytes(claims));
@@ -55,7 +56,7 @@ public class TokenService {
                     employeeId == null ? null : ((Number) employeeId).longValue(),
                     (String) claims.get("name"),
                     (String) claims.get("email"),
-                    (String) claims.get("role"));
+                    objectMapper.convertValue(claims.get("roles"), new TypeReference<List<String>>() {}));
         } catch (Exception ignored) {
             return null;
         }

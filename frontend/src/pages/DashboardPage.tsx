@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Loading } from '../components/Loading'
 import { StatusBadge } from '../components/StatusBadge'
-import { api } from '../lib/api'
+import { api, hasRole } from '../lib/api'
 import { useAuth } from '../lib/auth'
 
 type Dashboard = { counts: { status: string; total: number }[]; recentProjects: Project[] }
@@ -18,14 +18,14 @@ export function DashboardPage() {
   return <div className="page">
     <header className="page-header page-header--hero">
       <div><p className="eyebrow">Operations overview</p><h1>Good day, {user?.name.split(' ')[0]}.</h1><p>Keep every project moving with the right evidence and decisions.</p></div>
-      {user?.role==='ADMIN' && <Link className="button button--primary" to="/projects/new">New project <ArrowUpRight /></Link>}
+      {hasRole(user,'ADMIN') && <Link className="button button--primary" to="/projects/new">New project <ArrowUpRight /></Link>}
     </header>
     {error && <div className="alert alert--error">{error}</div>}
     <section className="metric-grid" aria-label="Project status summary">
-      <Metric icon={<Building2/>} label="All projects" value={Object.values(totals).reduce((a,b)=>a+Number(b),0)} tone="navy" />
-      <Metric icon={<Clock3/>} label="In progress" value={totals.IN_PROGRESS||0} tone="orange" />
-      <Metric icon={<CircleDashed/>} label="Not started" value={totals.NOT_STARTED||0} tone="slate" />
-      <Metric icon={<CheckCircle2/>} label="Completed" value={totals.COMPLETED||0} tone="green" />
+      <Metric to="/projects" icon={<Building2/>} label="All projects" value={Object.values(totals).reduce((a,b)=>a+Number(b),0)} tone="navy" />
+      <Metric to="/projects?status=IN_PROGRESS" icon={<Clock3/>} label="In progress" value={totals.IN_PROGRESS||0} tone="orange" />
+      <Metric to="/projects?status=NOT_STARTED" icon={<CircleDashed/>} label="Not started" value={totals.NOT_STARTED||0} tone="slate" />
+      <Metric to="/projects?status=COMPLETED" icon={<CheckCircle2/>} label="Completed" value={totals.COMPLETED||0} tone="green" />
     </section>
     <section className="section-card notification-section">
       <div className="section-heading"><div><p className="eyebrow"><Bell/> Action centre</p><h2>Notifications</h2></div><span className="notification-count">{notifications.length} pending</span></div>
@@ -45,6 +45,6 @@ export function DashboardPage() {
   </div>
 }
 
-function Metric({icon,label,value,tone}:{icon:ReactNode;label:string;value:number;tone:string}) {
-  return <article className={`metric metric--${tone}`}><span className="metric__icon">{icon}</span><span><small>{label}</small><strong>{value}</strong></span></article>
+function Metric({to,icon,label,value,tone}:{to:string;icon:ReactNode;label:string;value:number;tone:string}) {
+  return <Link to={to} className={`metric metric--${tone}`} aria-label={`${label}: ${value}`}><span className="metric__icon" aria-hidden="true">{icon}</span><span className="metric__content" aria-hidden="true"><small>{label}</small><strong>{value}</strong></span><ArrowUpRight className="metric__arrow" aria-hidden="true"/></Link>
 }

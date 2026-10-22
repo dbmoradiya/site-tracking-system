@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, post } from '../lib/api'
 
-type Employee={id:number;name:string;role:string}
+type Employee={id:number;name:string;roles:string[]}
 type SiteType={id:number;name:string;stages:string|DefaultStage[]}
 type Team={id:number;name:string}
 type Setup={siteTypes:SiteType[];employees:Employee[];teams:Team[]}
@@ -19,7 +19,7 @@ export function NewSitePage(){
   const removeStage=(index:number)=>setStages(normalize(stages.filter((_,i)=>i!==index)))
   const moveStage=(index:number,direction:-1|1)=>{const target=index+direction;if(target<0||target>=stages.length)return;const next=[...stages];const [stage]=next.splice(index,1);next.splice(target,0,stage);setStages(normalize(next))}
   const submit=async(e:FormEvent)=>{e.preventDefault();if(stages.length===0){setError('Add at least one Stage');return}setSaving(true);setError('');try{const result=await post<{id:number}>(`/projects/${projectId}/sites`,{...form,siteTypeId:Number(form.siteTypeId),coordinatorId:Number(form.coordinatorId),stages});navigate(`/sites/${result.id}`)}catch(err){setError(err instanceof Error?err.message:'Could not create Site')}finally{setSaving(false)}}
-  const coordinators=setup?.employees.filter(e=>e.role==='COORDINATOR')||[];const supervisors=setup?.employees.filter(e=>e.role==='SUPERVISOR')||[]
+  const coordinators=setup?.employees.filter(e=>e.roles.includes('COORDINATOR'))||[];const supervisors=setup?.employees.filter(e=>e.roles.includes('SUPERVISOR'))||[]
   return <div className="page page--wide"><Link className="back-link" to={`/projects/${projectId}`}><ArrowLeft/>Back to project</Link><header className="page-header"><div><p className="eyebrow">Admin workflow</p><h1>Create a Site</h1><p>Load the Site Type defaults, then tailor stages and dependencies for this Site.</p></div></header>
     <form onSubmit={submit} className="form-stack">{error&&<div className="alert alert--error">{error}</div>}<section className="form-card"><h2>Site details</h2><div className="form-grid"><label>Site name *<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>Site Type *<select required value={form.siteTypeId} onChange={e=>selectType(e.target.value)}><option value="">Select a type</option>{setup?.siteTypes.map(type=><option key={type.id} value={type.id}>{type.name}</option>)}</select></label><label>Site Coordinator *<select required value={form.coordinatorId} onChange={e=>setForm({...form,coordinatorId:e.target.value})}><option value="">Select a Coordinator</option>{coordinators.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Target date<input type="date" value={form.targetDate} onChange={e=>setForm({...form,targetDate:e.target.value})}/></label><label className="form-grid__wide">Site address<textarea rows={2} value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/></label></div></section>
       <section className="form-card"><div className="section-heading"><div><h2>Stages and dependencies</h2><p>Evidence is required for every Stage.</p></div><button type="button" className="button button--secondary" onClick={()=>setStages([...stages,{name:'',position:stages.length+1,dependsOnPosition:stages.length||null,evidenceRequired:true}])}><Plus/>Add Stage</button></div>

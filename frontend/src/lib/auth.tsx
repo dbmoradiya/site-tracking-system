@@ -13,7 +13,15 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     const value = localStorage.getItem('sitetrack-user')
-    return value ? JSON.parse(value) : null
+    if (!value) return null
+    const stored = JSON.parse(value) as User & { role?: User['roles'][number] }
+    if (!stored.roles && stored.role) {
+      const migrated = { ...stored, roles: [stored.role] }
+      delete migrated.role
+      localStorage.setItem('sitetrack-user', JSON.stringify(migrated))
+      return migrated
+    }
+    return stored
   })
   const [loading, setLoading] = useState(false)
 
