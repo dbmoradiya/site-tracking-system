@@ -44,6 +44,27 @@ public class AuthController {
         this.tokens = tokens;
     }
 
+    @PostMapping("/change-password")
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request,
+                               @org.springframework.security.core.annotation.AuthenticationPrincipal com.sitetrack.security.AppPrincipal principal) {
+        String key = "pw:" + principal.id();
+        checkThrottle(key);
+        if (request.newPassword().length() < 10 || request.newPassword().length() > 72)
+            throw new ApiException(400, "New password must be 10 to 72 characters");
+        String hash = jdbc.sql("select password_hash from app_users where id=:id and active=true").param("id", principal.id())
+                .query(String.class).optional().orElseThrow(() -> new ApiException(401, "Session expired. Please sign in again."));
+        if (!passwords.matches(request.currentPassword(), hash)) {
+            recordFailure(key);
+            throw new ApiException(400, "Current password is incorrect");
+        }
+        if (passwords.matches(request.newPassword(), hash)) throw new ApiException(400, "New password must be different from the current one");
+        jdbc.sql("update app_users set password_hash=:h where id=:id").param("h", passwords.encode(request.newPassword())).param("id", principal.id()).update();
+        failures.remove(key);
+    }
+
+    public record ChangePasswordRequest(@jakarta.validation.constraints.NotBlank String currentPassword,
+                                        @jakarta.validation.constraints.NotBlank String newPassword) {}
+
     @PostMapping("/login")
     public Map<String, Object> login(@Valid @RequestBody LoginRequest request) {
         String throttleKey = request.email().trim().toLowerCase();

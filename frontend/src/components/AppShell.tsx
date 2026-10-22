@@ -1,10 +1,12 @@
 import { AppShell as MantineAppShell, Avatar, Burger, Group, NavLink as MantineNavLink, ScrollArea, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Bell, Building2, LayoutDashboard, LogOut, Settings } from 'lucide-react'
+import { Bell, Building2, LayoutDashboard, KeyRound, LogOut, Settings } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { hasRole } from '../lib/api'
+import { ChangePasswordModal } from './ChangePassword'
+import { useState } from 'react'
 
 const navigation = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
@@ -15,6 +17,7 @@ const navigation = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
+  const [pwOpen, setPwOpen] = useState(false)
   const [opened, { toggle, close }] = useDisclosure(false)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
@@ -36,10 +39,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Group gap="xs" wrap="nowrap">
           <Text size="xs" c="dimmed" visibleFrom="sm" tt="capitalize">{roleLabel}</Text>
           <Avatar size="sm" color="orange" aria-label={`${user?.name}, ${roleLabel}`}>{initials}</Avatar>
+          <UnstyledButton onClick={() => setPwOpen(true)} aria-label="Change password" title="Change password" className="header-icon"><KeyRound size={18} aria-hidden="true" /></UnstyledButton>
           <UnstyledButton onClick={logout} aria-label="Sign out" className="header-icon"><LogOut size={18} aria-hidden="true" /></UnstyledButton>
         </Group>
       </Group>
     </MantineAppShell.Header>
+    <ChangePasswordModal opened={pwOpen} onClose={() => setPwOpen(false)} />
     <MantineAppShell.Navbar p="xs">
       <ScrollArea>
         <Stack gap={2} component="nav" aria-label="Primary navigation">

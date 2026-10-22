@@ -129,6 +129,7 @@ public class SetupController {
     @Transactional
     public Map<String,Object> createEmployee(@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
+        if(request.password()==null||request.password().isBlank()) throw new ApiException(400,"Password is required (10 to 72 characters)");
         ensureEmailFree(request.email(),null);
         long id=jdbc.sql("insert into employees(name,email,mobile) values(:name,:email,:mobile) returning id")
                 .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
