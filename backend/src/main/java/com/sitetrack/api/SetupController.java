@@ -50,7 +50,7 @@ public class SetupController {
                         "projects",names(rs.getString("assigned_projects")))).list();
         List<Map<String, Object>> teams = jdbc.sql("""
                 select t.id,t.name,t.contact_name,t.mobile,t.notes,t.active,
-                  coalesce((select string_agg(distinct p.name,'||') from sites s join projects p on p.id=s.project_id where s.team_id=t.id),'') assigned_projects
+                  coalesce((select string_agg(distinct p.name,'||') from site_stage_role_assignments sra join site_stages ss on ss.id=sra.stage_id join sites s on s.id=ss.site_id join projects p on p.id=s.project_id where sra.team_id=t.id),'') assigned_projects
                 from teams t order by t.name
                 """)
                 .query((rs,n)->Map.<String,Object>of("id",rs.getLong("id"),"name",rs.getString("name"),
@@ -104,11 +104,18 @@ public class SetupController {
         }
     }
 
+    private void ensureEmailFree(String email,Long exceptId){
+        long n=jdbc.sql("select count(*) from employees where lower(email)=lower(:e) and (:id::bigint is null or id<>:id)").param("e",email.trim()).param("id",exceptId).query(Long.class).single();
+        long u=jdbc.sql("select count(*) from app_users where lower(email)=lower(:e) and (:id::bigint is null or employee_id is distinct from :id)").param("e",email.trim()).param("id",exceptId).query(Long.class).single();
+        if(n>0||u>0) throw new ApiException(409,"An employee with this email already exists");
+    }
+
     @PostMapping("/employees")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public Map<String,Object> createEmployee(@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
+        ensureEmailFree(request.email(),null);
         long id=jdbc.sql("insert into employees(name,email,mobile) values(:name,:email,:mobile) returning id")
                 .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
                 .query(Long.class).single();
@@ -121,6 +128,7 @@ public class SetupController {
     @Transactional
     public void updateEmployee(@PathVariable long id,@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
+        ensureEmailFree(request.email(),id);
         int changed=jdbc.sql("update employees set name=:name,email=:email,mobile=:mobile where id=:id")
                 .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
                 .param("id",id).update();
@@ -134,6 +142,8 @@ public class SetupController {
     @PostMapping("/teams")
     @PreAuthorize("hasRole('ADMIN')")
     public Map<String,Object> createTeam(@Valid @RequestBody TeamRequest request) {
+        if(jdbc.sql("select count(*) from teams where lower(trim(name))=lower(trim(:n))").param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"A Team with this name already exists");
         long id=jdbc.sql("insert into teams(name,contact_name,mobile,notes) values(:name,:contact,:mobile,:notes) returning id")
                 .param("name",request.name()).param("contact",request.contactName()).param("mobile",request.mobile())
                 .param("notes",request.notes()).query(Long.class).single();
@@ -143,6 +153,8 @@ public class SetupController {
     @PutMapping("/teams/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void updateTeam(@PathVariable long id,@Valid @RequestBody TeamRequest request) {
+        if(jdbc.sql("select count(*) from teams where lower(trim(name))=lower(trim(:n)) and id<>:id").param("n",request.name()).param("id",id).query(Long.class).single()>0)
+            throw new ApiException(409,"A Team with this name already exists");
         int changed=jdbc.sql("update teams set name=:name,contact_name=:contact,mobile=:mobile,notes=:notes where id=:id")
                 .param("name",request.name()).param("contact",request.contactName()).param("mobile",request.mobile())
                 .param("notes",request.notes()).param("id",id).update();
@@ -174,7 +186,7 @@ public class SetupController {
     public record StageTemplateRequest(@NotBlank String name, Integer dependsOnPosition, List<String> requiredRoles) {
         public StageTemplateRequest { requiredRoles = requiredRoles == null ? List.of() : List.copyOf(requiredRoles); }
     }
-    public record EmployeeRequest(@NotBlank String name,@Email @NotBlank String email,String mobile,
+    public record EmployeeRequest(@NotBlank String name,@Email @NotBlank String email,@jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String mobile,
                                   @NotEmpty List<String> roles) {}
-    public record TeamRequest(@NotBlank String name,@NotBlank String contactName,@NotBlank String mobile,String notes) {}
+    public record TeamRequest(@NotBlank String name,@NotBlank String contactName,@NotBlank @jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String mobile,String notes) {}
 }

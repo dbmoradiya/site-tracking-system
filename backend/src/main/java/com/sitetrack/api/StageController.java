@@ -110,21 +110,10 @@ public class StageController {
                 """).param("site",siteId).query((rs,n)->Map.<String,Object>of("type","TEAM","role","TEAM",
                         "oldValue",value(rs.getString("old_team")),"newValue",value(rs.getString("new_team")),
                         "changedBy",rs.getString("changed_by"),"changedAt",rs.getTimestamp("created_at").toInstant())).list());
-        site.put("moveHistory",jdbc.sql("""
-                select h.old_project_name,h.new_project_name,h.created_at,u.name changed_by from site_move_history h
-                join app_users u on u.id=h.changed_by where h.site_id=:site order by h.created_at desc
-                """).param("site",siteId).query((rs,n)->Map.<String,Object>of("from",rs.getString("old_project_name"),"to",rs.getString("new_project_name"),
-                        "changedBy",rs.getString("changed_by"),"changedAt",rs.getTimestamp("created_at").toInstant())).list());
         site.put("canManage",canManage); site.put("assignmentHistory",assignmentHistory);
         site.put("stages",stages); return site;
     }
 
-    @PutMapping("/sites/{siteId}/team")
-    public void updateTeam(@PathVariable long siteId,@RequestBody SiteTeamRequest request,
-                           @AuthenticationPrincipal AppPrincipal user) {
-        workflow.requireSiteManager(siteId,user);
-        assignments.updateTeam(siteId,request.teamId(),user);
-    }
 
     /** Admin or the Project Coordinator assigns employees to the roles required by one Stage. */
     @PutMapping("/sites/{siteId}/stages/{stageId}/assignments")
@@ -141,6 +130,7 @@ public class StageController {
                                        @RequestPart(value="comment",required=false) String comment,
                                        @AuthenticationPrincipal AppPrincipal user) throws IOException {
         if(file.isEmpty()) throw new ApiException(400,"Choose a non-empty evidence file");
+        if(comment!=null&&comment.length()>2000) throw new ApiException(400,"Comment must be 2000 characters or fewer");
         requireAllowedEvidenceType(file);
         if(file.getSize()>15L*1024*1024) throw new ApiException(400,"Evidence file must be 15 MB or smaller");
         requireStageAccess(stageId,user);
@@ -148,15 +138,18 @@ public class StageController {
         if(List.of("BLOCKED","REVIEW_PENDING","APPROVED","COMPLETED").contains(current))
             throw new ApiException(409,"Evidence cannot be added while this Stage is "+current.toLowerCase().replace('_',' '));
         Files.createDirectories(uploadDir);
-        String safeName=UUID.randomUUID()+"-"+Path.of(file.getOriginalFilename()==null?"evidence":file.getOriginalFilename()).getFileName();
+        String rawName=Path.of(file.getOriginalFilename()==null?"evidence":file.getOriginalFilename()).getFileName().toString();
+        if(rawName.length()>120){ int dot=rawName.lastIndexOf('.'); String ext=dot>=0&&rawName.length()-dot<=8?rawName.substring(dot):""; rawName=rawName.substring(0,120-ext.length())+ext; }
+        final String displayName=rawName;
+        String safeName=UUID.randomUUID()+"-"+rawName.replaceAll("[^A-Za-z0-9._-]","_");
         Path target=uploadDir.resolve(safeName).normalize();
         if(!target.startsWith(uploadDir)) throw new ApiException(400,"Invalid file name");
         Files.copy(file.getInputStream(),target, StandardCopyOption.REPLACE_EXISTING);
         long id=jdbc.sql("""
                 insert into evidence(stage_id,file_name,content_type,storage_path,uploaded_by,comment)
                 values(:stage,:name,:type,:path,:user,:comment) returning id
-                """).param("stage",stageId).param("name",file.getOriginalFilename()==null?"evidence":file.getOriginalFilename())
-                .param("type",file.getContentType()).param("path",target.toString()).param("user",user.id())
+                """).param("stage",stageId).param("name",displayName)
+                .param("type",canonicalContentType(extOf(displayName),file.getContentType())).param("path",target.toString()).param("user",user.id())
                 .param("comment",comment==null||comment.isBlank()?null:comment.trim()).query(Long.class).single();
         jdbc.sql("update site_stages set status=case when status in ('READY','NOT_STARTED','CHANGES_REQUESTED') then 'IN_PROGRESS' else status end,updated_at=now() where id=:id")
                 .param("id",stageId).update();
@@ -180,7 +173,7 @@ public class StageController {
                 where rr.stage_id=:id and sra.employee_id is null and sra.team_id is null
                 """).param("id",stageId).query(Long.class).single();
         if(missingAssignments>0) throw new ApiException(400,"Assign an employee for every required role before submitting");
-        String status=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
+        String status=jdbc.sql("select status from site_stages where id=:id for update").param("id",stageId).query(String.class).single();
         if("BLOCKED".equals(status)) throw new ApiException(409,"Complete the dependency before submitting this Stage");
         if(!List.of("READY","IN_PROGRESS","CHANGES_REQUESTED").contains(status))
             throw new ApiException(409,"This Stage cannot be submitted from its current status");
@@ -196,7 +189,7 @@ public class StageController {
                        @AuthenticationPrincipal AppPrincipal user) {
         long siteId=workflow.siteIdForStage(stageId); workflow.requireSiteManager(siteId,user);
         if(!List.of("APPROVED","CHANGES_REQUESTED").contains(request.action())) throw new ApiException(400,"Invalid review action");
-        String current=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
+        String current=jdbc.sql("select status from site_stages where id=:id for update").param("id",stageId).query(String.class).single();
         if(!"REVIEW_PENDING".equals(current)) throw new ApiException(409,"Only a submitted Stage can be reviewed");
         if("CHANGES_REQUESTED".equals(request.action()) && (request.note()==null || request.note().isBlank()))
             throw new ApiException(400,"A reason is required when requesting changes");
@@ -221,7 +214,7 @@ public class StageController {
         long evidenceCount=jdbc.sql("select count(*) from evidence where stage_id=:id and upload_status='UPLOADED'")
                 .param("id",stageId).query(Long.class).single();
         if(evidenceCount==0) throw new ApiException(400,"At least one successfully uploaded evidence file is required");
-        String current=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
+        String current=jdbc.sql("select status from site_stages where id=:id for update").param("id",stageId).query(String.class).single();
         if("BLOCKED".equals(current)) throw new ApiException(409,"Complete the dependency before completing this Stage");
         if(!List.of("READY","NOT_STARTED","IN_PROGRESS").contains(current))
             throw new ApiException(409,"This Stage cannot be completed from its current status");
@@ -278,21 +271,70 @@ public class StageController {
                 .body(Files.readAllBytes(path));
     }
 
-    private static final java.util.Set<String> EVIDENCE_TYPES=java.util.Set.of("image/jpeg","image/png","image/webp","image/gif","image/heic","image/heif","application/pdf");
-    private static final java.util.Set<String> EVIDENCE_EXTENSIONS=java.util.Set.of("jpg","jpeg","png","webp","gif","heic","heif","pdf");
+    private static final String OOXML_XLSX="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    private static final String OOXML_DOCX="application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    private static final java.util.Map<String,java.util.Set<String>> EVIDENCE_TYPES_BY_EXTENSION=java.util.Map.ofEntries(
+            java.util.Map.entry("jpg",java.util.Set.of("image/jpeg")),java.util.Map.entry("jpeg",java.util.Set.of("image/jpeg")),
+            java.util.Map.entry("png",java.util.Set.of("image/png")),java.util.Map.entry("webp",java.util.Set.of("image/webp")),
+            java.util.Map.entry("gif",java.util.Set.of("image/gif")),
+            java.util.Map.entry("heic",java.util.Set.of("image/heic","image/heif")),java.util.Map.entry("heif",java.util.Set.of("image/heic","image/heif")),
+            java.util.Map.entry("pdf",java.util.Set.of("application/pdf")),
+            java.util.Map.entry("xls",java.util.Set.of("application/vnd.ms-excel")),
+            java.util.Map.entry("xlsx",java.util.Set.of(OOXML_XLSX)),
+            java.util.Map.entry("doc",java.util.Set.of("application/msword")),
+            java.util.Map.entry("docx",java.util.Set.of(OOXML_DOCX)));
 
     private void requireAllowedEvidenceType(MultipartFile file) {
         String type=file.getContentType()==null?"":file.getContentType().toLowerCase(java.util.Locale.ROOT);
         String name=file.getOriginalFilename()==null?"":file.getOriginalFilename().toLowerCase(java.util.Locale.ROOT);
         String extension=name.contains(".")?name.substring(name.lastIndexOf('.')+1):"";
-        if(!EVIDENCE_TYPES.contains(type) || !EVIDENCE_EXTENSIONS.contains(extension))
-            throw new ApiException(400,"Evidence must be an image or a PDF file");
+        java.util.Set<String> allowed=EVIDENCE_TYPES_BY_EXTENSION.get(extension);
+        boolean office=List.of("xls","xlsx","doc","docx").contains(extension);
+        boolean typeOk=allowed!=null&&(allowed.contains(type)||(office&&"application/octet-stream".equals(type)));
+        if(!typeOk)
+            throw new ApiException(400,"Evidence must be an image, PDF, Excel (xls, xlsx) or Word (doc, docx) file");
+        byte[] head;
+        try (java.io.InputStream in=file.getInputStream()) { head=in.readNBytes(16); } catch (IOException e) { throw new ApiException(400,"Could not read the file"); }
+        if(!contentMatchesExtension(extension,head))
+            throw new ApiException(400,"File content does not match its "+extension+" extension");
+    }
+
+    private static String extOf(String n){int d=n.lastIndexOf('.');return d<0?"":n.substring(d+1).toLowerCase(java.util.Locale.ROOT);}
+
+    private static String canonicalContentType(String extension,String sent) {
+        java.util.Set<String> allowed=EVIDENCE_TYPES_BY_EXTENSION.get(extension);
+        if(allowed!=null&&sent!=null&&allowed.contains(sent.toLowerCase(java.util.Locale.ROOT))) return sent.toLowerCase(java.util.Locale.ROOT);
+        return switch(extension){case "xls"->"application/vnd.ms-excel";case "xlsx"->OOXML_XLSX;case "doc"->"application/msword";case "docx"->OOXML_DOCX;default->sent;};
+    }
+
+    private static boolean contentMatchesExtension(String extension,byte[] h) {
+        if(h.length<4) return false;
+        boolean ole=(h[0]&0xFF)==0xD0&&(h[1]&0xFF)==0xCF&&(h[2]&0xFF)==0x11&&(h[3]&0xFF)==0xE0;
+        boolean zip=h[0]=='P'&&h[1]=='K'&&h[2]==3&&h[3]==4;
+        return switch(extension){
+            case "xls","doc"->ole;
+            case "xlsx","docx"->zip;
+            default->looksLikeAllowedFile(h)&&!ole&&!zip;
+        };
+    }
+
+    private static boolean looksLikeAllowedFile(byte[] h) {
+        if(h.length<4) return false;
+        boolean png=(h[0]&0xFF)==0x89&&h[1]=='P'&&h[2]=='N'&&h[3]=='G';
+        boolean jpeg=(h[0]&0xFF)==0xFF&&(h[1]&0xFF)==0xD8;
+        boolean gif=h[0]=='G'&&h[1]=='I'&&h[2]=='F'&&h[3]=='8';
+        boolean pdf=h[0]=='%'&&h[1]=='P'&&h[2]=='D'&&h[3]=='F';
+        boolean riffWebp=h.length>=12&&h[0]=='R'&&h[1]=='I'&&h[2]=='F'&&h[3]=='F'&&h[8]=='W'&&h[9]=='E'&&h[10]=='B'&&h[11]=='P';
+        boolean heic=h.length>=12&&h[4]=='f'&&h[5]=='t'&&h[6]=='y'&&h[7]=='p';
+        return png||jpeg||gif||pdf||riffWebp||heic;
     }
 
     /** Admin edits Site master details (name, address, target date). */
     @PutMapping("/sites/{siteId}")
     @PreAuthorize("hasRole('ADMIN')")
     public void updateSite(@PathVariable long siteId,@Valid @RequestBody SiteDetailsRequest request) {
+        if(jdbc.sql("select count(*) from sites where project_id=(select project_id from sites where id=:id) and id<>:id and lower(trim(name))=lower(trim(:n))").param("id",siteId).param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"This Project already has a Site with that name");
         int changed=jdbc.sql("update sites set name=:name,address=:address,target_date=:target,updated_at=now() where id=:id")
                 .param("name",request.name().trim()).param("address",request.address()).param("target",request.targetDate())
                 .param("id",siteId).update();
@@ -300,23 +342,22 @@ public class StageController {
     }
 
     /** Admin moves a Site, with its Stages, evidence and history, to another Project. */
-    @PutMapping("/sites/{siteId}/project")
+    @DeleteMapping("/sites/{siteId}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void moveSite(@PathVariable long siteId,@Valid @RequestBody MoveSiteRequest request,@AuthenticationPrincipal AppPrincipal user) {
-        Long current=jdbc.sql("select project_id from sites where id=:id for update").param("id",siteId).query(Long.class).optional()
+    public void deleteSite(@PathVariable long siteId) {
+        Long projectId=jdbc.sql("select project_id from sites where id=:id for update").param("id",siteId).query(Long.class).optional()
                 .orElseThrow(()->new ApiException(404,"Site not found"));
-        if(current.equals(request.projectId())) return;
-        boolean exists=jdbc.sql("select count(*) from projects where id=:id").param("id",request.projectId()).query(Long.class).single()>0;
-        if(!exists) throw new ApiException(404,"Target Project not found");
-        jdbc.sql("""
-                insert into site_move_history(site_id,old_project_id,new_project_id,old_project_name,new_project_name,changed_by)
-                select :site,:old,:new,(select name from projects where id=:old),(select name from projects where id=:new),:actor
-                """).param("site",siteId).param("old",current).param("new",request.projectId()).param("actor",user.id()).update();
-        jdbc.sql("update sites set project_id=:project,updated_at=now() where id=:id").param("project",request.projectId()).param("id",siteId).update();
-        jdbc.sql("update projects set updated_at=now() where id in (:a,:b)").param("a",current).param("b",request.projectId()).update();
-        workflow.recalculate(siteId);
-        workflow.recalculateProject(current);
+        List<String> paths=jdbc.sql("select e.storage_path from evidence e join site_stages ss on ss.id=e.stage_id where ss.site_id=:id")
+                .param("id",siteId).query(String.class).list();
+        jdbc.sql("delete from sites where id=:id").param("id",siteId).update();
+        jdbc.sql("update projects set updated_at=now() where id=:id").param("id",projectId).update();
+        workflow.recalculateProject(projectId);
+        for(String stored:paths) {
+            Path path=Path.of(stored).toAbsolutePath().normalize();
+            if(!path.startsWith(uploadDir)) continue;
+            try { Files.deleteIfExists(path); } catch(IOException ignored) { }
+        }
     }
 
     private void requireStageAccess(long stageId,AppPrincipal user) {
@@ -336,6 +377,5 @@ public class StageController {
     public record EvidenceFile(Long stageId,String storagePath,String contentType,String fileName) {}
     public record SiteTeamRequest(Long teamId) {}
     public record SiteDetailsRequest(@jakarta.validation.constraints.NotBlank String name,String address,java.time.LocalDate targetDate) {}
-    public record MoveSiteRequest(@jakarta.validation.constraints.NotNull Long projectId) {}
     public record StageAssignmentsRequest(Map<String,Long> roleAssignments) {}
 }

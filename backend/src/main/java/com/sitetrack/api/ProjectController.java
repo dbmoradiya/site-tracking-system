@@ -72,6 +72,8 @@ public class ProjectController {
     @Transactional
     public Map<String,Object> create(@Valid @RequestBody ProjectRequest request,@AuthenticationPrincipal AppPrincipal user) {
         projects.requireCoordinator(request.coordinatorId());
+        if(jdbc.sql("select count(*) from projects where lower(trim(name))=lower(trim(:n))").param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"A Project with this name already exists");
         long id=jdbc.sql("""
                 insert into projects(name,customer_name,customer_mobile,address,target_date,coordinator_id)
                 values(:name,:customer,:mobile,:address,:target,:coordinator) returning id
@@ -159,11 +161,13 @@ public class ProjectController {
         if(!projectExists) throw new ApiException(404,"Project not found");
         for(SiteStageRequest stage:request.stages())
             for(String role:stage.requiredRoles()) assignments.validate(role,null);
+        if(jdbc.sql("select count(*) from sites where project_id=:p and lower(trim(name))=lower(trim(:n))").param("p",projectId).param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"This Project already has a Site with that name");
         long siteId=jdbc.sql("""
                 insert into sites(project_id,site_type_id,team_id,name,address,target_date)
                 values(:project,:type,:team,:name,:address,:target) returning id
                 """).param("project",projectId).param("type",request.siteTypeId())
-                .param("team",request.teamId())
+                .param("team",(Long) null)
                 .param("name",request.name()).param("address",request.address()).param("target",request.targetDate())
                 .query(Long.class).single();
         Map<Integer,Long> stageIds=new LinkedHashMap<>();
@@ -184,7 +188,6 @@ public class ProjectController {
             if(dep!=null && stageIds.containsKey(dep)) jdbc.sql("update site_stages set depends_on_stage_id=:dep where id=:id")
                     .param("dep",stageIds.get(dep)).param("id",stageIds.get(i+1)).update();
         }
-        assignments.recordInitialTeam(siteId,request.teamId(),user);
         workflow.recalculate(siteId);
         return Map.of("id",siteId);
     }
@@ -239,7 +242,7 @@ public class ProjectController {
                 """;
     }
 
-    public record ProjectRequest(@NotBlank String name,@NotBlank String customerName,@NotBlank String customerMobile,
+    public record ProjectRequest(@NotBlank String name,@NotBlank String customerName,@NotBlank @jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String customerMobile,
                                  String address,LocalDate targetDate,@NotNull Long coordinatorId) {}
     public record CoordinatorRequest(@NotNull Long coordinatorId) {}
     public record PersonAssignment(String role,String name) {}

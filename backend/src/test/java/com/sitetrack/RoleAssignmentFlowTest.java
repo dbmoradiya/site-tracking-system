@@ -131,10 +131,13 @@ class RoleAssignmentFlowTest {
         detail = get(admin, "/sites/" + site, Map.class);
         assertEquals("Site 1 renamed", detail.get("name"));
         assertEquals("2027-01-31", detail.get("targetDate"));
-        assertEquals(403, send(HttpMethod.PUT, coordinator, "/sites/" + site + "/project", Map.of("projectId", projectB)));
-        assertEquals(200, send(HttpMethod.PUT, admin, "/sites/" + site + "/project", Map.of("projectId", projectB)));
-        assertEquals(projectB, ((Number) get(admin, "/sites/" + site, Map.class).get("projectId")).longValue());
-        // assignments survive the move
+        assertEquals(404, send(HttpMethod.PUT, admin, "/sites/" + site + "/project", Map.of("projectId", projectB)));
+        long throwaway = post(admin, "/projects/" + projectB + "/sites", Map.of("name", "Throwaway", "siteTypeId", 1, "stages", List.of(
+                Map.of("name", "Only", "requiredRoles", List.of("SUPERVISOR")))));
+        assertEquals(403, send(HttpMethod.DELETE, coordinator, "/sites/" + throwaway, null));
+        assertEquals(200, send(HttpMethod.DELETE, admin, "/sites/" + throwaway, null));
+        assertEquals(404, send(HttpMethod.GET, admin, "/sites/" + throwaway, null));
+        // assignments are unchanged
         stages = (List<Map<String, Object>>) get(admin, "/sites/" + site, Map.class).get("stages");
         assertEquals(supervisorA, assignee(stages.get(0), "SUPERVISOR"));
 
@@ -142,6 +145,10 @@ class RoleAssignmentFlowTest {
         assertEquals(400, upload(admin, stage1, "notes.txt", "text/plain"));
         assertEquals(400, upload(admin, stage1, "run.exe", "application/octet-stream"));
         assertEquals(200, upload(admin, stage1, "photo.png", "image/png"));
+        assertEquals(200, upload(admin, stage1, "sheet.xlsx", "application/octet-stream"));
+        assertEquals(200, upload(admin, stage1, "report.docx", "application/octet-stream"));
+        assertEquals(200, upload(admin, stage1, "old.xls", "application/octet-stream"));
+        assertEquals(200, upload(admin, stage1, "old.doc", "application/octet-stream"));
         assertEquals(200, upload(admin, stage1, "plan.pdf", "application/pdf"));
     }
 
@@ -177,9 +184,21 @@ class RoleAssignmentFlowTest {
         assertNull(((List<Map<String, Object>>) stage.get("assignments")).stream().filter(a -> "TEAM".equals(a.get("role"))).findFirst().orElseThrow().get("employeeId"));
     }
 
+    static byte[] sampleBytes(String filename) {
+        String f = filename.toLowerCase();
+        byte[] body = new byte[64];
+        byte[] magic = f.endsWith(".png") ? new byte[]{(byte) 0x89, 'P', 'N', 'G'}
+                : f.endsWith(".pdf") ? "%PDF".getBytes()
+                : (f.endsWith(".xlsx") || f.endsWith(".docx")) ? new byte[]{'P', 'K', 3, 4}
+                : (f.endsWith(".xls") || f.endsWith(".doc")) ? new byte[]{(byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0}
+                : new byte[]{'d', 'a', 't', 'a'};
+        System.arraycopy(magic, 0, body, 0, magic.length);
+        return body;
+    }
+
     int upload(String token, long stage, String filename, String type) {
         MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-        parts.add("file", new ByteArrayResource("data".getBytes()) {
+        parts.add("file", new ByteArrayResource(sampleBytes(filename)) {
             @Override public String getFilename() { return filename; }
         });
         try {

@@ -33,7 +33,20 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<?> handleConflict(DataIntegrityViolationException ex) {
+        Throwable root=ex.getMostSpecificCause();
+        String state=root instanceof java.sql.SQLException sql?sql.getSQLState():null;
+        if("22001".equals(state)) return ResponseEntity.badRequest().body(error("One of the values is too long"));
         return ResponseEntity.status(409).body(error("That record conflicts with existing data"));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    ResponseEntity<?> handleUnreadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(error("Invalid request: check dates and values"));
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<?> handleTooBig(org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(413).body(error("File is too large (max 15 MB)"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
