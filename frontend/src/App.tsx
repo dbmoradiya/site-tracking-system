@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewProjectPage } from './pages/NewProjectPage'
 import { NewSitePage } from './pages/NewSitePage'
+import { NotificationsPage } from './pages/NotificationsPage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { SetupPage } from './pages/SetupPage'
@@ -24,6 +25,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/projects/new" element={hasRole(user,'ADMIN') ? <NewProjectPage /> : <Navigate to="/projects" />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
         <Route path="/projects/:projectId/sites/new" element={hasRole(user,'ADMIN') ? <NewSitePage /> : <Navigate to="/projects" />} />

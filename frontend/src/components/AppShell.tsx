@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, LogOut, Menu, Settings, X } from 'lucide-react'
+import { Bell, Building2, LayoutDashboard, LogOut, Menu, Settings, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -7,6 +7,7 @@ import { hasRole } from '../lib/api'
 const navigation = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/projects', label: 'Projects', icon: Building2 },
+  { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/setup', label: 'Setup', icon: Settings, adminOnly: true },
 ]
 

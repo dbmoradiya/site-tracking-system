@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, ChevronDown, ChevronRight, Clock3, ExternalLink, FileCheck2, History, RefreshCcw, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { Loading } from '../components/Loading'
 import { EvidenceAction } from '../components/EvidenceAction'
 import { StatusBadge } from '../components/StatusBadge'
@@ -15,10 +15,11 @@ type Evidence={id:number;fileName:string;contentType:string;comment:string;uploa
 type Audit={assignments:{createdAt:string;oldSupervisor:string;newSupervisor:string;oldTeam:string;newTeam:string;changedBy:string}[];reviews:{action:string;note:string;createdAt:string;actionBy:string}[]}
 
 export function SiteDetailPage(){
-  const {siteId}=useParams();const [site,setSite]=useState<Site|null>(null);const [setup,setSetup]=useState<Setup|null>(null);const [error,setError]=useState('');const [reviewStageId,setReviewStageId]=useState<number|null>(null)
+  const {siteId}=useParams();const location=useLocation();const [site,setSite]=useState<Site|null>(null);const [setup,setSetup]=useState<Setup|null>(null);const [error,setError]=useState('');const [reviewStageId,setReviewStageId]=useState<number|null>(null)
   const load=useCallback(()=>api<Site>(`/sites/${siteId}`).then(setSite).catch(e=>setError(e.message)),[siteId]);useEffect(()=>{load()},[load]);useEffect(()=>{if(site?.canManage)api<Setup>('/setup').then(setSetup).catch(e=>setError(e.message))},[site?.canManage])
   const review=async(stageId:number,action:'APPROVED'|'CHANGES_REQUESTED',note='')=>{try{await post(`/stages/${stageId}/review`,{action,note});setReviewStageId(null);await load()}catch(err){setError(err instanceof Error?err.message:'Review failed')}}
   const complete=async(stageId:number)=>{try{await post(`/stages/${stageId}/complete`);await load()}catch(err){setError(err instanceof Error?err.message:'Could not complete Stage')}}
+  useEffect(()=>{if(!site||!location.hash.startsWith('#stage-'))return;const stageId=Number(location.hash.slice(7));const index=site.stages.findIndex(stage=>stage.id===stageId);if(index<0)return;window.requestAnimationFrame(()=>{const target=document.querySelectorAll<HTMLElement>('.timeline-item')[index];target?.setAttribute('tabindex','-1');target?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});target?.focus({preventScroll:true})})},[location.hash,site])
   if(!site)return error?<div className="page"><div className="alert alert--error" role="alert">{error}</div><Link className="button button--secondary" to="/projects">Back to Projects</Link></div>:<Loading label="Loading Site"/>
   const terminal=site.stages.filter(s=>['APPROVED','COMPLETED'].includes(s.status)).length;const progress=site.stages.length?terminal/site.stages.length*100:0
   return <div className="page"><Link className="back-link" to={`/projects/${site.projectId}`}><ArrowLeft/>{site.projectName}</Link><header className="detail-hero detail-hero--site"><div><div className="detail-hero__meta"><span>{site.siteType}</span><StatusBadge status={site.status}/></div><h1>{site.name}</h1><p>{site.address||'No Site address'} · Project Coordinator: {site.coordinator} · Team: {site.team}</p></div><div className="completion-ring" style={{'--progress':`${progress*3.6}deg`} as CSSProperties} aria-label={`${Math.round(progress)}% of Stages complete`}><strong>{Math.round(progress)}%</strong><small>complete</small></div></header>{error&&<div className="alert alert--error" role="alert">{error}</div>}

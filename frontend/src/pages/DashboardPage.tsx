@@ -2,17 +2,16 @@ import { ArrowUpRight, Bell, Building2, CheckCircle2, CircleDashed, Clock3 } fro
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Loading } from '../components/Loading'
+import { NotificationList, type NotificationPage } from '../components/NotificationList'
 import { StatusBadge } from '../components/StatusBadge'
 import { api, hasRole } from '../lib/api'
 import { useAuth } from '../lib/auth'
 
 type Dashboard = { counts: { status: string; total: number }[]; recentProjects: Project[] }
 type Project = { id:number; name:string; customerName:string; status:string; targetDate:string; siteCount:number; completedSites:number }
-type Notification = {stageId:number;stageName:string;siteId:number;siteName:string;projectId:number;projectName:string;status:string;updatedAt:string;title:string;actionLabel:string}
-
 export function DashboardPage() {
-  const { user } = useAuth(); const [data,setData]=useState<Dashboard|null>(null);const [notifications,setNotifications]=useState<Notification[]>([]); const [error,setError]=useState('')
-  useEffect(()=>{Promise.all([api<Dashboard>('/dashboard'),api<Notification[]>('/notifications')]).then(([dashboard,actions])=>{setData(dashboard);setNotifications(actions)}).catch(e=>setError(e.message))},[])
+  const { user } = useAuth(); const [data,setData]=useState<Dashboard|null>(null);const [notifications,setNotifications]=useState<NotificationPage|null>(null); const [error,setError]=useState('')
+  useEffect(()=>{Promise.all([api<Dashboard>('/dashboard'),api<NotificationPage>('/notifications?page=0&size=8')]).then(([dashboard,actions])=>{setData(dashboard);setNotifications(actions)}).catch(e=>setError(e.message))},[])
   const totals=useMemo(()=>Object.fromEntries(data?.counts.map(c=>[c.status,c.total])||[]),[data])
   if(!data && !error) return <Loading label="Preparing your workspace" />
   return <div className="page">
@@ -28,8 +27,8 @@ export function DashboardPage() {
       <Metric to="/projects?status=COMPLETED" icon={<CheckCircle2/>} label="Completed" value={totals.COMPLETED||0} tone="green" />
     </section>
     <section className="section-card notification-section">
-      <div className="section-heading"><div><p className="eyebrow"><Bell/> Action centre</p><h2>Notifications</h2></div><span className="notification-count">{notifications.length} pending</span></div>
-      {notifications.length===0?<div className="notification-empty"><CheckCircle2/><div><strong>You are all caught up</strong><p>No pending action needs your attention.</p></div></div>:<div className="notification-list">{notifications.slice(0,8).map(item=><Link to={`/projects/${item.projectId}`} key={`${item.stageId}-${item.status}`}><span className="notification-icon"><Bell/></span><span><strong>{item.title}</strong><small>{item.projectName} · {item.siteName} · {item.stageName}</small></span><span className="notification-time">{new Date(item.updatedAt).toLocaleDateString()}</span><ArrowUpRight/></Link>)}</div>}
+      <div className="section-heading"><div><p className="eyebrow"><Bell/> Action centre</p><h2>Notifications</h2></div><div className="notification-heading-actions"><span className="notification-count">{notifications?.total||0} pending</span><Link to="/notifications">View all notifications</Link></div></div>
+      <NotificationList items={notifications?.items||[]}/>
     </section>
     <section className="section-card">
       <div className="section-heading"><div><p className="eyebrow">Live portfolio</p><h2>Recent projects</h2></div><Link to="/projects">View all</Link></div>
