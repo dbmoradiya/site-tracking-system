@@ -2,6 +2,7 @@ package com.sitetrack.api;
 
 import com.sitetrack.security.AppPrincipal;
 import com.sitetrack.service.WorkflowService;
+import com.sitetrack.service.SiteAssignmentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +33,14 @@ public class StageController {
     private final JdbcClient jdbc;
     private final WorkflowService workflow;
     private final Path uploadDir;
+    private final SiteAssignmentService assignments;
 
-    public StageController(JdbcClient jdbc, WorkflowService workflow, @Value("${app.upload-dir}") String uploadDir) {
+    public StageController(JdbcClient jdbc, WorkflowService workflow,SiteAssignmentService assignments,
+                           @Value("${app.upload-dir}") String uploadDir) {
         this.jdbc = jdbc;
         this.workflow = workflow;
         this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
+        this.assignments = assignments;
     }
 
     @GetMapping("/sites/{siteId}")
@@ -43,37 +48,72 @@ public class StageController {
         workflow.requireSiteAccess(siteId,user);
         Map<String,Object> site=jdbc.sql("""
                 select s.id,s.name,s.address,s.target_date,s.status,p.id project_id,p.name project_name,
-                       st.name site_type,e.name coordinator
+                       st.name site_type,e.name coordinator,s.team_id,tm.name team
                 from sites s join projects p on p.id=s.project_id join site_types st on st.id=s.site_type_id
-                join employees e on e.id=p.coordinator_id where s.id=:id
+                join employees e on e.id=p.coordinator_id left join teams tm on tm.id=s.team_id where s.id=:id
                 """).param("id",siteId).query((rs,n)->{
                     Map<String,Object> row=new LinkedHashMap<>(); row.put("id",rs.getLong("id"));
                     row.put("name",rs.getString("name")); row.put("address",rs.getString("address"));
                     row.put("status",rs.getString("status")); row.put("projectId",rs.getLong("project_id"));
                     row.put("projectName",rs.getString("project_name")); row.put("siteType",rs.getString("site_type"));
-                    row.put("coordinator",rs.getString("coordinator")); return row;
+                    row.put("coordinator",rs.getString("coordinator")); row.put("teamId",rs.getObject("team_id"));
+                    row.put("team",rs.getString("team")==null?"Unassigned":rs.getString("team")); return row;
                 }).optional().orElseThrow(()->new ApiException(404,"Site not found"));
         boolean canManage=user.hasRole("ADMIN") || (user.employeeId()!=null &&
                 jdbc.sql("select p.coordinator_id from sites s join projects p on p.id=s.project_id where s.id=:id")
                         .param("id",siteId).query(Long.class).single().equals(user.employeeId()));
         List<Map<String,Object>> stages=jdbc.sql("""
-                select ss.id,ss.name,ss.position,ss.status,ss.evidence_required,ss.depends_on_stage_id,ss.supervisor_id,
-                       sup.name supervisor,tm.name team,count(ev.id) filter(where ev.upload_status='UPLOADED') evidence_count
-                from site_stages ss left join employees sup on sup.id=ss.supervisor_id left join teams tm on tm.id=ss.team_id
+                select ss.id,ss.name,ss.position,ss.status,ss.evidence_required,ss.depends_on_stage_id,
+                       coalesce(array_agg(distinct rr.role_code order by rr.role_code) filter(where rr.role_code is not null),array[]::varchar[]) required_roles,
+                       count(distinct ev.id) filter(where ev.upload_status='UPLOADED') evidence_count
+                from site_stages ss left join site_stage_required_roles rr on rr.stage_id=ss.id
                 left join evidence ev on ev.stage_id=ss.id where ss.site_id=:siteId
-                group by ss.id,sup.name,tm.name order by ss.position
+                group by ss.id order by ss.position
                 """).param("siteId",siteId).query((rs,n)->{
                     Map<String,Object> row=new LinkedHashMap<>(); row.put("id",rs.getLong("id"));
                     row.put("name",rs.getString("name")); row.put("position",rs.getInt("position"));
                     row.put("status",rs.getString("status")); row.put("evidenceRequired",rs.getBoolean("evidence_required"));
-                    row.put("supervisor",rs.getString("supervisor") == null ? "Unassigned" : rs.getString("supervisor"));
-                    row.put("team",rs.getString("team") == null ? "Unassigned" : rs.getString("team"));
+                    List<String> requiredRoles=List.of((String[])rs.getArray("required_roles").getArray());
+                    row.put("requiredRoles",requiredRoles);
                     row.put("evidenceCount",rs.getLong("evidence_count")); row.put("canManage",canManage);
-                    boolean canUpload=canManage || ("SUPERVISOR".equals(user.role()) && user.employeeId()!=null &&
-                            user.employeeId().equals((Long)rs.getObject("supervisor_id")));
+                    boolean canUpload=canManage || (user.employeeId()!=null && jdbc.sql("""
+                            select count(*) from site_role_assignments where site_id=:site and employee_id=:employee
+                            and role_code=any(:roles)
+                            """).param("site",siteId).param("employee",user.employeeId())
+                            .param("roles",requiredRoles.toArray(String[]::new)).query(Long.class).single()>0);
                     row.put("canUpload",canUpload); return row;
                 }).list();
-        site.put("canManage",canManage); site.put("stages",stages); return site;
+        List<Map<String,Object>> roleAssignments=jdbc.sql("""
+                select sra.role_code,e.id employee_id,e.name employee_name from site_role_assignments sra
+                join employees e on e.id=sra.employee_id where sra.site_id=:site order by sra.role_code
+                """).param("site",siteId).query((rs,n)->Map.<String,Object>of("role",rs.getString("role_code"),
+                        "employeeId",rs.getLong("employee_id"),"employeeName",rs.getString("employee_name"))).list();
+        List<Map<String,Object>> assignmentHistory=new ArrayList<>(jdbc.sql("""
+                select h.role_code,h.created_at,oe.name old_employee,ne.name new_employee,u.name changed_by
+                from site_role_assignment_history h left join employees oe on oe.id=h.old_employee_id
+                left join employees ne on ne.id=h.new_employee_id join app_users u on u.id=h.changed_by
+                where h.site_id=:site order by h.created_at desc
+                """).param("site",siteId).query((rs,n)->{
+                    Map<String,Object> row=new LinkedHashMap<>();row.put("type","ROLE");row.put("role",rs.getString("role_code"));
+                    row.put("oldValue",value(rs.getString("old_employee")));row.put("newValue",value(rs.getString("new_employee")));
+                    row.put("changedBy",rs.getString("changed_by"));row.put("changedAt",rs.getTimestamp("created_at").toInstant());return row;
+                }).list());
+        assignmentHistory.addAll(jdbc.sql("""
+                select h.created_at,ot.name old_team,nt.name new_team,u.name changed_by from site_team_assignment_history h
+                left join teams ot on ot.id=h.old_team_id left join teams nt on nt.id=h.new_team_id
+                join app_users u on u.id=h.changed_by where h.site_id=:site order by h.created_at desc
+                """).param("site",siteId).query((rs,n)->Map.<String,Object>of("type","TEAM","role","TEAM",
+                        "oldValue",value(rs.getString("old_team")),"newValue",value(rs.getString("new_team")),
+                        "changedBy",rs.getString("changed_by"),"changedAt",rs.getTimestamp("created_at").toInstant())).list());
+        site.put("canManage",canManage); site.put("roleAssignments",roleAssignments);site.put("assignmentHistory",assignmentHistory);
+        site.put("stages",stages); return site;
+    }
+
+    @PutMapping("/sites/{siteId}/assignments")
+    public void updateAssignments(@PathVariable long siteId,@RequestBody SiteAssignmentsRequest request,
+                                  @AuthenticationPrincipal AppPrincipal user) {
+        workflow.requireSiteManager(siteId,user);
+        assignments.update(siteId,request.roleAssignments()==null?Map.of():request.roleAssignments(),request.teamId(),user);
     }
 
     @PostMapping("/stages/{stageId}/assign")
@@ -127,6 +167,12 @@ public class StageController {
         long evidenceCount=jdbc.sql("select count(*) from evidence where stage_id=:id and upload_status='UPLOADED'")
                 .param("id",stageId).query(Long.class).single();
         if(evidenceCount==0) throw new ApiException(400,"At least one successfully uploaded evidence file is required");
+        long missingAssignments=jdbc.sql("""
+                select count(*) from site_stage_required_roles rr join site_stages ss on ss.id=rr.stage_id
+                left join site_role_assignments sra on sra.site_id=ss.site_id and sra.role_code=rr.role_code
+                where rr.stage_id=:id and sra.employee_id is null
+                """).param("id",stageId).query(Long.class).single();
+        if(missingAssignments>0) throw new ApiException(400,"Assign an employee for every required role before submitting");
         String status=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
         if("BLOCKED".equals(status)) throw new ApiException(409,"Complete the dependency before submitting this Stage");
         if(!List.of("READY","IN_PROGRESS","CHANGES_REQUESTED").contains(status))
@@ -213,12 +259,15 @@ public class StageController {
     }
 
     private void requireStageAccess(long stageId,AppPrincipal user) {
-        if("ADMIN".equals(user.role())) return;
-        long siteId=workflow.siteIdForStage(stageId);
-        if("COORDINATOR".equals(user.role())) { workflow.requireSiteManager(siteId,user); return; }
-        boolean assigned=user.employeeId()!=null && jdbc.sql("select count(*) from site_stages where id=:id and supervisor_id=:employee")
-                .param("id",stageId).param("employee",user.employeeId()).query(Long.class).single()>0;
-        if(!assigned) throw new ApiException(403,"This Stage is not assigned to you");
+        if(user.hasRole("ADMIN")) return;
+        boolean allowed=user.employeeId()!=null && jdbc.sql("""
+                select count(*) from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id
+                where ss.id=:id and (p.coordinator_id=:employee or exists(
+                  select 1 from site_stage_required_roles rr join site_role_assignments sra
+                    on sra.site_id=ss.site_id and sra.role_code=rr.role_code
+                  where rr.stage_id=ss.id and sra.employee_id=:employee))
+                """).param("id",stageId).param("employee",user.employeeId()).query(Long.class).single()>0;
+        if(!allowed) throw new ApiException(403,"This Stage is not assigned to you");
     }
 
     private String value(String value) { return value == null ? "—" : value; }
@@ -226,4 +275,5 @@ public class StageController {
     public record ReviewRequest(String action,String note) {}
     public record AssignmentRow(Long supervisorId,Long teamId) {}
     public record EvidenceFile(Long stageId,String storagePath,String contentType,String fileName) {}
+    public record SiteAssignmentsRequest(Map<String,Long> roleAssignments,Long teamId) {}
 }

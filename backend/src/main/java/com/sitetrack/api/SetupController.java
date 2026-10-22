@@ -39,8 +39,8 @@ public class SetupController {
                 select e.id,e.name,e.email,e.mobile,e.active,
                   coalesce(array_agg(er.role_code order by er.role_code) filter(where er.role_code is not null),array[]::varchar[]) roles,
                   coalesce((select string_agg(distinct p.name,'||') from projects p left join sites s on s.project_id=p.id
-                    left join site_stages ss on ss.site_id=s.id
-                    where p.coordinator_id=e.id or ss.supervisor_id=e.id),'') assigned_projects
+                    left join site_role_assignments sra on sra.site_id=s.id
+                    where p.coordinator_id=e.id or sra.employee_id=e.id),'') assigned_projects
                 from employees e left join employee_roles er on er.employee_id=e.id
                 group by e.id order by e.name
                 """)
@@ -50,7 +50,7 @@ public class SetupController {
                         "projects",names(rs.getString("assigned_projects")))).list();
         List<Map<String, Object>> teams = jdbc.sql("""
                 select t.id,t.name,t.contact_name,t.mobile,t.notes,t.active,
-                  coalesce((select string_agg(distinct p.name,'||') from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id where ss.team_id=t.id),'') assigned_projects
+                  coalesce((select string_agg(distinct p.name,'||') from sites s join projects p on p.id=s.project_id where s.team_id=t.id),'') assigned_projects
                 from teams t order by t.name
                 """)
                 .query((rs,n)->Map.<String,Object>of("id",rs.getLong("id"),"name",rs.getString("name"),

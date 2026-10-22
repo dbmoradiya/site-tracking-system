@@ -28,8 +28,8 @@ public class WorkflowService {
         String sql = """
                 select count(*) from projects p where p.id=:projectId and (
                   p.coordinator_id=:employeeId or exists(
-                    select 1 from sites s join site_stages ss on ss.site_id=s.id
-                    where s.project_id=p.id and ss.supervisor_id=:employeeId))
+                    select 1 from site_role_assignments sra
+                    where sra.site_id in (select id from sites where project_id=p.id) and sra.employee_id=:employeeId))
                 """;
         boolean allowed = user.employeeId() != null && jdbc.sql(sql)
                 .param("projectId", projectId).param("employeeId", user.employeeId())
@@ -42,7 +42,7 @@ public class WorkflowService {
         String sql = """
                 select count(*) from sites s join projects p on p.id=s.project_id where s.id=:siteId and (
                   p.coordinator_id=:employeeId or exists(
-                    select 1 from site_stages ss where ss.site_id=s.id and ss.supervisor_id=:employeeId))
+                    select 1 from site_role_assignments sra where sra.site_id=s.id and sra.employee_id=:employeeId))
                 """;
         boolean allowed = user.employeeId() != null && jdbc.sql(sql)
                 .param("siteId", siteId).param("employeeId", user.employeeId())

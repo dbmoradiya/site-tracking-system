@@ -23,7 +23,9 @@ public class NotificationController {
         String condition=user.hasRole("ADMIN")
                 ? "(ss.status='REVIEW_PENDING' or ss.supervisor_id is null or ss.team_id is null)"
                 : "((p.coordinator_id=:employeeId and (ss.status='REVIEW_PENDING' or ss.supervisor_id is null or ss.team_id is null)) " +
-                  "or (ss.supervisor_id=:employeeId and ss.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED')))";
+                  "or (ss.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED') and exists(" +
+                  "select 1 from site_stage_required_roles rr join site_role_assignments sra " +
+                  "on sra.site_id=s.id and sra.role_code=rr.role_code where rr.stage_id=ss.id and sra.employee_id=:employeeId)))";
         JdbcClient.StatementSpec spec=jdbc.sql("""
                 select ss.id stage_id,ss.name stage_name,ss.status,ss.updated_at,ss.supervisor_id,ss.team_id,s.id site_id,s.name site_name,
                        p.id project_id,p.name project_name

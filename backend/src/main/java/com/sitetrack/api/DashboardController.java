@@ -21,8 +21,8 @@ public class DashboardController {
     public Map<String, Object> dashboard(@AuthenticationPrincipal AppPrincipal user) {
         String filter = user.hasRole("ADMIN") ? "" : """
                  where p.coordinator_id=:employeeId or exists (
-                   select 1 from sites s join site_stages ss on ss.site_id=s.id
-                   where s.project_id=p.id and ss.supervisor_id=:employeeId)
+                   select 1 from sites s join site_role_assignments sra on sra.site_id=s.id
+                   where s.project_id=p.id and sra.employee_id=:employeeId)
                 """;
         JdbcClient.StatementSpec spec = jdbc.sql("select status, count(*) total from projects p" + filter + " group by status");
         if (!user.hasRole("ADMIN")) spec = spec.param("employeeId", user.employeeId());
