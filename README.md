@@ -1,43 +1,46 @@
 # Work Site Tracking System
 
-Manager web and employee mobile product design for linked work sites, evidence approval, inventory, and offline field updates.
+Product and system design for a manager web app and a simple employee mobile app.
 
-- [System design v0.2](docs/system-design.md)
-- [Design delivery and review guide](design/README.md)
-- [Editable Penpot file](design/deliverables/fieldwork-designs.penpot)
+- [Open the simple employee demo — Gujarati](http://127.0.0.1:4173/employee.html#M46)
+- [Employee demo — English](http://127.0.0.1:4173/employee.html#M04)
 - [Eight-page client walkthrough](design/deliverables/client-review.pdf)
-- [Client screen review PDF](design/deliverables/design-review.pdf)
-- [User journeys and screen inventory](design/deliverables/user-journeys.md)
-- [Requirements coverage and verification](design/deliverables/coverage-report.md)
+- [Editable Penpot file](design/deliverables/fieldwork-designs.penpot)
+- [System design v0.2](docs/system-design.md)
+- [Employee usability rationale and proposed field check](design/specs/employee-usability.md)
+- [Complete design delivery guide](design/README.md)
+- [Requirements and verification](design/deliverables/coverage-report.md)
 
-The confirmed application stack is Java Spring Boot, SQLite, React, and Flutter. This repository currently contains product/system design and executable design-review tooling, not the production backend or mobile application.
+The employee app shows one next job and large, labelled photo, voice and material actions. Photos and voice notes can be sent without typing. Hindi/Gujarati variants cover the main task chains, confirmations, messages and help. Detailed work lists, material balances and update history remain available as secondary actions.
 
-## Review the designs
+<img src="design/deliverables/previews/M06.png" width="280" alt="Simple English employee site screen"> <img src="design/deliverables/previews/M74.png" width="280" alt="Gujarati employee site screen">
+
+216 screen/state designs include 80 manager screens and 136 employee screens/states, including 74 Hindi/Gujarati variants. Screen IDs include task states and language variants, not a hierarchy of 212 product pages. The Penpot file also includes nine journey maps, seven foundation/component boards and seven prototype starting flows.
+
+The confirmed product stack is Java Spring Boot, SQLite, React and Flutter. This repository contains designs and executable review tooling; the production backend and mobile application are not implemented here.
+
+## Review
 
 ```sh
 npm ci
 npm run design:review
 ```
 
-Open http://127.0.0.1:4173. Import the `.penpot` file into Penpot to edit boards, use prototype flows, and collect shared client comments. The browser gallery also supports review notes saved locally on the reviewer's device.
-
-UI revision 2 uses structured stage rows, purple accents and a mobile site workspace with Work / Materials / Updates tabs and contextual action sheets. Core work actions are within two taps of My Sites.
-
-152 screen/state boards cover the manager and employee experiences, including 14 Hindi/Gujarati examples. The native file also includes nine user journey maps, shared design tokens, and seven foundation/component boards.
-
-![Manager dashboard](design/deliverables/previews/A02.png)
+Open http://127.0.0.1:4173/employee.html for the uncluttered employee prototype, or http://127.0.0.1:4173 for all screens and review notes. Import the `.penpot` file into Penpot for editing, native prototype flows and shared comments.
 
 ## Rebuild and verify
 
 ```sh
 npm run design:build
 npm run design:test
-# Start the review server in another terminal before running browser QA:
-node design/tools/browser-qa.mjs
-node design/tools/client-review.mjs
-node design/tools/report.mjs
+# Start design:review in another terminal before these checks:
+npm run design:browser-test
+npm run design:employee-preview
+npm run design:client-review
+npm run design:report
+npm run design:package
 ```
 
-Browser checks require a local Google Chrome installation. Actual native import verification additionally requires a running Penpot instance and a local authenticated test-account state; see the delivery guide. Credentials, browser sessions, Docker volumes and local runtime files are excluded from Git.
+Build and browser checks require installed Google Chrome. Native import verification additionally requires the local Penpot instance and its ignored authenticated browser state. Credentials, Docker volumes and local runtime files are excluded from Git.
 
-The verification report separates design coverage from the backend integration and native-device checks required during implementation.
+Checks cover design geometry, core typography, tap paths, selected-language continuity and requirements annotations. Real employee usability, native permissions, recording, inventory transactions and durable offline storage require field/device/integration validation during implementation.

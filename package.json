@@ -9,6 +9,7 @@
     "design:review": "python3 -m http.server 4173 --bind 127.0.0.1 --directory design/deliverables",
     "design:penpot": "node design/tools/start-penpot.mjs",
     "design:browser-test": "node design/tools/browser-qa.mjs",
+    "design:employee-preview": "node design/tools/employee-preview.mjs",
     "design:client-review": "node design/tools/client-review.mjs",
     "design:report": "node design/tools/report.mjs",
     "design:package": "node design/tools/package.mjs"

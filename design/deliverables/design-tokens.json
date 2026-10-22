@@ -1,4 +1,56 @@
 {
+  "Employee": {
+    "color": {
+      "ink": {
+        "$type": "color",
+        "$value": "#162B35"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "#536976"
+      },
+      "primary": {
+        "$type": "color",
+        "$value": "#175CD3"
+      },
+      "soft": {
+        "$type": "color",
+        "$value": "#EDF4FF"
+      },
+      "bg": {
+        "$type": "color",
+        "$value": "#F7F9FC"
+      },
+      "line": {
+        "$type": "color",
+        "$value": "#E3EAF1"
+      },
+      "green": {
+        "$type": "color",
+        "$value": "#16704C"
+      },
+      "greenBg": {
+        "$type": "color",
+        "$value": "#E8F5EE"
+      },
+      "orange": {
+        "$type": "color",
+        "$value": "#A34F12"
+      },
+      "orangeBg": {
+        "$type": "color",
+        "$value": "#FFF1E5"
+      }
+    },
+    "touchTarget": {
+      "$type": "dimension",
+      "$value": "64px"
+    },
+    "body": {
+      "$type": "dimension",
+      "$value": "18px"
+    }
+  },
   "Foundations": {
     "color": {
       "ink": {

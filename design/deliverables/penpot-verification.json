@@ -1,11 +1,12 @@
 {
   "status": "passed",
+  "importedArtifactName": "FIELDWORK · Simple employee UI · a1f11999",
   "penpotVersion": "2.18.3",
   "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
-  "artifactSha256": "d70d32c00012b54dab3f44573d6c49bfbe3aa1fba0d7418bd336745b3930a601",
-  "importedFileId": "606a0e71-0fc2-810e-8008-d3b553122709",
-  "importedScreens": 152,
-  "importedBoards": 168,
+  "artifactSha256": "a0507a86e763e7ef5bfda1e1e5719823e1158a4aab86f3fb89737df35963b05b",
+  "importedFileId": "606a0e71-0fc2-810e-8008-d3ca3f13b47a",
+  "importedScreens": 216,
+  "importedBoards": 232,
   "pages": [
     {
       "name": "00 · Foundations & components",
@@ -19,21 +20,22 @@
     },
     {
       "name": "02 · Employee mobile · All screens",
-      "shapes": 2870,
-      "flows": 3
+      "shapes": 3864,
+      "flows": 5
     },
     {
       "name": "03 · End-to-end user journeys",
-      "shapes": 482,
+      "shapes": 487,
       "flows": 0
     }
   ],
-  "editableTextShapes": 4513,
-  "prototypeLinks": 1623,
+  "editableTextShapes": 4708,
+  "prototypeLinks": 6439,
   "components": 6,
-  "flows": 5,
+  "flows": 7,
   "publicViewVerified": true,
-  "editorURL": "http://localhost:9001/#/workspace?team-id=606a0e71-0fc2-810e-8008-d393751025dc&file-id=606a0e71-0fc2-810e-8008-d3b553122709&page-id=d58a0193-58a9-8086-8008-d3b52e2a3395",
-  "viewerURL": "http://localhost:9001/#/view?file-id=606a0e71-0fc2-810e-8008-d3b553122709&page-id=d58a0193-58a9-8086-8008-d3b52e3beecb&share-id=cac956f0-5602-4702-9313-436a7c95a10c&index=0",
+  "nativeVoiceFlowVerified": true,
+  "editorURL": "http://localhost:9001/#/workspace?team-id=606a0e71-0fc2-810e-8008-d393751025dc&file-id=606a0e71-0fc2-810e-8008-d3ca3f13b47a&page-id=c93e6eed-9f9a-8036-8008-d3ca18d761df",
+  "viewerURL": "http://localhost:9001/#/view?file-id=606a0e71-0fc2-810e-8008-d3ca3f13b47a&page-id=c93e6eed-9f9a-8036-8008-d3ca18f8bc6d&share-id=72939e96-5a0d-4703-91aa-154a8a0dd55d&index=78",
   "scope": "Actual import into a loopback-only local Penpot instance. No hosted cloud workspace or external client URL has been published."
 }

@@ -2,24 +2,24 @@
 
 Based on system design v0.2. Source SHA-256: `6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62`.
 
-80 manager screens/states and 72 employee screens/states, including 14 Hindi/Gujarati review examples. Nine journey boards and seven foundation/component boards are included in the native Penpot file. Canonical screen content is English; localized examples cover home, login, composing updates, permission errors, empty states, conflicts and evidence validation. Full native-app translation and linguistic review remain implementation/release work.
+80 manager screens/states and 136 employee screens/states, including 74 Hindi/Gujarati screen/state variants. Nine journey boards and seven foundation/component boards are included in the native Penpot file. Canonical screen content is English; localized examples cover home, login, composing updates, permission errors, empty states, conflicts and evidence validation. Full native-app translation and linguistic review remain implementation/release work.
 
 ## Mobile navigation revision
 
-Primary structure: **My Sites → Site workspace**. The workspace contains **Work / Materials / Updates** tabs. Stages are checklist rows with direct Start / Submit / Pending controls. The global Sites / Requests / Sync / Profile navigation remains on the employee home and other app areas.
+Primary structure: **My work → Site → one large action**. The site shows one clear next job, Add photo, Voice note and Need material. All work, Materials and Updates are smaller secondary actions. Home navigation is My work / Messages / Help. Sending is automatic.
 
-- Start an open stage: M04 → M06 → M58 (two taps).
-- Add an update: M04 → M06 → M10 sheet (two taps). Photo location and attachment review remain explicit action steps.
-- Request eligible-stage completion: M04 → M06 → M56 sheet (two taps; no-photo wiring stage). An open stage must first be started before completion.
-- Record stock use: M06 → Materials M24 → M29 sheet.
-- Request more material: M06 → Materials M24 → M26 sheet.
-- View updates: M06 → Updates M34; return directly with Work.
+- Start work: M04 → M06 → M58 (two taps).
+- Send a photo: M04 → M06 → M11 location permission → M14 preview → M34 updates. No caption is required. Voice: M06 → M15 → M105 recording → M106 review → M34.
+- Finished work: M58 → M17 → M19. Start does not automatically approve a job. All work remains available under M07.
+- Record material used: M06 → Materials M24 → M29.
+- Ask for material: M04 → M06 → M26 (two taps to the form).
+- Gujarati daily work: M46 → M74 → direct photo, voice or material request. Hindi starts at M45 → M73.
 
-Screen IDs include states and sheets, not a hierarchy of separate product pages. Prototype boards illustrate outcomes; mutation persistence is implementation work.
+Screen IDs include action states and language variants, not a hierarchy of separate product pages. Prototype boards illustrate outcomes; mutation persistence is implementation work.
 
 ## Review method
 
-Open the browser gallery at http://127.0.0.1:4173. Choose a journey or a screen. Click illustrated product actions, or use Previous/Next to inspect individual states. Native Penpot contains four organized pages and five prototype starting flows. The PDF is a static screen-by-screen review copy.
+Open the browser gallery at http://127.0.0.1:4173. Choose a journey or a screen. Click illustrated product actions, or use Previous/Next to inspect individual states. Native Penpot contains four organized pages and seven prototype starting flows. The PDF is a static screen-by-screen review copy.
 
 ## J01 — Set up the operation
 
@@ -61,11 +61,11 @@ Employee signs in without a password-change step, starts eligible work, adds tex
 1. [M04 — My sites](index.html#M04)
 2. [M06 — Suryoday solar](index.html#M06)
 3. [M58 — Panel installation · in progress](index.html#M58)
-4. [M10 — Add update](index.html#M10)
-5. [M11 — Add location to your photo](index.html#M11)
-6. [M14 — Photo ready to attach](index.html#M14)
-7. [M10 — Add update](index.html#M10)
-8. [M06 — Suryoday solar](index.html#M06)
+4. [M11 — Add location to your photo](index.html#M11)
+5. [M14 — Photo ready to attach](index.html#M14)
+6. [M34 — Site activity](index.html#M34)
+7. [M06 — Suryoday solar](index.html#M06)
+8. [M58 — Panel installation · in progress](index.html#M58)
 9. [M17 — Request stage completion](index.html#M17)
 10. [M19 — Awaiting manager approval](index.html#M19)
 
@@ -79,7 +79,7 @@ Admin reviews immutable attempts, photo location and audio context, requests cha
 2. [A22 — Review stage completion](index.html#A22)
 3. [A19 — Photo evidence & location](index.html#A19)
 4. [A23 — Request changes](index.html#A23)
-5. [M20 — Changes requested](index.html#M20)
+5. [M20 — Manager needs another photo](index.html#M20)
 6. [M59 — Resubmit Mounting structure](index.html#M59)
 7. [A22 — Review stage completion](index.html#A22)
 8. [A75 — Mounting structure approved](index.html#A75)
@@ -95,10 +95,10 @@ Employee may create another material request while one is open. Admin explicitly
 
 1. [M24 — Site materials](index.html#M24)
 2. [M26 — Request materials](index.html#M26)
-3. [M27 — Another request is already open](index.html#M27)
+3. [M27 — Your request is sent](index.html#M27)
 4. [A25 — Decide material quantities](index.html#A25)
 5. [A26 — Record a dispatch](index.html#A26)
-6. [M28 — Request MR-041](index.html#M28)
+6. [M28 — Your material request](index.html#M28)
 7. [M29 — Record consumption](index.html#M29)
 8. [M30 — Consumption recorded](index.html#M30)
 9. [M31 — Request a material return](index.html#M31)
@@ -115,12 +115,12 @@ Cached work is available offline within seven days. A photo saves its location w
 1. [M42 — My sites · offline](index.html#M42)
 2. [M10 — Add update](index.html#M10)
 3. [M11 — Add location to your photo](index.html#M11)
-4. [M47 — Photo saved offline](index.html#M47)
+4. [M47 — Photo saved on this phone](index.html#M47)
 5. [M15 — Record a voice update](index.html#M15)
-6. [M35 — Updates & sync](index.html#M35)
-7. [M36 — This update needs attention](index.html#M36)
-8. [M37 — This site was reassigned](index.html#M37)
-9. [M38 — Reconnect to unlock your work](index.html#M38)
+6. [M35 — Your saved updates](index.html#M35)
+7. [M36 — Please check the quantity](index.html#M36)
+8. [M37 — This site has a new worker](index.html#M37)
+9. [M38 — Please sign in again](index.html#M38)
 
 ## J07 — Admin records field work without changing assignee
 
@@ -147,15 +147,16 @@ Admin sets English/Hindi/Gujarati preference and shares an admin-set password. R
 [Journey map](J08.svg) · Acceptance scenarios: 2, 17, 23, 25
 
 1. [A38 — Add employee](index.html#A38)
-2. [M02 — Choose your language](index.html#M02)
-3. [M45 — मेरी साइटें](index.html#M45)
-4. [M46 — મારી સાઇટ્સ](index.html#M46)
-5. [A48 — Reporting & reminders](index.html#A48)
-6. [M40 — Notifications](index.html#M40)
-7. [A40 — Reset employee password](index.html#A40)
-8. [A58 — Password reset complete](index.html#A58)
-9. [M49 — Your manager reset your password](index.html#M49)
-10. [M03 — Contact your manager](index.html#M03)
+2. [M46 — મારી સાઇટ્સ](index.html#M46)
+3. [M74 — Suryoday solar](index.html#M74)
+4. [M78 — Add location to your photo](index.html#M78)
+5. [M80 — Photo ready to attach](index.html#M80)
+6. [M92 — Site activity](index.html#M92)
+7. [M76 — Panel installation · in progress](index.html#M76)
+8. [M84 — Request stage completion](index.html#M84)
+9. [M86 — Awaiting manager approval](index.html#M86)
+10. [A40 — Reset employee password](index.html#A40)
+11. [M49 — Use your new password](index.html#M49)
 
 ## J09 — Blocked, overdue and dependency recovery
 
@@ -170,12 +171,12 @@ Blocked and overdue appear together. A stage block leaves independent stages ava
 5. [A24 — Review block request](index.html#A24)
 6. [A14 — Block site](index.html#A14)
 7. [A31 — Link sites and prerequisites](index.html#A31)
-8. [M23 — Waiting for other work](index.html#M23)
+8. [M23 — Finish these jobs first](index.html#M23)
 9. [A15 — Reopen completed work](index.html#A15)
 
 ## Screen inventory
 
-Each entry is an editable native board and an SVG. IDs are stable review references. Long mobile content is shown as a full scrollable screen design; app implementation must keep navigation usable within the native viewport.
+Each entry is an editable native board and an SVG. IDs are stable review references. Most core mobile actions fit one 412×915 viewport; longer secondary lists scroll. Runtime Flutter layouts must preserve readable text, safe areas and large targets at smaller sizes.
 
 | ID | Screen / state | Role | Area |
 | --- | --- | --- | --- |
@@ -269,34 +270,71 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [M08](index.html#M08) | Panel installation | mobile | My Sites |
 | [M09](index.html#M09) | Start this stage? | mobile | My Sites |
 | [M10](index.html#M10) | Add update | mobile | Updates |
+| [M100](index.html#M100) | Request a material return | mobile | Materials |
+| [M101](index.html#M101) | Request completion · no photo required | mobile | My Sites |
+| [M102](index.html#M102) | Request completion · no photo required | mobile | My Sites |
+| [M103](index.html#M103) | Request a block | mobile | My Sites |
+| [M104](index.html#M104) | Request a block | mobile | My Sites |
+| [M105](index.html#M105) | Voice note · recording | mobile | Updates |
+| [M106](index.html#M106) | Voice note · voiceReady | mobile | Updates |
+| [M107](index.html#M107) | आवाज़ का संदेश · recording | mobile | Updates |
+| [M108](index.html#M108) | आवाज़ का संदेश · voiceReady | mobile | Updates |
+| [M109](index.html#M109) | અવાજનો સંદેશ · recording | mobile | Updates |
 | [M11](index.html#M11) | Add location to your photo | mobile | Photo evidence |
-| [M12](index.html#M12) | Location permission needed | mobile | Photo evidence |
-| [M13](index.html#M13) | Waiting for a location fix | mobile | Photo evidence |
+| [M110](index.html#M110) | અવાજનો સંદેશ · voiceReady | mobile | Updates |
+| [M111](index.html#M111) | My details | mobile | Profile |
+| [M112](index.html#M112) | Your request is sent | mobile | Materials |
+| [M113](index.html#M113) | Your request is sent | mobile | Materials |
+| [M114](index.html#M114) | Consumption recorded | mobile | Materials |
+| [M115](index.html#M115) | Consumption recorded | mobile | Materials |
+| [M116](index.html#M116) | Return awaiting receipt | mobile | Materials |
+| [M117](index.html#M117) | Return awaiting receipt | mobile | Materials |
+| [M118](index.html#M118) | My material requests | mobile | Materials |
+| [M119](index.html#M119) | My material requests | mobile | Materials |
+| [M12](index.html#M12) | Turn on location | mobile | Photo evidence |
+| [M120](index.html#M120) | My profile | mobile | Profile |
+| [M121](index.html#M121) | My profile | mobile | Profile |
+| [M122](index.html#M122) | Notifications | mobile | Updates |
+| [M123](index.html#M123) | Notifications | mobile | Updates |
+| [M124](index.html#M124) | My details | mobile | Profile |
+| [M125](index.html#M125) | My details | mobile | Profile |
+| [M126](index.html#M126) | Interface language | mobile | Profile |
+| [M127](index.html#M127) | Interface language | mobile | Profile |
+| [M128](index.html#M128) | Your saved updates | mobile | Sync |
+| [M129](index.html#M129) | Your saved updates | mobile | Sync |
+| [M13](index.html#M13) | Finding your location | mobile | Photo evidence |
+| [M130](index.html#M130) | Contact your manager | mobile | Access |
+| [M131](index.html#M131) | Contact your manager | mobile | Access |
+| [M132](index.html#M132) | Contact your manager | mobile | Profile |
+| [M133](index.html#M133) | Filter my sites | mobile | My Sites |
+| [M134](index.html#M134) | Filter my sites | mobile | My Sites |
+| [M135](index.html#M135) | Work at this location | mobile | My Sites |
+| [M136](index.html#M136) | Work at this location | mobile | My Sites |
 | [M14](index.html#M14) | Photo ready to attach | mobile | Photo evidence |
 | [M15](index.html#M15) | Record a voice update | mobile | Updates |
 | [M16](index.html#M16) | Audio upload interrupted | mobile | Updates |
 | [M17](index.html#M17) | Request stage completion | mobile | My Sites |
-| [M18](index.html#M18) | Add a photo before submitting | mobile | Photo evidence |
+| [M18](index.html#M18) | Add a photo first | mobile | Photo evidence |
 | [M19](index.html#M19) | Awaiting manager approval | mobile | My Sites |
-| [M20](index.html#M20) | Changes requested | mobile | My Sites |
+| [M20](index.html#M20) | Manager needs another photo | mobile | My Sites |
 | [M21](index.html#M21) | Request a block | mobile | My Sites |
 | [M22](index.html#M22) | This site is blocked | mobile | My Sites |
-| [M23](index.html#M23) | Waiting for other work | mobile | My Sites |
+| [M23](index.html#M23) | Finish these jobs first | mobile | My Sites |
 | [M24](index.html#M24) | Site materials | mobile | Materials |
 | [M25](index.html#M25) | My material requests | mobile | Materials |
 | [M26](index.html#M26) | Request materials | mobile | Materials |
-| [M27](index.html#M27) | Another request is already open | mobile | Materials |
-| [M28](index.html#M28) | Request MR-041 | mobile | Materials |
+| [M27](index.html#M27) | Your request is sent | mobile | Materials |
+| [M28](index.html#M28) | Your material request | mobile | Materials |
 | [M29](index.html#M29) | Record consumption | mobile | Materials |
 | [M30](index.html#M30) | Consumption recorded | mobile | Materials |
 | [M31](index.html#M31) | Request a material return | mobile | Materials |
 | [M32](index.html#M32) | Return awaiting receipt | mobile | Materials |
-| [M33](index.html#M33) | Linked project context | mobile | My Sites |
+| [M33](index.html#M33) | Work at this location | mobile | My Sites |
 | [M34](index.html#M34) | Site activity | mobile | Updates |
-| [M35](index.html#M35) | Updates & sync | mobile | Sync |
-| [M36](index.html#M36) | This update needs attention | mobile | Sync |
-| [M37](index.html#M37) | This site was reassigned | mobile | Sync |
-| [M38](index.html#M38) | Reconnect to unlock your work | mobile | Access |
+| [M35](index.html#M35) | Your saved updates | mobile | Sync |
+| [M36](index.html#M36) | Please check the quantity | mobile | Sync |
+| [M37](index.html#M37) | This site has a new worker | mobile | Sync |
+| [M38](index.html#M38) | Please sign in again | mobile | Access |
 | [M39](index.html#M39) | My profile | mobile | Profile |
 | [M40](index.html#M40) | Notifications | mobile | Updates |
 | [M41](index.html#M41) | You have unsynced work | mobile | Profile |
@@ -305,10 +343,10 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [M44](index.html#M44) | Return surplus after completion | mobile | Materials |
 | [M45](index.html#M45) | मेरी साइटें | mobile | Languages |
 | [M46](index.html#M46) | મારી સાઇટ્સ | mobile | Languages |
-| [M47](index.html#M47) | Photo saved offline | mobile | Sync |
-| [M48](index.html#M48) | Device storage | mobile | Sync |
-| [M49](index.html#M49) | Your manager reset your password | mobile | Access |
-| [M50](index.html#M50) | Microphone permission needed | mobile | Updates |
+| [M47](index.html#M47) | Photo saved on this phone | mobile | Sync |
+| [M48](index.html#M48) | Make room for more photos | mobile | Sync |
+| [M49](index.html#M49) | Use your new password | mobile | Access |
+| [M50](index.html#M50) | Turn on the microphone | mobile | Updates |
 | [M51](index.html#M51) | Evidence details | mobile | Photo evidence |
 | [M52](index.html#M52) | No sites assigned yet | mobile | System states |
 | [M53](index.html#M53) | Could not load the latest data | mobile | System states |
@@ -331,3 +369,30 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [M70](index.html#M70) | अपडेट जोड़ें | mobile | Languages |
 | [M71](index.html#M71) | અપડેટ ઉમેરો | mobile | Languages |
 | [M72](index.html#M72) | Interface language | mobile | Profile |
+| [M73](index.html#M73) | Suryoday solar | mobile | My Sites |
+| [M74](index.html#M74) | Suryoday solar | mobile | My Sites |
+| [M75](index.html#M75) | Panel installation · in progress | mobile | My Sites |
+| [M76](index.html#M76) | Panel installation · in progress | mobile | My Sites |
+| [M77](index.html#M77) | Add location to your photo | mobile | Photo evidence |
+| [M78](index.html#M78) | Add location to your photo | mobile | Photo evidence |
+| [M79](index.html#M79) | Photo ready to attach | mobile | Photo evidence |
+| [M80](index.html#M80) | Photo ready to attach | mobile | Photo evidence |
+| [M81](index.html#M81) | Record a voice update | mobile | Updates |
+| [M82](index.html#M82) | Record a voice update | mobile | Updates |
+| [M83](index.html#M83) | Request stage completion | mobile | My Sites |
+| [M84](index.html#M84) | Request stage completion | mobile | My Sites |
+| [M85](index.html#M85) | Awaiting manager approval | mobile | My Sites |
+| [M86](index.html#M86) | Awaiting manager approval | mobile | My Sites |
+| [M87](index.html#M87) | Site materials | mobile | Materials |
+| [M88](index.html#M88) | Site materials | mobile | Materials |
+| [M89](index.html#M89) | Request materials | mobile | Materials |
+| [M90](index.html#M90) | Request materials | mobile | Materials |
+| [M91](index.html#M91) | Site activity | mobile | Updates |
+| [M92](index.html#M92) | Site activity | mobile | Updates |
+| [M93](index.html#M93) | Stages | mobile | My Sites |
+| [M94](index.html#M94) | Stages | mobile | My Sites |
+| [M95](index.html#M95) | This site is blocked | mobile | My Sites |
+| [M96](index.html#M96) | This site is blocked | mobile | My Sites |
+| [M97](index.html#M97) | Record consumption | mobile | Materials |
+| [M98](index.html#M98) | Record consumption | mobile | Materials |
+| [M99](index.html#M99) | Request a material return | mobile | Materials |

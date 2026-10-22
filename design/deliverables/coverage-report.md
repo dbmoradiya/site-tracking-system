@@ -4,18 +4,18 @@ Source: system design v0.2 · SHA-256 `6092666676dd5e9817e2e829b0010a0ad80361d7d
 
 ## What was checked
 
-- 152 screen/state designs, 168 total native boards, 9 journeys, 6 reusable native components and shared colors/typographies/tokens.
-- All 152 SVG screens rendered in Chromium; 4173 text nodes measured; 0 overflow/out-of-board findings and 0 page errors.
-- 22 automated design-contract tests passed, covering native editable shapes, real prototype destinations, source-version consistency, evidence/location rules, credential controls, stock lifecycle, closeout, localized labels, 44px mobile targets, and 4.5:1 semantic text contrast.
-- Browser clicks exercised My Sites → inline start → completion, workspace tabs, material sheets, no-photo completion, stage-row review, composer → location → photo → composer, and final approval → completed site. Gallery local-note persistence and a 390px review viewport were checked.
+- 216 screen/state designs, 232 total native boards, 9 journeys, 6 reusable native components and shared colors/typographies/tokens.
+- All 216 SVG screens rendered in Chromium; 4365 text nodes measured; 0 overflow/out-of-board findings and 0 page errors.
+- 25 automated design-contract tests passed, covering native editable shapes, real prototype destinations, source-version consistency, evidence/location rules, credential controls, stock lifecycle, closeout, localized labels, 44px mobile targets, and 4.5:1 semantic text contrast.
+- Browser clicks exercised starting/finishing work, direct photo send, record/stop/send voice, material requests, Hindi/Gujarati paths, no-photo completion, manager stage review and final approval. Gallery local-note persistence, a 390px review viewport and a 360px distraction-free employee demo were checked.
 - Native Penpot verification: **passed**. See [machine-readable verification](penpot-verification.json) when available.
-- Representative rendered screens were visually inspected, including dashboard, stage register, mobile workspace and update sheet, Gujarati home, actual native Penpot workspace, and the short client walkthrough. PDF exports inline SVG screens and assert the Source Sans font is loaded to prevent fallback typography.
+- Representative rendered screens were visually inspected, including dashboard, stage register, simple employee site and photo/voice flow, Gujarati home, actual native Penpot workspace, and the short client walkthrough. PDF exports inline SVG screens and assert the Source Sans font is loaded to prevent fallback typography.
 
 ## Scope of the result
 
 This is a design and click-through prototype delivery. Form values, GPS readings, media, audio, permissions and stock are illustrated states. The SVG review gallery is not the implemented React application, the Penpot employee boards are not a compiled Flutter app, and no Spring Boot/SQLite business backend has been built. Design coverage is not proof of runtime authorization, cryptography, inventory concurrency, real device GPS, recording, backup recovery or offline durability. These are explicitly deferred integration/device checks, not reported as passing here.
 
-English canonical screens and 14 Hindi/Gujarati examples are included. Complete localization, device screen-reader behavior, native platform permission dialogs and linguistic review must be validated during implementation. Proposed accuracy/media/cache settings remain proposals from the source document.
+English canonical screens and 74 Hindi/Gujarati screen/state variants are included. Complete localization, device screen-reader behavior, native platform permission dialogs and linguistic review must be validated during implementation. Proposed accuracy/media/cache settings remain proposals from the source document.
 
 ## Acceptance traceability
 
@@ -32,12 +32,12 @@ English canonical screens and 14 Hindi/Gujarati examples are included. Complete 
 | 9 | Linked Shed/Solar sites have independent balances and assignments. A Shed dependency holds Solar until satisfied. Employees see only permitted linked-site context. | [A30](index.html#A30), [A31](index.html#A31), [M33](index.html#M33) | Implement and test the documented behavior; design contract checked. |
 | 10 | Two simultaneous approvals cannot reserve the same stock twice. Partial dispatch consumes only dispatched reservations. Ledger and balances reconcile. | [A25](index.html#A25), [A26](index.html#A26) | Concurrent reservation correctness requires SQLite integration tests. |
 | 11 | Multiple open material requests remain independent. Partial approval explicitly accounts for every residual quantity. | [M25](index.html#M25), [M27](index.html#M27), [A25](index.html#A25), [A57](index.html#A57) | Implement and test the documented behavior; design contract checked. |
-| 12 | Consumption reduces site stock; pending returns cannot also be consumed. Only actual admin-confirmed return receipt increases warehouse stock. | [M29](index.html#M29), [M31](index.html#M31), [M32](index.html#M32), [A27](index.html#A27) | Implement and test the documented behavior; design contract checked. |
+| 12 | Consumption reduces site stock; pending returns cannot also be consumed. Only actual admin-confirmed return receipt increases warehouse stock. | [M29](index.html#M29), [M31](index.html#M31), [M32](index.html#M32), [A27](index.html#A27), [M97](index.html#M97), [M98](index.html#M98), [M99](index.html#M99), [M100](index.html#M100) | Implement and test the documented behavior; design contract checked. |
 | 13 | Flutter offline text/photo/audio work survives restart, remains marked unsynced, and creates one server event after repeated retries. An upload failure never produces an invalid approval submission. | [M35](index.html#M35), [M16](index.html#M16), [M47](index.html#M47) | Durability across real Flutter process termination requires device tests. |
 | 14 | Reassignment, deactivation, a new block, or a stock conflict while offline causes a visible server conflict and preserves recoverable input. | [M36](index.html#M36), [M37](index.html#M37), [M49](index.html#M49) | Implement and test the documented behavior; design contract checked. |
 | 15 | Dashboard site counts exclude drafts/projects from active denominators; employee updates and admin edits affect daily metrics differently as specified. | [A02](index.html#A02), [A11](index.html#A11), [A48](index.html#A48) | Implement and test the documented behavior; design contract checked. |
 | 16 | Reopening approved work preserves the audit trail, recalculates progress, and flags downstream dependency effects. | [A15](index.html#A15), [A31](index.html#A31) | Implement and test the documented behavior; design contract checked. |
-| 17 | Hindi/Gujarati interfaces handle long labels, validation, empty states, and offline errors without clipping; business-entered text is preserved. | [M45](index.html#M45), [M46](index.html#M46), [M60](index.html#M60), [M61](index.html#M61), [M62](index.html#M62), [M63](index.html#M63), [M64](index.html#M64), [M65](index.html#M65), [M66](index.html#M66), [M67](index.html#M67), [M68](index.html#M68), [M69](index.html#M69), [M70](index.html#M70), [M71](index.html#M71) | Native fonts and accessibility require Android/iOS device checks. |
+| 17 | Hindi/Gujarati interfaces handle long labels, validation, empty states, and offline errors without clipping; business-entered text is preserved. | [M45](index.html#M45), [M46](index.html#M46), [M60](index.html#M60), [M61](index.html#M61), [M62](index.html#M62), [M63](index.html#M63), [M64](index.html#M64), [M65](index.html#M65), [M66](index.html#M66), [M67](index.html#M67), [M68](index.html#M68), [M69](index.html#M69), [M70](index.html#M70), [M71](index.html#M71), [M73](index.html#M73), [M74](index.html#M74), [M75](index.html#M75), [M76](index.html#M76), [M77](index.html#M77), [M78](index.html#M78), [M79](index.html#M79), [M80](index.html#M80), [M81](index.html#M81), [M82](index.html#M82), [M83](index.html#M83), [M84](index.html#M84), [M85](index.html#M85), [M86](index.html#M86), [M87](index.html#M87), [M88](index.html#M88), [M89](index.html#M89), [M90](index.html#M90), [M91](index.html#M91), [M92](index.html#M92), [M93](index.html#M93), [M94](index.html#M94), [M95](index.html#M95), [M96](index.html#M96), [M97](index.html#M97), [M98](index.html#M98), [M99](index.html#M99), [M100](index.html#M100), [M101](index.html#M101), [M102](index.html#M102), [M103](index.html#M103), [M104](index.html#M104), [M107](index.html#M107), [M108](index.html#M108), [M109](index.html#M109), [M110](index.html#M110), [M112](index.html#M112), [M113](index.html#M113), [M114](index.html#M114), [M115](index.html#M115), [M116](index.html#M116), [M117](index.html#M117), [M118](index.html#M118), [M119](index.html#M119), [M120](index.html#M120), [M121](index.html#M121), [M122](index.html#M122), [M123](index.html#M123), [M124](index.html#M124), [M125](index.html#M125), [M126](index.html#M126), [M127](index.html#M127), [M128](index.html#M128), [M129](index.html#M129), [M130](index.html#M130), [M131](index.html#M131), [M133](index.html#M133), [M134](index.html#M134), [M135](index.html#M135), [M136](index.html#M136) | Native fonts and accessibility require Android/iOS device checks. |
 | 18 | Final stage approval automatically completes the site. Completed sites can reconcile material returns without reopening work; work mutations require reopening. | [A52](index.html#A52), [M43](index.html#M43), [M44](index.html#M44), [A65](index.html#A65) | Implement and test the documented behavior; design contract checked. |
 | 19 | On photo addition, permission denial, disabled location services, or failure to obtain a fix prevents acceptance as evidence and leaves a recoverable draft. Every accepted site photo has valid position, accuracy, author, and observation time. | [M11](index.html#M11), [M12](index.html#M12), [M13](index.html#M13), [M14](index.html#M14) | Actual OS GPS and permission behavior requires device/browser tests. |
 | 20 | A photo added offline at location A and synchronized later from location B retains location A. Automatic sync requires no fresh location and records server receipt separately. Gallery images are labeled with addition location, not claimed original shooting location. | [M47](index.html#M47), [M35](index.html#M35) | Implement and test the documented behavior; design contract checked. |
@@ -51,10 +51,16 @@ English canonical screens and 14 Hindi/Gujarati examples are included. Complete 
 
 ## Corrections made during review
 
+- Added measured native text positionData from the bundled fonts so shared Penpot prototypes render text as well as the editor. Native checks now require visible guest-view text and click the real record → stop → review flow.
+- Replaced the dense employee site dashboard with one next job and large photo/voice/material actions.
+- Added recording, stop and review states; photos and voice send directly without forcing a written note.
+- Localized core task chains, results, messages, help and profile in Hindi/Gujarati.
+- Moved detailed implementation rules out of employee screens into separately retained review annotations.
+- Fixed pictograms intercepting SVG hotspot taps; actual browser clicks exercise the large microphone target.
 - Replaced stage cards with structured rows in manager stage views and mobile workspaces.
 - Adopted a purple accent, white sidebar, underline tabs, compact registers and daily reporting panels after reviewing the public [Onsite product UI](https://onsiteteams.com/). No Onsite assets or branding are included.
-- Flattened mobile to My Sites → Site workspace → direct actions; Work / Materials / Updates switch in the same workspace. Update, completion, block, consumption, request and return forms open as contextual sheets.
-- Added native-shape and browser regressions for stage rows, two-tap core actions, workspace tabs and sheet dismissal.
+- Simplified mobile to My work → Site → direct action. Secondary lists remain available without filling the daily screen with administrative information.
+- Added native-shape and browser regressions for large controls, readable core typography, direct actions, caption-free updates and selected-language continuity.
 - Enlarged mobile filter and menu hit areas to at least 44px.
 - Removed authenticated navigation from login, expired-unlock and reset-session screens; separated login language selection from signed-in profile language selection.
 - Replaced English bottom navigation labels on Hindi/Gujarati examples.
@@ -71,12 +77,14 @@ From the repository root:
 
 ```sh
 npm ci
+# Google Chrome is required for exact native font metrics.
 npm run design:build
 npm run design:test
 npm run design:review
 # In a second terminal (requires installed Google Chrome):
 node design/tools/browser-qa.mjs
 node design/tools/client-review.mjs
+node design/tools/employee-preview.mjs
 node design/tools/report.mjs
 ```
 
