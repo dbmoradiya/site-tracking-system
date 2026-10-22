@@ -220,3 +220,18 @@ add('M72','Interface language','cards','Profile',{subtitle:'Change your interfac
 byId('M39').actions[0].to='M72';
 byId('M02').cards[0].to='M01';byId('M02').cards[1].to='M69';byId('M02').cards[2].to='M68';byId('M02').actions[0].to='M01';
 export const implementationOnly={1:'Admin creation, unique-admin constraint and password persistence require backend integration tests.',4:'Server authorization must be exercised with authenticated roles.',7:'Atomic completion and duplicate approvals require backend transactions.',10:'Concurrent reservation correctness requires SQLite integration tests.',13:'Durability across real Flutter process termination requires device tests.',17:'Native fonts and accessibility require Android/iOS device checks.',19:'Actual OS GPS and permission behavior requires device/browser tests.',23:'Credential hashing, reset enforcement and token revocation require backend tests.',24:'Real offline unlock and protected local storage require device tests.',26:'Concurrency, rollback and backup recovery require the implemented SQLite backend.',27:'Python-to-Spring Security hash interoperability requires the implemented authentication stack.'};
+
+// Client review revision: one site workspace, direct row actions, contextual sheets.
+for(const id of ['A06','A08','A33','A35','A75','M23'])byId(id).stageLayout='rows';
+for(const id of ['M06','M07','M08','M09','M58','M57'])byId(id).workspace='work';
+byId('M24').workspace='materials';byId('M34').workspace='activity';
+for(const id of ['M10','M17','M21','M26','M29','M31','M56','M59'])byId(id).presentation='sheet';
+byId('M06').cards=mstage;byId('M06').actions=[B('Start panel installation','M58'),B('Add update','M10'),B('Request stage completion','M17'),B('Request block','M21','secondary')];
+byId('M06').tabs=[['Work','M06'],['Materials','M24'],['Updates','M34']];
+byId('M08').actions[0].to='M58';
+byId('M19').actions[0]=B('Back to site','M06');
+byId('M17').actions=byId('M17').actions.filter(a=>a.to!=='M18');
+journeys.find(j=>j.id==='J03').steps=['M04','M06','M58','M10','M11','M14','M10','M06','M17','M19'];
+// Keep the review home focused on the two site workspaces actually represented.
+byId('M04').cards.splice(2);byId('M04').subtitle='Good morning, Ravi · 2 assigned sites';
+byId('M45').actions[0].to='M72';byId('M46').actions[0].to='M72';

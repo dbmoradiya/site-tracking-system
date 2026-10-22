@@ -5,6 +5,7 @@ Manager web and employee mobile product design for linked work sites, evidence a
 - [System design v0.2](docs/system-design.md)
 - [Design delivery and review guide](design/README.md)
 - [Editable Penpot file](design/deliverables/fieldwork-designs.penpot)
+- [Eight-page client walkthrough](design/deliverables/client-review.pdf)
 - [Client screen review PDF](design/deliverables/design-review.pdf)
 - [User journeys and screen inventory](design/deliverables/user-journeys.md)
 - [Requirements coverage and verification](design/deliverables/coverage-report.md)
@@ -20,6 +21,8 @@ npm run design:review
 
 Open http://127.0.0.1:4173. Import the `.penpot` file into Penpot to edit boards, use prototype flows, and collect shared client comments. The browser gallery also supports review notes saved locally on the reviewer's device.
 
+UI revision 2 uses structured stage rows, purple accents and a mobile site workspace with Work / Materials / Updates tabs and contextual action sheets. Core work actions are within two taps of My Sites.
+
 152 screen/state boards cover the manager and employee experiences, including 14 Hindi/Gujarati examples. The native file also includes nine user journey maps, shared design tokens, and seven foundation/component boards.
 
 ![Manager dashboard](design/deliverables/previews/A02.png)
@@ -31,6 +34,7 @@ npm run design:build
 npm run design:test
 # Start the review server in another terminal before running browser QA:
 node design/tools/browser-qa.mjs
+node design/tools/client-review.mjs
 node design/tools/report.mjs
 ```
 

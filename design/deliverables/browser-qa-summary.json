@@ -1,10 +1,14 @@
 {
   "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
   "screensRendered": 152,
-  "textNodesMeasured": 3755,
+  "textNodesMeasured": 4173,
   "failures": [],
   "consoleErrors": [],
   "flowsTested": [
+    "My Sites → site workspace → inline start → completion sheet → pending → site",
+    "site tabs → material consumption / request sheets → site",
+    "Work tab → no-photo completion sheet → pending",
+    "manager stage row → approval review",
     "photo composer → location permission → photo review → composer",
     "final stage approval → completed site with material reconciliation"
   ],

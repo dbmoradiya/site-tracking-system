@@ -4,6 +4,19 @@ Based on system design v0.2. Source SHA-256: `6092666676dd5e9817e2e829b0010a0ad8
 
 80 manager screens/states and 72 employee screens/states, including 14 Hindi/Gujarati review examples. Nine journey boards and seven foundation/component boards are included in the native Penpot file. Canonical screen content is English; localized examples cover home, login, composing updates, permission errors, empty states, conflicts and evidence validation. Full native-app translation and linguistic review remain implementation/release work.
 
+## Mobile navigation revision
+
+Primary structure: **My Sites → Site workspace**. The workspace contains **Work / Materials / Updates** tabs. Stages are checklist rows with direct Start / Submit / Pending controls. The global Sites / Requests / Sync / Profile navigation remains on the employee home and other app areas.
+
+- Start an open stage: M04 → M06 → M58 (two taps).
+- Add an update: M04 → M06 → M10 sheet (two taps). Photo location and attachment review remain explicit action steps.
+- Request eligible-stage completion: M04 → M06 → M56 sheet (two taps; no-photo wiring stage). An open stage must first be started before completion.
+- Record stock use: M06 → Materials M24 → M29 sheet.
+- Request more material: M06 → Materials M24 → M26 sheet.
+- View updates: M06 → Updates M34; return directly with Work.
+
+Screen IDs include states and sheets, not a hierarchy of separate product pages. Prototype boards illustrate outcomes; mutation persistence is implementation work.
+
 ## Review method
 
 Open the browser gallery at http://127.0.0.1:4173. Choose a journey or a screen. Click illustrated product actions, or use Previous/Next to inspect individual states. Native Penpot contains four organized pages and five prototype starting flows. The PDF is a static screen-by-screen review copy.
@@ -45,19 +58,16 @@ Employee signs in without a password-change step, starts eligible work, adds tex
 
 [Journey map](J03.svg) · Acceptance scenarios: 5, 6, 19, 21, 23
 
-1. [M01 — Good work starts here](index.html#M01)
-2. [M04 — My sites](index.html#M04)
-3. [M06 — Suryoday solar](index.html#M06)
-4. [M07 — Stages](index.html#M07)
-5. [M08 — Panel installation](index.html#M08)
-6. [M09 — Start this stage?](index.html#M09)
-7. [M58 — Panel installation · in progress](index.html#M58)
-8. [M10 — Add update](index.html#M10)
-9. [M11 — Add location to your photo](index.html#M11)
-10. [M14 — Photo ready to attach](index.html#M14)
-11. [M15 — Record a voice update](index.html#M15)
-12. [M17 — Request stage completion](index.html#M17)
-13. [M19 — Awaiting manager approval](index.html#M19)
+1. [M04 — My sites](index.html#M04)
+2. [M06 — Suryoday solar](index.html#M06)
+3. [M58 — Panel installation · in progress](index.html#M58)
+4. [M10 — Add update](index.html#M10)
+5. [M11 — Add location to your photo](index.html#M11)
+6. [M14 — Photo ready to attach](index.html#M14)
+7. [M10 — Add update](index.html#M10)
+8. [M06 — Suryoday solar](index.html#M06)
+9. [M17 — Request stage completion](index.html#M17)
+10. [M19 — Awaiting manager approval](index.html#M19)
 
 ## J04 — Review, reject, correct and complete
 

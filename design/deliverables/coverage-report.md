@@ -5,11 +5,11 @@ Source: system design v0.2 · SHA-256 `6092666676dd5e9817e2e829b0010a0ad80361d7d
 ## What was checked
 
 - 152 screen/state designs, 168 total native boards, 9 journeys, 6 reusable native components and shared colors/typographies/tokens.
-- All 152 SVG screens rendered in Chromium; 3755 text nodes measured; 0 overflow/out-of-board findings and 0 page errors.
-- 19 automated design-contract tests passed, covering native editable shapes, real prototype destinations, source-version consistency, evidence/location rules, credential controls, stock lifecycle, closeout, localized labels, 44px mobile targets, and 4.5:1 semantic text contrast.
-- Browser clicks exercised composer → location → photo → composer, and final approval → completed site. Gallery local-note persistence and a 390px review viewport were checked.
+- All 152 SVG screens rendered in Chromium; 4173 text nodes measured; 0 overflow/out-of-board findings and 0 page errors.
+- 22 automated design-contract tests passed, covering native editable shapes, real prototype destinations, source-version consistency, evidence/location rules, credential controls, stock lifecycle, closeout, localized labels, 44px mobile targets, and 4.5:1 semantic text contrast.
+- Browser clicks exercised My Sites → inline start → completion, workspace tabs, material sheets, no-photo completion, stage-row review, composer → location → photo → composer, and final approval → completed site. Gallery local-note persistence and a 390px review viewport were checked.
 - Native Penpot verification: **passed**. See [machine-readable verification](penpot-verification.json) when available.
-- Representative rendered screens were visually inspected, including dashboard, employee creation, English mobile home, and Gujarati home.
+- Representative rendered screens were visually inspected, including dashboard, stage register, mobile workspace and update sheet, Gujarati home, actual native Penpot workspace, and the short client walkthrough. PDF exports inline SVG screens and assert the Source Sans font is loaded to prevent fallback typography.
 
 ## Scope of the result
 
@@ -51,6 +51,10 @@ English canonical screens and 14 Hindi/Gujarati examples are included. Complete 
 
 ## Corrections made during review
 
+- Replaced stage cards with structured rows in manager stage views and mobile workspaces.
+- Adopted a purple accent, white sidebar, underline tabs, compact registers and daily reporting panels after reviewing the public [Onsite product UI](https://onsiteteams.com/). No Onsite assets or branding are included.
+- Flattened mobile to My Sites → Site workspace → direct actions; Work / Materials / Updates switch in the same workspace. Update, completion, block, consumption, request and return forms open as contextual sheets.
+- Added native-shape and browser regressions for stage rows, two-tap core actions, workspace tabs and sheet dismissal.
 - Enlarged mobile filter and menu hit areas to at least 44px.
 - Removed authenticated navigation from login, expired-unlock and reset-session screens; separated login language selection from signed-in profile language selection.
 - Replaced English bottom navigation labels on Hindi/Gujarati examples.
@@ -72,6 +76,7 @@ npm run design:test
 npm run design:review
 # In a second terminal (requires installed Google Chrome):
 node design/tools/browser-qa.mjs
+node design/tools/client-review.mjs
 node design/tools/report.mjs
 ```
 

@@ -3,23 +3,23 @@
     "color": {
       "ink": {
         "$type": "color",
-        "$value": "#173B32"
+        "$value": "#24233B"
       },
       "brand": {
         "$type": "color",
-        "$value": "#206E52"
+        "$value": "#6246C7"
       },
       "dark": {
         "$type": "color",
-        "$value": "#142F28"
+        "$value": "#231B4D"
       },
       "mint": {
         "$type": "color",
-        "$value": "#E7F2E9"
+        "$value": "#EEEAFB"
       },
       "bg": {
         "$type": "color",
-        "$value": "#F5F6F2"
+        "$value": "#F6F7FB"
       },
       "surface": {
         "$type": "color",
@@ -27,11 +27,11 @@
       },
       "border": {
         "$type": "color",
-        "$value": "#DCE5DD"
+        "$value": "#E5E6EF"
       },
       "muted": {
         "$type": "color",
-        "$value": "#596F63"
+        "$value": "#626578"
       },
       "amber": {
         "$type": "color",
@@ -39,23 +39,23 @@
       },
       "amberBg": {
         "$type": "color",
-        "$value": "#FFF3D7"
+        "$value": "#FFF5DF"
       },
       "danger": {
         "$type": "color",
-        "$value": "#A9362C"
+        "$value": "#B13843"
       },
       "dangerBg": {
         "$type": "color",
-        "$value": "#FCEDE9"
+        "$value": "#FCEEF0"
       },
       "blue": {
         "$type": "color",
-        "$value": "#305D8C"
+        "$value": "#375D93"
       },
       "blueBg": {
         "$type": "color",
-        "$value": "#EAF1FA"
+        "$value": "#EBF2FC"
       }
     },
     "space": {

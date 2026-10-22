@@ -31,11 +31,11 @@ try{
  for(const s of manifest.screens){const frame=frames.find(f=>f.name.startsWith(s.id+' · '));assert.ok(frame,'Missing imported screen '+s.id);assert.equal(frame.width,s.width);assert.equal(frame.height,s.height);}
  const nativeFlows=pages.reduce((n,p)=>n+Object.keys(p.flows||{}).length,0);assert.equal(nativeFlows,5);
  assert.equal(Object.keys(file.data.components).length,6);
- const cards=all.filter(s=>s.type==='rect'&&s.name.startsWith('Card /'));assert.ok(cards.length>100);for(const card of cards)assert.equal(card.r1,13,'Native card radius mismatch');
+ const cards=all.filter(s=>s.type==='rect'&&s.name.startsWith('Card /'));assert.ok(cards.length>50);for(const card of cards)assert.equal(card.r1,13,'Native card radius mismatch');
  const ids=new Set(all.map(s=>s.id));let links=0;for(const s of all)for(const i of s.interactions||[]){if(i.actionType==='navigate'){assert.ok(ids.has(i.destination),'Broken imported link');links++;}}
  const admin=pages.find(p=>p.name.startsWith('01')),mobile=pages.find(p=>p.name.startsWith('02'));
  const edit=new URL(editorURL);const query=new URLSearchParams(edit.hash.split('?')[1]);
- for(const [p,id,out]of [[admin,'A02','penpot-manager'],[mobile,'M46','penpot-gujarati']]){
+ for(const [p,id,out]of [[admin,'A02','penpot-manager'],[mobile,'M46','penpot-gujarati'],[admin,'A08','penpot-stages'],[mobile,'M06','penpot-workspace'],[mobile,'M10','penpot-update-sheet']]){
   query.set('page-id',p.id);await page.goto(base+'/#/workspace?'+query);await page.getByText(p.name,{exact:true}).first().waitFor();
   const board=frames.find(f=>f.name.startsWith(id+' · '));await page.getByText(board.name,{exact:true}).last().click();await page.keyboard.press('Shift+2');await page.waitForTimeout(2500);await page.screenshot({path:root+'/previews/'+out+'.png'});
  }

@@ -2,6 +2,9 @@
 
 ## Start here
 
+- **Short client walkthrough:** [client-review.pdf](deliverables/client-review.pdf) (8 pages)
+- **Mobile workspace:** http://127.0.0.1:4173/#M06
+- **Stage register:** http://127.0.0.1:4173/#A08
 - **Browser review:** http://127.0.0.1:4173
 - **Native Penpot:** [fieldwork-designs.penpot](deliverables/fieldwork-designs.penpot)
 - **Screen review PDF:** [design-review.pdf](deliverables/design-review.pdf)
@@ -30,6 +33,9 @@ The ZIP contains the native Penpot file, PDF, browser gallery, SVGs and fonts. I
 
 ## Design conventions
 
+- Revision for client review: purple accents, white desktop sidebar, compact stage rows and a tabbed mobile site workspace. The public [Onsite UI](https://onsiteteams.com/) informed the component direction; artwork and branding remain original.
+- From My Sites, opening the site takes one tap; start, add update, eligible-stage completion and site tabs take one more. Confirmation and photo/GPS steps are action states, not additional nested menus.
+- Mobile sheets dismiss to their Work or Materials tab in the site workspace. Native boards show explicit sample states; this prototype does not persist mutations as a live app would.
 - FIELDWORK is a working product name, not a finalized brand decision.
 - Desktop artboards use a 1440px canvas; mobile uses a 412px canvas with full content height where scrolling is needed.
 - Source Sans Pro supports the main interface; Noto Sans Devanagari/Gujarati support localized examples. Font license texts accompany the delivery.
@@ -39,7 +45,7 @@ The ZIP contains the native Penpot file, PDF, browser gallery, SVGs and fonts. I
 
 ## Verification and limits
 
-19 design-contract tests pass. All 152 rendered screens were measured with no text overflow findings. Read the coverage report for the precise scope. Runtime backend/device checks are intentionally not claimed: this delivery designs the application rather than implementing it. English canonical designs and 14 localized examples are ready for review; full translation and native-device testing follow during implementation.
+22 design-contract tests pass. All 152 rendered screens were measured with no text overflow findings. Read the coverage report for the precise scope. Runtime backend/device checks are intentionally not claimed: this delivery designs the application rather than implementing it. English canonical designs and 14 localized examples are ready for review; full translation and native-device testing follow during implementation.
 
 ## Tool provenance
 

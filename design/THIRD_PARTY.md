@@ -8,3 +8,5 @@
 - Noto Sans Devanagari and Noto Sans Gujarati: Google Fonts, SIL Open Font License. Font-specific license texts accompany the font files.
 
 All site evidence illustrations are locally drawn vectors. Sample names, quantities, phone numbers and coordinate observations are illustrative design data. No actual employee location, evidence photo or voice recording was collected to prepare this delivery.
+
+UI revision 2 was informed by the purple accents, tabbed project workspaces and compact task/register layouts shown on [Onsite's public product site](https://onsiteteams.com/). No Onsite screenshots, logos, photos, code or other assets are included in the delivery.
