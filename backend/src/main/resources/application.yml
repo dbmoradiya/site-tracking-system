@@ -26,4 +26,4 @@ management:
 app:
   jwt-secret: ${APP_JWT_SECRET:local-development-secret-change-me}
   upload-dir: ${APP_UPLOAD_DIR:./data/uploads}
-  allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:8080}
+  allowed-origin-patterns: ${APP_ALLOWED_ORIGIN_PATTERNS:http://localhost:5173,http://localhost:8080,https://*.ngrok-free.app,https://*.ngrok.app,https://*.ngrok.io}

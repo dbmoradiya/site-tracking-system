@@ -25,6 +25,10 @@ docker compose up --build
 Open <http://localhost:8080>. The API health endpoint is
 <http://localhost:8081/actuator/health>.
 
+ngrok HTTPS URLs under `ngrok-free.app`, `ngrok.app`, and `ngrok.io` are
+allowed by default. For another tunnel domain, set
+`APP_ALLOWED_ORIGIN_PATTERNS` before starting Docker Compose.
+
 Demo accounts (password: `SiteTrack123!`):
 
 - `admin@sitetrack.local`

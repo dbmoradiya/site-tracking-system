@@ -21,6 +21,7 @@ services:
       DB_PASSWORD: sitetrack
       APP_JWT_SECRET: change-this-development-secret-before-production
       APP_UPLOAD_DIR: /data/uploads
+      APP_ALLOWED_ORIGIN_PATTERNS: ${APP_ALLOWED_ORIGIN_PATTERNS:-http://localhost:5173,http://localhost:8080,https://*.ngrok-free.app,https://*.ngrok.app,https://*.ngrok.io}
     depends_on:
       db:
         condition: service_healthy

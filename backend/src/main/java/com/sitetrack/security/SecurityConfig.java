@@ -39,9 +39,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(@Value("${app.allowed-origins}") String origins) {
+    CorsConfigurationSource corsConfigurationSource(@Value("${app.allowed-origin-patterns}") String originPatterns) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.stream(origins.split(",")).map(String::trim).toList());
+        config.setAllowedOriginPatterns(Arrays.stream(originPatterns.split(",")).map(String::trim).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setExposedHeaders(List.of("Location"));
