@@ -1,0 +1,106 @@
+{
+  "version": "0.4",
+  "date": "2026-10-22",
+  "requirements_source": "docs/requirements-v0.4-working-draft.md",
+  "page_count": 18,
+  "pages": [
+    {
+      "id": "00",
+      "title": "Client review માર્ગદર્શિકા",
+      "role": ""
+    },
+    {
+      "id": "01",
+      "title": "મુખ્ય કામનો પ્રવાહ",
+      "role": ""
+    },
+    {
+      "id": "02",
+      "title": "Roles, platform અને permission",
+      "role": ""
+    },
+    {
+      "id": "03",
+      "title": "Admin setup અને master data",
+      "role": "એડમિન · વેબ"
+    },
+    {
+      "id": "04",
+      "title": "નવો Project બનાવવો",
+      "role": "એડમિન · વેબ"
+    },
+    {
+      "id": "05",
+      "title": "Projectની અંદર Site બનાવવી",
+      "role": "એડમિન · વેબ"
+    },
+    {
+      "id": "06",
+      "title": "Project overview: અલગ Sites, અલગ Coordinators",
+      "role": "એડમિન · વેબ"
+    },
+    {
+      "id": "07",
+      "title": "દરેક Stage પર Supervisor + Team સોંપવી",
+      "role": "વેબ"
+    },
+    {
+      "id": "08",
+      "title": "Coordinator dashboard અને linked Site access",
+      "role": "Coordinator · વેબ"
+    },
+    {
+      "id": "09",
+      "title": "Supervisor: મારું કામ",
+      "role": "Supervisor · Android"
+    },
+    {
+      "id": "10",
+      "title": "Supervisor: Stage details",
+      "role": "Supervisor · Android"
+    },
+    {
+      "id": "11",
+      "title": "Online photo upload",
+      "role": "Android"
+    },
+    {
+      "id": "12",
+      "title": "Stage completion request",
+      "role": "Supervisor · Android"
+    },
+    {
+      "id": "13",
+      "title": "Admin / Coordinator review",
+      "role": "વેબ + Android"
+    },
+    {
+      "id": "14",
+      "title": "Coordinator absence-cover flow",
+      "role": "Coordinator"
+    },
+    {
+      "id": "15",
+      "title": "Assignment handover અને visible history",
+      "role": "વેબ + Android"
+    },
+    {
+      "id": "16",
+      "title": "Upload failure અને explicit retry",
+      "role": "Android"
+    },
+    {
+      "id": "17",
+      "title": "Client સાથે નક્કી કરવાના મુદ્દા",
+      "role": ""
+    }
+  ],
+  "scope_excluded": [
+    "materials",
+    "GPS/location",
+    "offline/sync",
+    "iOS",
+    "Team login"
+  ],
+  "pending_decisions_page": "17"
+}
