@@ -109,9 +109,9 @@ public class SetupController {
     @Transactional
     public Map<String,Object> createEmployee(@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
-        long id=jdbc.sql("insert into employees(name,email,mobile,role) values(:name,:email,:mobile,:role) returning id")
+        long id=jdbc.sql("insert into employees(name,email,mobile) values(:name,:email,:mobile) returning id")
                 .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
-                .param("role",request.roles().getFirst()).query(Long.class).single();
+                .query(Long.class).single();
         saveEmployeeRoles(id, request.roles());
         return Map.of("id",id);
     }
@@ -121,9 +121,9 @@ public class SetupController {
     @Transactional
     public void updateEmployee(@PathVariable long id,@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
-        int changed=jdbc.sql("update employees set name=:name,email=:email,mobile=:mobile,role=:role where id=:id")
+        int changed=jdbc.sql("update employees set name=:name,email=:email,mobile=:mobile where id=:id")
                 .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
-                .param("role",request.roles().getFirst()).param("id",id).update();
+                .param("id",id).update();
         if(changed==0) throw new ApiException(404,"Employee not found");
         jdbc.sql("delete from employee_roles where employee_id=:id").param("id",id).update();
         saveEmployeeRoles(id, request.roles());

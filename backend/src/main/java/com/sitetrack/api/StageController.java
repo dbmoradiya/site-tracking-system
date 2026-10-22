@@ -4,6 +4,7 @@ import com.sitetrack.security.AppPrincipal;
 import com.sitetrack.service.WorkflowService;
 import com.sitetrack.service.SiteAssignmentService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ContentDisposition;
@@ -54,7 +55,7 @@ public class StageController {
                 """).param("id",siteId).query((rs,n)->{
                     Map<String,Object> row=new LinkedHashMap<>(); row.put("id",rs.getLong("id"));
                     row.put("name",rs.getString("name")); row.put("address",rs.getString("address"));
-                    row.put("status",rs.getString("status")); row.put("projectId",rs.getLong("project_id"));
+                    row.put("status",rs.getString("status")); row.put("targetDate",rs.getDate("target_date")==null?null:rs.getDate("target_date").toLocalDate().toString()); row.put("projectId",rs.getLong("project_id"));
                     row.put("projectName",rs.getString("project_name")); row.put("siteType",rs.getString("site_type"));
                     row.put("coordinator",rs.getString("coordinator")); row.put("teamId",rs.getObject("team_id"));
                     row.put("team",rs.getString("team")==null?"Unassigned":rs.getString("team")); return row;
@@ -135,6 +136,7 @@ public class StageController {
                                        @RequestPart(value="comment",required=false) String comment,
                                        @AuthenticationPrincipal AppPrincipal user) throws IOException {
         if(file.isEmpty()) throw new ApiException(400,"Choose a non-empty evidence file");
+        requireAllowedEvidenceType(file);
         if(file.getSize()>15L*1024*1024) throw new ApiException(400,"Evidence file must be 15 MB or smaller");
         requireStageAccess(stageId,user);
         String current=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
@@ -271,6 +273,43 @@ public class StageController {
                 .body(Files.readAllBytes(path));
     }
 
+    private static final java.util.Set<String> EVIDENCE_TYPES=java.util.Set.of("image/jpeg","image/png","image/webp","image/gif","image/heic","image/heif","application/pdf");
+    private static final java.util.Set<String> EVIDENCE_EXTENSIONS=java.util.Set.of("jpg","jpeg","png","webp","gif","heic","heif","pdf");
+
+    private void requireAllowedEvidenceType(MultipartFile file) {
+        String type=file.getContentType()==null?"":file.getContentType().toLowerCase(java.util.Locale.ROOT);
+        String name=file.getOriginalFilename()==null?"":file.getOriginalFilename().toLowerCase(java.util.Locale.ROOT);
+        String extension=name.contains(".")?name.substring(name.lastIndexOf('.')+1):"";
+        if(!EVIDENCE_TYPES.contains(type) || !EVIDENCE_EXTENSIONS.contains(extension))
+            throw new ApiException(400,"Evidence must be an image or a PDF file");
+    }
+
+    /** Admin edits Site master details (name, address, target date). */
+    @PutMapping("/sites/{siteId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void updateSite(@PathVariable long siteId,@Valid @RequestBody SiteDetailsRequest request) {
+        int changed=jdbc.sql("update sites set name=:name,address=:address,target_date=:target,updated_at=now() where id=:id")
+                .param("name",request.name().trim()).param("address",request.address()).param("target",request.targetDate())
+                .param("id",siteId).update();
+        if(changed==0) throw new ApiException(404,"Site not found");
+    }
+
+    /** Admin moves a Site, with its Stages, evidence and history, to another Project. */
+    @PutMapping("/sites/{siteId}/project")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public void moveSite(@PathVariable long siteId,@Valid @RequestBody MoveSiteRequest request) {
+        Long current=jdbc.sql("select project_id from sites where id=:id for update").param("id",siteId).query(Long.class).optional()
+                .orElseThrow(()->new ApiException(404,"Site not found"));
+        if(current.equals(request.projectId())) return;
+        boolean exists=jdbc.sql("select count(*) from projects where id=:id").param("id",request.projectId()).query(Long.class).single()>0;
+        if(!exists) throw new ApiException(404,"Target Project not found");
+        jdbc.sql("update sites set project_id=:project,updated_at=now() where id=:id").param("project",request.projectId()).param("id",siteId).update();
+        jdbc.sql("update projects set updated_at=now() where id in (:a,:b)").param("a",current).param("b",request.projectId()).update();
+        workflow.recalculate(siteId);
+        workflow.recalculateProject(current);
+    }
+
     private void requireStageAccess(long stageId,AppPrincipal user) {
         if(user.hasRole("ADMIN")) return;
         boolean allowed=user.employeeId()!=null && jdbc.sql("""
@@ -287,5 +326,7 @@ public class StageController {
     public record ReviewRequest(String action,String note) {}
     public record EvidenceFile(Long stageId,String storagePath,String contentType,String fileName) {}
     public record SiteTeamRequest(Long teamId) {}
+    public record SiteDetailsRequest(@jakarta.validation.constraints.NotBlank String name,String address,java.time.LocalDate targetDate) {}
+    public record MoveSiteRequest(@jakarta.validation.constraints.NotNull Long projectId) {}
     public record StageAssignmentsRequest(Map<String,Long> roleAssignments) {}
 }

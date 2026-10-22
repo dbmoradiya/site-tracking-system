@@ -1,5 +1,7 @@
-import { Bell, Building2, LayoutDashboard, LogOut, Menu, Settings, X } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { AppShell as MantineAppShell, Avatar, Burger, Group, NavLink as MantineNavLink, ScrollArea, Stack, Text, UnstyledButton } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
+import { Bell, Building2, LayoutDashboard, LogOut, Settings } from 'lucide-react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { hasRole } from '../lib/api'
@@ -13,48 +15,46 @@ const navigation = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
-  const [open, setOpen] = useState(false)
+  const [opened, { toggle, close }] = useDisclosure(false)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
-  const links = navigation.filter(item => !item.adminOnly || hasRole(user,'ADMIN'))
-  const roleLabel = user?.roles.map(role=>role.toLowerCase().replaceAll('_',' ')).join(', ') || ''
+  const links = navigation.filter(item => !item.adminOnly || hasRole(user, 'ADMIN'))
+  const roleLabel = user?.roles.map(role => role.toLowerCase().replaceAll('_', ' ')).join(', ') || ''
   useEffect(() => {
-    setOpen(false)
+    close()
     mainRef.current?.focus({ preventScroll: true })
-  }, [location.pathname])
-  return <div className="app-shell">
+  }, [location.pathname, close])
+  const initials = user?.name.slice(0, 2).toUpperCase()
+  return <MantineAppShell header={{ height: 48 }} navbar={{ width: 208, breakpoint: 'sm', collapsed: { mobile: !opened } }} padding={0}>
     <a className="skip-link" href="#main-content">Skip to main content</a>
-    <header className="mobile-header">
-      <button className="icon-button" onClick={() => setOpen(true)} aria-label="Open navigation" aria-expanded={open}><Menu aria-hidden="true" /></button>
-      <Brand />
-      <span className="avatar" aria-label={`${user?.name}, ${roleLabel}`}>{user?.name.slice(0, 2).toUpperCase()}</span>
-    </header>
-    {open && <button className="nav-scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />}
-    <aside className={`sidebar ${open ? 'sidebar--open' : ''}`}>
-      <div className="sidebar__top">
-        <Brand />
-        <button className="icon-button sidebar__close" onClick={() => setOpen(false)} aria-label="Close navigation"><X aria-hidden="true" /></button>
-      </div>
-      <nav className="sidebar__nav" aria-label="Primary navigation">
-        {links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} end={to === '/'} onClick={() => setOpen(false)}>
-          <Icon aria-hidden="true" /><span>{label}</span>
-        </NavLink>)}
-      </nav>
-      <div className="sidebar__profile">
-        <span className="avatar">{user?.name.slice(0, 2).toUpperCase()}</span>
-        <div><strong>{user?.name}</strong><span>{roleLabel}</span></div>
-        <button className="icon-button" onClick={logout} aria-label="Sign out"><LogOut aria-hidden="true" /></button>
-      </div>
-    </aside>
-    <main ref={mainRef} id="main-content" className="main-content" tabIndex={-1}>{children}</main>
-    <nav className="bottom-nav" aria-label="Mobile navigation">
-      {links.slice(0, 4).map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} end={to === '/'}>
-        <Icon aria-hidden="true" /><span>{label}</span>
-      </NavLink>)}
-    </nav>
-  </div>
-}
-
-function Brand() {
-  return <div className="brand"><span className="brand__mark">ST</span><span>SiteTrack</span></div>
+    <MantineAppShell.Header>
+      <Group h="100%" px="sm" justify="space-between" wrap="nowrap">
+        <Group gap="xs" wrap="nowrap">
+          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Toggle navigation" />
+          <span className="brand__mark">ST</span><Text fw={700}>SiteTrack</Text>
+        </Group>
+        <Group gap="xs" wrap="nowrap">
+          <Text size="xs" c="dimmed" visibleFrom="sm" tt="capitalize">{roleLabel}</Text>
+          <Avatar size="sm" color="orange" aria-label={`${user?.name}, ${roleLabel}`}>{initials}</Avatar>
+          <UnstyledButton onClick={logout} aria-label="Sign out" className="header-icon"><LogOut size={18} aria-hidden="true" /></UnstyledButton>
+        </Group>
+      </Group>
+    </MantineAppShell.Header>
+    <MantineAppShell.Navbar p="xs">
+      <ScrollArea>
+        <Stack gap={2} component="nav" aria-label="Primary navigation">
+          {links.map(({ to, label, icon: Icon }) => <MantineNavLink key={to} component={NavLink} to={to} end={to === '/'}
+            label={label} leftSection={<Icon size={16} aria-hidden="true" />} onClick={close}
+            active={to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)} />)}
+        </Stack>
+      </ScrollArea>
+      <Group mt="auto" gap="xs" p="xs" wrap="nowrap" className="nav-profile">
+        <Avatar size="sm" color="orange">{initials}</Avatar>
+        <div><Text size="sm" fw={600} lh={1.2}>{user?.name}</Text><Text size="xs" c="dimmed" tt="capitalize">{roleLabel}</Text></div>
+      </Group>
+    </MantineAppShell.Navbar>
+    <MantineAppShell.Main>
+      <main ref={mainRef} id="main-content" className="main-content" tabIndex={-1}>{children}</main>
+    </MantineAppShell.Main>
+  </MantineAppShell>
 }
