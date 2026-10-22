@@ -1,0 +1,69 @@
+# Production stack: Caddy (HTTPS) -> frontend (nginx, React build) -> backend (Spring Boot) -> Postgres.
+# Usage: cp deploy/.env.example deploy/.env, edit it, then:
+#   docker compose -f deploy/compose.prod.yaml --env-file deploy/.env up -d --build
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sitetrack
+      POSTGRES_USER: sitetrack
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sitetrack -d sitetrack"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/sitetrack
+      DB_USERNAME: sitetrack
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?set APP_JWT_SECRET (32+ random characters)}
+      APP_UPLOAD_DIR: /data/uploads
+      APP_ALLOWED_ORIGIN_PATTERNS: https://${SITE_ADDRESS:?set SITE_ADDRESS}
+      APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-}
+      APP_BOOTSTRAP_ADMIN_NAME: ${APP_BOOTSTRAP_ADMIN_NAME:-Administrator}
+      APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - upload_data:/data/uploads
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: /api
+        VITE_SHOW_DEMO_ACCOUNTS: "false"
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  postgres_data:
+  upload_data:
+  caddy_data:
+  caddy_config:

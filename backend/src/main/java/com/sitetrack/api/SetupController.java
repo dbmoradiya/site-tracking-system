@@ -16,8 +16,18 @@ import java.util.Map;
 @RequestMapping("/api/setup")
 public class SetupController {
     private final JdbcClient jdbc;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public SetupController(JdbcClient jdbc) { this.jdbc = jdbc; }
+    public SetupController(JdbcClient jdbc, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) { this.jdbc = jdbc; this.passwordEncoder = passwordEncoder; }
+
+    private void saveLogin(long employeeId,String name,String email,String password) {
+        if(password==null||password.isBlank()) return;
+        if(password.length()<10||password.length()>72) throw new ApiException(400,"Password must be 10 to 72 characters");
+        String hash=passwordEncoder.encode(password);
+        int changed=jdbc.sql("update app_users set password_hash=:h,active=true where employee_id=:id").param("h",hash).param("id",employeeId).update();
+        if(changed==0) jdbc.sql("insert into app_users(employee_id,name,email,password_hash,role) values(:id,:name,:email,:h,'EMPLOYEE')")
+                .param("id",employeeId).param("name",name).param("email",email.trim()).param("h",hash).update();
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','COORDINATOR')")
@@ -124,6 +134,7 @@ public class SetupController {
                 .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
                 .query(Long.class).single();
         saveEmployeeRoles(id, request.roles());
+        saveLogin(id,request.name(),request.email(),request.password());
         return Map.of("id",id);
     }
 
@@ -141,6 +152,7 @@ public class SetupController {
         saveEmployeeRoles(id, request.roles());
         jdbc.sql("update app_users set name=:name,email=:email where employee_id=:id")
                 .param("name",request.name()).param("email",request.email()).param("id",id).update();
+        saveLogin(id,request.name(),request.email(),request.password());
     }
 
     @PostMapping("/teams")
@@ -191,6 +203,6 @@ public class SetupController {
         public StageTemplateRequest { requiredRoles = requiredRoles == null ? List.of() : List.copyOf(requiredRoles); }
     }
     public record EmployeeRequest(@NotBlank String name,@Email @NotBlank String email,@jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String mobile,
-                                  @NotEmpty List<String> roles) {}
+                                  @NotEmpty List<String> roles,String password) {}
     public record TeamRequest(@NotBlank String name,@NotBlank String contactName,@NotBlank @jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String mobile,String notes) {}
 }

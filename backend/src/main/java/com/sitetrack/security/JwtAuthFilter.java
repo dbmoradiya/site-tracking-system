@@ -15,9 +15,11 @@ import java.io.IOException;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final TokenService tokens;
+    private final org.springframework.jdbc.core.simple.JdbcClient jdbc;
 
-    public JwtAuthFilter(TokenService tokens) {
+    public JwtAuthFilter(TokenService tokens, org.springframework.jdbc.core.simple.JdbcClient jdbc) {
         this.tokens = tokens;
+        this.jdbc = jdbc;
     }
 
     @Override
@@ -26,7 +28,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             AppPrincipal principal = tokens.parse(header.substring(7));
-            if (principal != null) {
+            if (principal != null && jdbc.sql("select count(*) from app_users where id=:id and active=true").param("id", principal.id()).query(Long.class).single() > 0) {
                 var authorities = principal.roles().stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                         .toList();

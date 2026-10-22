@@ -11,4 +11,5 @@ RUN addgroup -S sitetrack && adduser -S sitetrack -G sitetrack && mkdir -p /data
 COPY --from=build /workspace/target/sitetrack-api-0.1.0.jar app.jar
 USER sitetrack
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 CMD wget -qO- http://localhost:8081/actuator/health || exit 1
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-jar", "/app/app.jar"]

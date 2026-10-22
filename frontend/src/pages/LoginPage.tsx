@@ -47,10 +47,10 @@ export function LoginPage() {
         <TextInput label="Email address" type="email" value={email} onChange={e => setEmail(e.currentTarget.value)} autoComplete="email" required />
         <PasswordInput label="Password" value={password} onChange={e => setPassword(e.currentTarget.value)} autoComplete="current-password" required />
         <Button type="submit" fullWidth loading={loading} rightSection={<ArrowRight size={16} />}>Sign in</Button>
-        <div className="demo-accounts">
+        {(import.meta.env.DEV||import.meta.env.VITE_SHOW_DEMO_ACCOUNTS==='true')&&<div className="demo-accounts">
           <strong>Demo accounts</strong>
           {demoAccounts.map(account => <button type="button" key={account.key} onClick={() => setEmail(`${account.key}@sitetrack.local`)}>{account.label}<small>{account.key}@sitetrack.local</small></button>)}
-        </div>
+        </div>}
       </form>
     </section>
   </main>

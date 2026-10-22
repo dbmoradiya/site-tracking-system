@@ -256,7 +256,7 @@ public class StageController {
     }
 
     @GetMapping("/evidence/{evidenceId}/content")
-    public ResponseEntity<byte[]> evidenceContent(@PathVariable long evidenceId,@AuthenticationPrincipal AppPrincipal user) throws IOException {
+    public ResponseEntity<org.springframework.core.io.Resource> evidenceContent(@PathVariable long evidenceId,@AuthenticationPrincipal AppPrincipal user) throws IOException {
         EvidenceFile evidence=jdbc.sql("select stage_id,storage_path,content_type,file_name from evidence where id=:id and upload_status='UPLOADED'")
                 .param("id",evidenceId).query(EvidenceFile.class).optional()
                 .orElseThrow(()->new ApiException(404,"Evidence not found"));
@@ -268,7 +268,8 @@ public class StageController {
         catch (Exception ignored) { contentType=MediaType.APPLICATION_OCTET_STREAM; }
         return ResponseEntity.ok().contentType(contentType)
                 .header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.inline().filename(evidence.fileName(), StandardCharsets.UTF_8).build().toString())
-                .body(Files.readAllBytes(path));
+                .header("X-Content-Type-Options","nosniff")
+                .contentLength(Files.size(path)).body(new org.springframework.core.io.FileSystemResource(path));
     }
 
     private static final String OOXML_XLSX="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Badge, Button, Group, Modal, NativeSelect, Paper, Stack, Table, Tabs, Text, TextInput, Textarea, Title, SimpleGrid } from '@mantine/core'
+import { ActionIcon, Alert, Badge, Button, Group, Modal, NativeSelect, Paper, Stack, Table, Tabs, Text, TextInput, Textarea, Title, SimpleGrid, PasswordInput } from '@mantine/core'
 import { ChevronDown, ChevronUp, Layers3, Pencil, Plus, Save, Trash2, UsersRound, Wrench } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { api, post, put } from '../lib/api'
@@ -90,12 +90,13 @@ function Employees({items,onSaved}:{items:Employee[];onSaved:()=>void}){
   </>
 }
 function EmployeeForm({item,onCancel,onSaved}:{item:Employee;onCancel:()=>void;onSaved:()=>void}){
-  const [form,setForm]=useState({name:item.name,email:item.email,mobile:item.mobile,roles:item.roles});const [saving,setSaving]=useState(false);const [error,setError]=useState('')
+  const [form,setForm]=useState({name:item.name,email:item.email,mobile:item.mobile,roles:item.roles,password:''});const [saving,setSaving]=useState(false);const [error,setError]=useState('')
   const save=async(e:FormEvent)=>{e.preventDefault();if(!form.roles.length){setError('Select at least one role');return}setSaving(true);setError('');try{if(item.id)await put(`/setup/employees/${item.id}`,form);else await post('/setup/employees',form);onSaved()}catch(err){setError(err instanceof Error?err.message:'Save failed')}finally{setSaving(false)}}
   return <form onSubmit={save}><Stack gap="sm">{error&&<Alert color="red" role="alert">{error}</Alert>}
     <TextInput required label="Name" value={form.name} onChange={e=>setForm({...form,name:e.currentTarget.value})}/>
     <TextInput required type="email" label="Email" value={form.email} onChange={e=>setForm({...form,email:e.currentTarget.value})}/>
     <TextInput inputMode="tel" label="Mobile" value={form.mobile} onChange={e=>setForm({...form,mobile:e.currentTarget.value})}/>
+    <PasswordInput label="Login password" description={item.id?'Leave blank to keep the current password. Enter a new one to create or reset the login.':'Optional. Set a password (10+ characters) so this employee can sign in with the email above.'} autoComplete="new-password" minLength={10} maxLength={72} value={form.password} onChange={e=>setForm({...form,password:e.currentTarget.value})}/>
     <RolesSelect label="Roles" selected={form.roles} onChange={roles=>setForm({...form,roles})}/></Stack><Actions onCancel={onCancel} saving={saving}/></form>
 }
 
