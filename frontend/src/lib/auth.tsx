@@ -4,7 +4,7 @@ import { api, type User } from './api'
 type AuthContextValue = {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (mobile: string, password: string) => Promise<void>
   logout: () => void
 }
 
@@ -36,11 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('sitetrack:unauthorized', logout)
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (mobile: string, password: string) => {
     setLoading(true)
     try {
       const result = await api<{ token: string; user: User }>('/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile, password }),
       })
       localStorage.setItem('sitetrack-token', result.token)
       localStorage.setItem('sitetrack-user', JSON.stringify(result.user))

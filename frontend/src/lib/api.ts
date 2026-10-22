@@ -1,5 +1,5 @@
 export type Role = 'ADMIN' | 'COORDINATOR' | 'SUPERVISOR' | 'DESIGN_ENGINEER' | 'PROCUREMENT_MANAGER'
-export type User = { id: number; employeeId: number | null; name: string; email: string; roles: Role[] }
+export type User = { id: number; employeeId: number | null; name: string; mobile: string; roles: Role[] }
 export const hasRole = (user: User | null | undefined, role: Role) => Boolean(user?.roles.includes(role))
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'

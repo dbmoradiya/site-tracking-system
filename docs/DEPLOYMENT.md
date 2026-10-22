@@ -5,7 +5,7 @@ Versions are identical to `develop`: Spring Boot 4.1.1, Java 21, React 19.3.1, N
 ## What the `prod` profile does
 - `SPRING_PROFILES_ACTIVE=prod` loads `application-prod.yml`.
 - Flyway also runs `db/prod/V1000__remove_demo_data.sql`, which deletes all demo logins, employees, teams, projects, sites and site types. A fresh production database starts empty. **Never point the prod profile at a database that has real data you did not create through the app after first start**: V1000 runs once, on first start only.
-- The first Admin is created from `APP_BOOTSTRAP_ADMIN_EMAIL` / `APP_BOOTSTRAP_ADMIN_PASSWORD` (12+ characters) when no Admin exists. Create all other users in the app (Setup > Employees > Login password).
+- The first Admin is created from `APP_BOOTSTRAP_ADMIN_MOBILE` / `APP_BOOTSTRAP_ADMIN_PASSWORD` (12+ characters) when no Admin exists. Create all other users in the app (Setup > Employees > Login password).
 - The app refuses to start when `APP_JWT_SECRET` is shorter than 32 characters or looks like a default, or when `APP_ALLOWED_ORIGIN_PATTERNS` is empty.
 - The Login page shows no demo accounts (`VITE_SHOW_DEMO_ACCOUNTS=false`).
 - Only `/actuator/health` is exposed (no details). Error messages and stack traces are not returned.
@@ -19,7 +19,8 @@ Versions are identical to `develop`: Spring Boot 4.1.1, Java 21, React 19.3.1, N
 | `APP_JWT_SECRET` | 32+ random characters (`openssl rand -base64 36`) |
 | `APP_UPLOAD_DIR` | Evidence folder, default `/data/uploads`. **Must be on a persistent volume** |
 | `APP_ALLOWED_ORIGIN_PATTERNS` | Comma separated allowed browser origins |
-| `APP_BOOTSTRAP_ADMIN_*` | First start only |
+| `APP_BOOTSTRAP_ADMIN_*` | First start only (mobile number and password of the first Admin) |
+| `APP_ADMIN_MOBILE`, `APP_ADMIN_PASSWORD` | Optional, any profile: set the Admin mobile / reset the Admin password at startup. Remove after use |
 
 ## Run with Docker Compose (any VM)
 ```
@@ -49,3 +50,6 @@ Every image used has a linux/arm64 variant (checked on Docker Hub, 23 Oct 2026):
 
 ## Passwords
 Passwords are stored as BCrypt hashes (salted, adaptive, cost 10) and are never returned by the API or written to logs. The Admin sets an employee's password when creating the employee (min 10 characters). Every signed-in user can change their own password with the key icon in the header (current + new). Existing sessions stay valid until their token expires (12 hours).
+
+## Sign-in
+Everyone, Admin included, signs in with mobile number + password. Numbers are normalized (spaces, dashes and +91 are accepted; Indian numbers are 10 digits starting 6-9) and must be unique. There is no email in the product and no default password. To set or reset the Admin password: start once with `APP_ADMIN_PASSWORD` set, then remove it.

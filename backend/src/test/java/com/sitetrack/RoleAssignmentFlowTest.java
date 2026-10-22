@@ -24,7 +24,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** End-to-end API checks against a real (embedded) PostgreSQL with the Flyway schema and seed data. */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "app.admin.mobile=9000000009")
 class RoleAssignmentFlowTest {
     static EmbeddedPostgres postgres;
 
@@ -51,9 +51,9 @@ class RoleAssignmentFlowTest {
     RestClient client() { return RestClient.builder().baseUrl("http://localhost:" + port + "/api").build(); }
 
     @SuppressWarnings("unchecked")
-    String login(String email) {
+    String login(String mobile) {
         Map<String, Object> body = client().post().uri("/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("email", email, "password", PASSWORD)).retrieve().body(Map.class);
+                .body(Map.of("mobile", mobile, "password", PASSWORD)).retrieve().body(Map.class);
         return (String) body.get("token");
     }
 
@@ -81,19 +81,19 @@ class RoleAssignmentFlowTest {
     @SuppressWarnings("unchecked")
     @Test
     void perStageAssignmentsSiteEditMoveAndEvidenceRules() {
-        String admin = login("admin@sitetrack.local");
-        String coordinator = login("coordinator@sitetrack.local");
-        String supervisor = login("supervisor@sitetrack.local");
+        String admin = login("+919000000009");
+        String coordinator = login("+919000000001");
+        String supervisor = login("+919000000002");
         // seeded logins for the two other operational roles exist
-        assertNotNull(login("design@sitetrack.local"));
-        assertNotNull(login("procurement@sitetrack.local"));
+        assertNotNull(login("+919000000003"));
+        assertNotNull(login("+919000000004"));
 
         Map<String, Object> setup = get(admin, "/setup", Map.class);
         List<Map<String, Object>> employees = (List<Map<String, Object>>) setup.get("employees");
-        long supervisorA = idOf(employees, "supervisor@sitetrack.local");
-        long supervisorB = idOf(employees, "mehul@sitetrack.local");
-        long designer = idOf(employees, "design@sitetrack.local");
-        long coordinatorId = idOf(employees, "coordinator@sitetrack.local");
+        long supervisorA = idOf(employees, "+919000000002");
+        long supervisorB = idOf(employees, "Mehul Parmar");
+        long designer = idOf(employees, "+919000000003");
+        long coordinatorId = idOf(employees, "+919000000001");
 
         long projectA = post(admin, "/projects", Map.of("name", "Project A", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
         long projectB = post(admin, "/projects", Map.of("name", "Project B", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
@@ -155,14 +155,14 @@ class RoleAssignmentFlowTest {
     @SuppressWarnings("unchecked")
     @Test
     void teamCanBeRequiredPerStage() {
-        String admin = login("admin@sitetrack.local");
-        String coordinator = login("coordinator@sitetrack.local");
+        String admin = login("+919000000009");
+        String coordinator = login("+919000000001");
         Map<String, Object> setup = get(admin, "/setup", Map.class);
         List<Map<String, Object>> teams = (List<Map<String, Object>>) setup.get("teams");
         long teamId = ((Number) teams.get(0).get("id")).longValue();
-        long coordinatorId = idOf((List<Map<String, Object>>) setup.get("employees"), "coordinator@sitetrack.local");
+        long coordinatorId = idOf((List<Map<String, Object>>) setup.get("employees"), "+919000000001");
         // a Team is not a valid employee role
-        assertEquals(400, send(HttpMethod.POST, admin, "/setup/employees", Map.of("name", "Bad Role", "email", "bad@sitetrack.local", "mobile", "9000000000", "roles", List.of("TEAM"), "password", "Sample1234!")));
+        assertEquals(400, send(HttpMethod.POST, admin, "/setup/employees", Map.of("name", "Bad Role", "mobile", "9000000055", "roles", List.of("TEAM"), "password", "Sample1234!")));
         long project = post(admin, "/projects", Map.of("name", "Team Project", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
         long site = post(admin, "/projects/" + project + "/sites", Map.of("name", "Team Site", "siteTypeId", 1, "stages", List.of(
                 Map.of("name", "Civil", "requiredRoles", List.of("TEAM", "SUPERVISOR")))));
@@ -209,7 +209,7 @@ class RoleAssignmentFlowTest {
 
     @SuppressWarnings("unchecked")
     long idOf(List<Map<String, Object>> employees, String email) {
-        return employees.stream().filter(e -> email.equals(e.get("email"))).mapToLong(e -> ((Number) e.get("id")).longValue()).findFirst().orElseThrow();
+        return employees.stream().filter(e -> email.equals(e.get("mobile")) || email.equals(e.get("name"))).mapToLong(e -> ((Number) e.get("id")).longValue()).findFirst().orElseThrow();
     }
 
     @SuppressWarnings("unchecked")

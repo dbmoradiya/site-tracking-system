@@ -4,23 +4,16 @@ import { Alert, Button, PasswordInput, TextInput } from '@mantine/core'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
-const demoAccounts = [
-  { key: 'admin', label: 'Admin' },
-  { key: 'coordinator', label: 'Coordinator' },
-  { key: 'supervisor', label: 'Supervisor' },
-  { key: 'design', label: 'Design Engineer' },
-  { key: 'procurement', label: 'Procurement Manager' },
-]
 
 export function LoginPage() {
   const { login, loading } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('admin@sitetrack.local')
-  const [password, setPassword] = useState('SiteTrack123!')
+  const [mobile, setMobile] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError('')
-    try { await login(email, password); navigate('/', { replace: true }) } catch (err) { setError(err instanceof Error ? err.message : 'Sign in failed') }
+    try { await login(mobile, password); navigate('/', { replace: true }) } catch (err) { setError(err instanceof Error ? err.message : 'Sign in failed') }
   }
   return <main className="login-page">
     <section className="login-hero">
@@ -44,13 +37,9 @@ export function LoginPage() {
         <h2>Welcome back</h2>
         <p className="muted">Sign in to continue to your Sites.</p>
         {error && <Alert color="red" role="alert">{error}</Alert>}
-        <TextInput label="Email address" type="email" value={email} onChange={e => setEmail(e.currentTarget.value)} autoComplete="email" required />
+        <TextInput label="Mobile number" type="tel" inputMode="tel" placeholder="e.g. 98765 43210" value={mobile} onChange={e => setMobile(e.currentTarget.value)} autoComplete="username" required />
         <PasswordInput label="Password" value={password} onChange={e => setPassword(e.currentTarget.value)} autoComplete="current-password" required />
         <Button type="submit" fullWidth loading={loading} rightSection={<ArrowRight size={16} />}>Sign in</Button>
-        {(import.meta.env.DEV||import.meta.env.VITE_SHOW_DEMO_ACCOUNTS==='true')&&<div className="demo-accounts">
-          <strong>Demo accounts</strong>
-          {demoAccounts.map(account => <button type="button" key={account.key} onClick={() => setEmail(`${account.key}@sitetrack.local`)}>{account.label}<small>{account.key}@sitetrack.local</small></button>)}
-        </div>}
       </form>
     </section>
   </main>

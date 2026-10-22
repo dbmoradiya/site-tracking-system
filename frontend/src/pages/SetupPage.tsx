@@ -8,7 +8,7 @@ import { RolesSelect, titleCase, type BusinessRole } from '../components/RolesSe
 type RawStage={id:number;name:string;position:number;dependsOnId:number|null;evidenceRequired:boolean;requiredRoles:BusinessRole[]}
 type StageDraft={name:string;dependsOnPosition:number|null;requiredRoles:BusinessRole[]}
 type SiteType={id:number;name:string;description:string;stages:string|RawStage[]}
-type Employee={id:number;name:string;email:string;mobile:string;roles:BusinessRole[];active:boolean;projects:string[]}
+type Employee={id:number;name:string;mobile:string;roles:BusinessRole[];active:boolean;projects:string[]}
 type Team={id:number;name:string;contactName:string;mobile:string;notes:string;active:boolean;projects:string[]}
 type Setup={siteTypes:SiteType[];employees:Employee[];teams:Team[]}
 type Tab='types'|'employees'|'teams'
@@ -80,23 +80,22 @@ function SiteTypeForm({item,onCancel,onSaved}:{item:SiteType;onCancel:()=>void;o
 function Employees({items,onSaved}:{items:Employee[];onSaved:()=>void}){
   const [selected,setSelected]=useState<Employee|null>(null);const [editing,setEditing]=useState(false);const close=()=>{setSelected(null);setEditing(false)}
   return <>
-    <Section title="Employees" count={`${items.length} active`} action="Add Employee" onAdd={()=>{setSelected({id:0,name:'',email:'',mobile:'',roles:['COORDINATOR'],active:true,projects:[]});setEditing(true)}}>
+    <Section title="Employees" count={`${items.length} active`} action="Add Employee" onAdd={()=>{setSelected({id:0,name:'',mobile:'',roles:['COORDINATOR'],active:true,projects:[]});setEditing(true)}}>
       <Table.Thead><Table.Tr><Table.Th>Name</Table.Th><Table.Th>Roles</Table.Th><Table.Th>Mobile</Table.Th><Table.Th>Projects</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{items.map(item=><Row key={item.id} onOpen={()=>setSelected(item)}><Table.Td fw={600}>{item.name}</Table.Td><Table.Td>{item.roles.map(titleCase).join(', ')}</Table.Td><Table.Td>{item.mobile||'No mobile'}</Table.Td><Table.Td><Chips projects={item.projects}/></Table.Td></Row>)}</Table.Tbody>
     </Section>
     <Modal opened={selected!==null} onClose={close} title={selected?.id?selected.name:'Add Employee'}>{selected&&(editing
       ?<EmployeeForm item={selected} onCancel={selected.id?()=>setEditing(false):close} onSaved={()=>{onSaved();close()}}/>
-      :<Stack gap="sm"><ReadRow label="Roles" value={selected.roles.map(titleCase).join(', ')}/><ReadRow label="Email" value={selected.email}/><ReadRow label="Mobile" value={selected.mobile||'Not provided'}/><AssignedProjects projects={selected.projects}/><EditButton onClick={()=>setEditing(true)}/></Stack>)}</Modal>
+      :<Stack gap="sm"><ReadRow label="Roles" value={selected.roles.map(titleCase).join(', ')}/><ReadRow label="Mobile (login)" value={selected.mobile}/><AssignedProjects projects={selected.projects}/><EditButton onClick={()=>setEditing(true)}/></Stack>)}</Modal>
   </>
 }
 function EmployeeForm({item,onCancel,onSaved}:{item:Employee;onCancel:()=>void;onSaved:()=>void}){
-  const [form,setForm]=useState({name:item.name,email:item.email,mobile:item.mobile,roles:item.roles,password:''});const [saving,setSaving]=useState(false);const [error,setError]=useState('')
+  const [form,setForm]=useState({name:item.name,mobile:item.mobile,roles:item.roles,password:''});const [saving,setSaving]=useState(false);const [error,setError]=useState('')
   const save=async(e:FormEvent)=>{e.preventDefault();if(!form.roles.length){setError('Select at least one role');return}if((!item.id||form.password)&&form.password.length<10){setError('Password must be at least 10 characters');return}setSaving(true);setError('');try{if(item.id)await put(`/setup/employees/${item.id}`,form);else await post('/setup/employees',form);onSaved()}catch(err){setError(err instanceof Error?err.message:'Save failed')}finally{setSaving(false)}}
   return <form onSubmit={save}><Stack gap="sm">{error&&<Alert color="red" role="alert">{error}</Alert>}
     <TextInput required label="Name" value={form.name} onChange={e=>setForm({...form,name:e.currentTarget.value})}/>
-    <TextInput required type="email" label="Email" value={form.email} onChange={e=>setForm({...form,email:e.currentTarget.value})}/>
-    <TextInput inputMode="tel" label="Mobile" value={form.mobile} onChange={e=>setForm({...form,mobile:e.currentTarget.value})}/>
-    <PasswordInput label="Login password" required={!item.id} description={item.id?'Leave blank to keep the current password. Enter a new one to reset it.':'Required. At least 10 characters. The employee signs in with the email above and this password, and can change it later.'} autoComplete="new-password" minLength={10} maxLength={72} value={form.password} onChange={e=>setForm({...form,password:e.currentTarget.value})}/>
+    <TextInput required type="tel" inputMode="tel" label="Mobile number (used to sign in)" placeholder="e.g. 98765 43210" value={form.mobile} onChange={e=>setForm({...form,mobile:e.currentTarget.value})}/>
+    <PasswordInput label="Login password" required={!item.id} description={item.id?'Leave blank to keep the current password. Enter a new one to reset it.':'Required. At least 10 characters. The employee signs in with the mobile number above and this password, and can change it later.'} autoComplete="new-password" minLength={10} maxLength={72} value={form.password} onChange={e=>setForm({...form,password:e.currentTarget.value})}/>
     <RolesSelect label="Roles" selected={form.roles} onChange={roles=>setForm({...form,roles})}/></Stack><Actions onCancel={onCancel} saving={saving}/></form>
 }
 

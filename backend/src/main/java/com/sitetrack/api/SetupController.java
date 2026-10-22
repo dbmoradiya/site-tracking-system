@@ -20,13 +20,13 @@ public class SetupController {
 
     public SetupController(JdbcClient jdbc, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) { this.jdbc = jdbc; this.passwordEncoder = passwordEncoder; }
 
-    private void saveLogin(long employeeId,String name,String email,String password) {
+    private void saveLogin(long employeeId,String name,String mobile,String password) {
         if(password==null||password.isBlank()) return;
         if(password.length()<10||password.length()>72) throw new ApiException(400,"Password must be 10 to 72 characters");
         String hash=passwordEncoder.encode(password);
         int changed=jdbc.sql("update app_users set password_hash=:h,active=true where employee_id=:id").param("h",hash).param("id",employeeId).update();
-        if(changed==0) jdbc.sql("insert into app_users(employee_id,name,email,password_hash,role) values(:id,:name,:email,:h,'EMPLOYEE')")
-                .param("id",employeeId).param("name",name).param("email",email.trim()).param("h",hash).update();
+        if(changed==0) jdbc.sql("insert into app_users(employee_id,name,mobile,password_hash,role) values(:id,:name,:mobile,:h,'EMPLOYEE')")
+                .param("id",employeeId).param("name",name).param("mobile",mobile).param("h",hash).update();
     }
 
     @GetMapping
@@ -46,7 +46,7 @@ public class SetupController {
                         "description",rs.getString("description") == null ? "" : rs.getString("description"),
                         "stages",rs.getString("stages"))).list();
         List<Map<String, Object>> employees = jdbc.sql("""
-                select e.id,e.name,e.email,e.mobile,e.active,
+                select e.id,e.name,e.mobile,e.active,
                   coalesce(array_agg(er.role_code order by er.role_code) filter(where er.role_code is not null),array[]::varchar[]) roles,
                   coalesce((select string_agg(distinct p.name,'||') from projects p left join sites s on s.project_id=p.id
                     left join site_role_assignments sra on sra.site_id=s.id
@@ -55,7 +55,7 @@ public class SetupController {
                 group by e.id order by e.name
                 """)
                 .query((rs,n)->Map.<String,Object>of("id",rs.getLong("id"),"name",rs.getString("name"),
-                        "email",rs.getString("email"),"mobile",rs.getString("mobile") == null ? "" : rs.getString("mobile"),
+                        "mobile",rs.getString("mobile") == null ? "" : rs.getString("mobile"),
                         "roles",List.of((String[])rs.getArray("roles").getArray()),"active",rs.getBoolean("active"),
                         "projects",names(rs.getString("assigned_projects")))).list();
         List<Map<String, Object>> teams = jdbc.sql("""
@@ -118,10 +118,10 @@ public class SetupController {
         }
     }
 
-    private void ensureEmailFree(String email,Long exceptId){
-        long n=jdbc.sql("select count(*) from employees where lower(email)=lower(:e) and (:id::bigint is null or id<>:id)").param("e",email.trim()).param("id",exceptId).query(Long.class).single();
-        long u=jdbc.sql("select count(*) from app_users where lower(email)=lower(:e) and (:id::bigint is null or employee_id is distinct from :id)").param("e",email.trim()).param("id",exceptId).query(Long.class).single();
-        if(n>0||u>0) throw new ApiException(409,"An employee with this email already exists");
+    private void ensureMobileFree(String mobile,Long exceptId){
+        long n=jdbc.sql("select count(*) from employees where mobile=:m and (:id::bigint is null or id<>:id)").param("m",mobile).param("id",exceptId).query(Long.class).single();
+        long u=jdbc.sql("select count(*) from app_users where mobile=:m and (:id::bigint is null or employee_id is distinct from :id)").param("m",mobile).param("id",exceptId).query(Long.class).single();
+        if(n>0||u>0) throw new ApiException(409,"This mobile number is already used by another login");
     }
 
     @PostMapping("/employees")
@@ -130,12 +130,13 @@ public class SetupController {
     public Map<String,Object> createEmployee(@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
         if(request.password()==null||request.password().isBlank()) throw new ApiException(400,"Password is required (10 to 72 characters)");
-        ensureEmailFree(request.email(),null);
-        long id=jdbc.sql("insert into employees(name,email,mobile) values(:name,:email,:mobile) returning id")
-                .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
+        String mobile=Mobile.normalize(request.mobile());
+        ensureMobileFree(mobile,null);
+        long id=jdbc.sql("insert into employees(name,mobile) values(:name,:mobile) returning id")
+                .param("name",request.name()).param("mobile",mobile)
                 .query(Long.class).single();
         saveEmployeeRoles(id, request.roles());
-        saveLogin(id,request.name(),request.email(),request.password());
+        saveLogin(id,request.name(),mobile,request.password());
         return Map.of("id",id);
     }
 
@@ -144,16 +145,17 @@ public class SetupController {
     @Transactional
     public void updateEmployee(@PathVariable long id,@Valid @RequestBody EmployeeRequest request) {
         validateRoles(request.roles());
-        ensureEmailFree(request.email(),id);
-        int changed=jdbc.sql("update employees set name=:name,email=:email,mobile=:mobile where id=:id")
-                .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
+        String mobile=Mobile.normalize(request.mobile());
+        ensureMobileFree(mobile,id);
+        int changed=jdbc.sql("update employees set name=:name,mobile=:mobile where id=:id")
+                .param("name",request.name()).param("mobile",mobile)
                 .param("id",id).update();
         if(changed==0) throw new ApiException(404,"Employee not found");
         jdbc.sql("delete from employee_roles where employee_id=:id").param("id",id).update();
         saveEmployeeRoles(id, request.roles());
-        jdbc.sql("update app_users set name=:name,email=:email where employee_id=:id")
-                .param("name",request.name()).param("email",request.email()).param("id",id).update();
-        saveLogin(id,request.name(),request.email(),request.password());
+        jdbc.sql("update app_users set name=:name,mobile=:mobile where employee_id=:id")
+                .param("name",request.name()).param("mobile",mobile).param("id",id).update();
+        saveLogin(id,request.name(),mobile,request.password());
     }
 
     @PostMapping("/teams")
@@ -203,7 +205,7 @@ public class SetupController {
     public record StageTemplateRequest(@NotBlank String name, Integer dependsOnPosition, List<String> requiredRoles) {
         public StageTemplateRequest { requiredRoles = requiredRoles == null ? List.of() : List.copyOf(requiredRoles); }
     }
-    public record EmployeeRequest(@NotBlank String name,@Email @NotBlank String email,@jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String mobile,
+    public record EmployeeRequest(@NotBlank String name,@NotBlank String mobile,
                                   @NotEmpty List<String> roles,String password) {}
     public record TeamRequest(@NotBlank String name,@NotBlank String contactName,@NotBlank @jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String mobile,String notes) {}
 }

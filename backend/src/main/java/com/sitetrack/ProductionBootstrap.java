@@ -20,7 +20,7 @@ class ProductionBootstrap {
     ApplicationRunner productionChecks(JdbcClient jdbc, PasswordEncoder encoder,
                                        @Value("${app.jwt-secret}") String jwtSecret,
                                        @Value("${app.allowed-origin-patterns}") String origins,
-                                       @Value("${app.bootstrap-admin.email}") String adminEmail,
+                                       @Value("${app.bootstrap-admin.mobile}") String adminMobile,
                                        @Value("${app.bootstrap-admin.name}") String adminName,
                                        @Value("${app.bootstrap-admin.password}") String adminPassword) {
         return args -> {
@@ -30,10 +30,11 @@ class ProductionBootstrap {
                 throw new IllegalStateException("APP_ALLOWED_ORIGIN_PATTERNS must list the public site URL, for example https://sitetrack.example.com");
             long admins = jdbc.sql("select count(*) from app_users where role='ADMIN'").query(Long.class).single();
             if (admins > 0) return;
-            if (adminEmail.isBlank() || adminPassword.length() < 12)
-                throw new IllegalStateException("No Admin exists. Set APP_BOOTSTRAP_ADMIN_EMAIL and APP_BOOTSTRAP_ADMIN_PASSWORD (at least 12 characters) for the first start");
-            jdbc.sql("insert into app_users(employee_id,name,email,password_hash,role) values (null,:name,:email,:hash,'ADMIN')")
-                    .param("name", adminName).param("email", adminEmail.trim().toLowerCase()).param("hash", encoder.encode(adminPassword)).update();
+            String mobile = com.sitetrack.api.Mobile.normalizeOrNull(adminMobile);
+            if (mobile == null || adminPassword.length() < 12)
+                throw new IllegalStateException("No Admin exists. Set APP_BOOTSTRAP_ADMIN_MOBILE (valid mobile number) and APP_BOOTSTRAP_ADMIN_PASSWORD (at least 12 characters) for the first start");
+            jdbc.sql("insert into app_users(employee_id,name,mobile,password_hash,role) values (null,:name,:mobile,:hash,'ADMIN')")
+                    .param("name", adminName).param("mobile", mobile).param("hash", encoder.encode(adminPassword)).update();
         };
     }
 }

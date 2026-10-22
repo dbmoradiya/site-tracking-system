@@ -29,11 +29,11 @@ ngrok HTTPS URLs under `ngrok-free.app`, `ngrok.app`, and `ngrok.io` are
 allowed by default. For another tunnel domain, set
 `APP_ALLOWED_ORIGIN_PATTERNS` before starting Docker Compose.
 
-Demo accounts (password: `SiteTrack123!`):
-
-- `admin@sitetrack.local`
-- `coordinator@sitetrack.local`
-- `supervisor@sitetrack.local`
+Sign-in is by mobile number and password for everyone (no email). There is no
+default password. Set the Admin mobile number and password at startup with
+`APP_ADMIN_MOBILE` and `APP_ADMIN_PASSWORD` (10 to 72 characters; remove them afterwards).
+The Admin creates every other login in Setup > Employees. Users change their own
+password with the key icon in the header.
 
 ## Product rules
 
