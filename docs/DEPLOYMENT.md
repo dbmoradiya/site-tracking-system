@@ -43,3 +43,9 @@ Run daily from cron and copy off the server. Volume names depend on the compose 
 Free and persistent: one Oracle Cloud Always Free Arm VM running the compose file (https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm). Risks: signup verification, capacity, idle reclamation.
 Cheapest sensible paid: one small Hetzner VPS, about 4 to 5 euro/month (https://www.hetzner.com/cloud/).
 Not suitable: Render free (sleeps after 15 min, files lost on restart, free Postgres expires after 30 days; https://render.com/docs/free). Fly.io has no free tier (https://docs.fly.io/about/pricing).
+
+## ARM64 (Oracle Always Free Ampere A1)
+Every image used has a linux/arm64 variant (checked on Docker Hub, 23 Oct 2026): postgres:17-alpine, caddy:2-alpine, nginx:1.29-alpine, node:24-alpine, maven:3.9.11-eclipse-temurin-21, eclipse-temurin:21-jre-alpine. No Dockerfile change is needed; `docker compose build` on the ARM VM builds native arm64 images. The same compose runs DB, backend, frontend and file storage on one VM; uploads live on the `upload_data` volume on the VM disk.
+
+## Passwords
+Passwords are stored as BCrypt hashes (salted, adaptive, cost 10) and are never returned by the API or written to logs. The Admin sets an employee's password when creating the employee (min 10 characters). Every signed-in user can change their own password with the key icon in the header (current + new). Existing sessions stay valid until their token expires (12 hours).
