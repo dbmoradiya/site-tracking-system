@@ -116,22 +116,6 @@ public class StageController {
         assignments.update(siteId,request.roleAssignments()==null?Map.of():request.roleAssignments(),request.teamId(),user);
     }
 
-    @PostMapping("/stages/{stageId}/assign")
-    @Transactional
-    public void assign(@PathVariable long stageId,@Valid @RequestBody AssignmentRequest request,
-                       @AuthenticationPrincipal AppPrincipal user) {
-        long siteId=workflow.siteIdForStage(stageId); workflow.requireSiteManager(siteId,user);
-        AssignmentRow old=jdbc.sql("select supervisor_id,team_id from site_stages where id=:id")
-                .param("id",stageId).query(AssignmentRow.class).single();
-        jdbc.sql("update site_stages set supervisor_id=:supervisor,team_id=:team,updated_at=now() where id=:id")
-                .param("supervisor",request.supervisorId()).param("team",request.teamId()).param("id",stageId).update();
-        jdbc.sql("""
-                insert into assignment_history(stage_id,old_supervisor_id,new_supervisor_id,old_team_id,new_team_id,changed_by)
-                values(:stage,:oldSupervisor,:newSupervisor,:oldTeam,:newTeam,:user)
-                """).param("stage",stageId).param("oldSupervisor",old.supervisorId()).param("newSupervisor",request.supervisorId())
-                .param("oldTeam",old.teamId()).param("newTeam",request.teamId()).param("user",user.id()).update();
-    }
-
     @PostMapping(value="/stages/{stageId}/evidence",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public Map<String,Object> evidence(@PathVariable long stageId,@RequestPart("file") MultipartFile file,
@@ -235,25 +219,13 @@ public class StageController {
     @GetMapping("/stages/{stageId}/history")
     public Map<String,Object> history(@PathVariable long stageId,@AuthenticationPrincipal AppPrincipal user) {
         requireStageAccess(stageId,user);
-        List<Map<String,Object>> assignments=jdbc.sql("""
-                select ah.created_at,os.name old_supervisor,ns.name new_supervisor,ot.name old_team,nt.name new_team,u.name changed_by
-                from assignment_history ah left join employees os on os.id=ah.old_supervisor_id
-                left join employees ns on ns.id=ah.new_supervisor_id left join teams ot on ot.id=ah.old_team_id
-                left join teams nt on nt.id=ah.new_team_id join app_users u on u.id=ah.changed_by
-                where ah.stage_id=:id order by ah.created_at desc
-                """).param("id",stageId).query((rs,n)->{
-                    Map<String,Object> row=new LinkedHashMap<>(); row.put("createdAt",rs.getTimestamp("created_at").toInstant());
-                    row.put("oldSupervisor",value(rs.getString("old_supervisor"))); row.put("newSupervisor",value(rs.getString("new_supervisor")));
-                    row.put("oldTeam",value(rs.getString("old_team"))); row.put("newTeam",value(rs.getString("new_team")));
-                    row.put("changedBy",rs.getString("changed_by")); return row;
-                }).list();
         List<Map<String,Object>> reviews=jdbc.sql("""
                 select r.action,r.note,r.created_at,u.name action_by from stage_reviews r join app_users u on u.id=r.action_by
                 where r.stage_id=:id order by r.created_at desc
                 """).param("id",stageId).query((rs,n)->Map.<String,Object>of(
                         "action",rs.getString("action"),"note",value(rs.getString("note")),
                         "createdAt",rs.getTimestamp("created_at").toInstant(),"actionBy",rs.getString("action_by"))).list();
-        return Map.of("assignments",assignments,"reviews",reviews);
+        return Map.of("reviews",reviews);
     }
 
     @GetMapping("/stages/{stageId}/evidence")
@@ -299,9 +271,7 @@ public class StageController {
     }
 
     private String value(String value) { return value == null ? "—" : value; }
-    public record AssignmentRequest(Long supervisorId,Long teamId) {}
     public record ReviewRequest(String action,String note) {}
-    public record AssignmentRow(Long supervisorId,Long teamId) {}
     public record EvidenceFile(Long stageId,String storagePath,String contentType,String fileName) {}
     public record SiteAssignmentsRequest(Map<String,Long> roleAssignments,Long teamId) {}
 }

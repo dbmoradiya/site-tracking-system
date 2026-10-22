@@ -48,7 +48,9 @@ public class ProjectController {
                        count(distinct s.id) site_count,
                        count(distinct s.id) filter(where s.status='COMPLETED') completed_sites,
                        pc.name coordinator,
-                       coalesce((select string_agg(distinct es.name,'||') from sites ss join site_stages stg on stg.site_id=ss.id join employees es on es.id=stg.supervisor_id where ss.project_id=p.id),'') supervisors,
+                       coalesce((select string_agg(distinct sra.role_code||'::'||ea.name,'||')
+                         from sites sa join site_role_assignments sra on sra.site_id=sa.id
+                         join employees ea on ea.id=sra.employee_id where sa.project_id=p.id),'') assignment_pairs,
                        %s action_required
                 from projects p join employees pc on pc.id=p.coordinator_id left join sites s on s.project_id=p.id
                 """.formatted(actionRequiredExpression(user))+filter+" group by p.id,pc.name order by p.updated_at desc");
@@ -60,7 +62,7 @@ public class ProjectController {
             row.put("address",rs.getString("address")); row.put("targetDate",date(rs.getDate("target_date")));
             row.put("status",rs.getString("status")); row.put("siteCount",rs.getLong("site_count"));
             row.put("completedSites",rs.getLong("completed_sites"));
-            row.put("coordinators",List.of(rs.getString("coordinator"))); row.put("supervisors",names(rs.getString("supervisors")));
+            row.put("coordinators",List.of(rs.getString("coordinator"))); row.put("assignments",assignmentPairs(rs.getString("assignment_pairs")));
             row.put("actionRequired",rs.getLong("action_required")); return row;
         }).list();
     }
@@ -101,7 +103,7 @@ public class ProjectController {
         JdbcClient.StatementSpec siteSpec=jdbc.sql("""
                 select s.id,s.name,s.address,s.target_date,s.status,st.name site_type,
                        pc.name coordinator,
-                       count(ss.id) stage_count,count(ss.id) filter(where ss.status='APPROVED') approved_stages
+                       count(ss.id) stage_count,count(ss.id) filter(where ss.status in ('APPROVED','COMPLETED')) completed_stages
                 from sites s join projects p on p.id=s.project_id join site_types st on st.id=s.site_type_id
                 join employees pc on pc.id=p.coordinator_id
                 left join site_stages ss on ss.site_id=s.id where s.project_id=:id
@@ -115,7 +117,7 @@ public class ProjectController {
                     row.put("address",rs.getString("address")); row.put("targetDate",date(rs.getDate("target_date")));
                     row.put("status",rs.getString("status")); row.put("siteType",rs.getString("site_type"));
                     row.put("coordinator",rs.getString("coordinator")); row.put("stageCount",rs.getLong("stage_count"));
-                    row.put("approvedStages",rs.getLong("approved_stages"));
+                    row.put("completedStages",rs.getLong("completed_stages"));
                     row.put("canManage",projectManager); return row;
                 }).list();
         project.put("sites",sites);
@@ -152,16 +154,17 @@ public class ProjectController {
             if (dependency != null && (dependency < 1 || dependency > i))
                 throw new ApiException(400,"A Stage can depend only on an earlier Stage");
         }
-        long projectCoordinator=jdbc.sql("select coordinator_id from projects where id=:id").param("id",projectId)
-                .query(Long.class).optional().orElseThrow(()->new ApiException(404,"Project not found"));
+        boolean projectExists=jdbc.sql("select count(*) from projects where id=:id").param("id",projectId)
+                .query(Long.class).single()>0;
+        if(!projectExists) throw new ApiException(404,"Project not found");
         var requiredRoles=request.stages().stream().flatMap(stage->stage.requiredRoles().stream()).collect(java.util.stream.Collectors.toSet());
         if(!request.roleAssignments().keySet().equals(requiredRoles))
             throw new ApiException(400,"Provide one Site assignment field for every required role");
         request.roleAssignments().forEach(assignments::validate);
         long siteId=jdbc.sql("""
-                insert into sites(project_id,site_type_id,coordinator_id,team_id,name,address,target_date)
-                values(:project,:type,:coordinator,:team,:name,:address,:target) returning id
-                """).param("project",projectId).param("type",request.siteTypeId()).param("coordinator",projectCoordinator)
+                insert into sites(project_id,site_type_id,team_id,name,address,target_date)
+                values(:project,:type,:team,:name,:address,:target) returning id
+                """).param("project",projectId).param("type",request.siteTypeId())
                 .param("team",request.teamId())
                 .param("name",request.name()).param("address",request.address()).param("target",request.targetDate())
                 .query(Long.class).single();
@@ -169,11 +172,10 @@ public class ProjectController {
         for(int i=0;i<request.stages().size();i++) {
             SiteStageRequest stage=request.stages().get(i);
             long stageId=jdbc.sql("""
-                    insert into site_stages(site_id,name,position,evidence_required,status,supervisor_id,team_id)
-                    values(:site,:name,:position,true,:status,:supervisor,null) returning id
+                    insert into site_stages(site_id,name,position,evidence_required,status)
+                    values(:site,:name,:position,true,:status) returning id
                     """).param("site",siteId).param("name",stage.name()).param("position",i+1)
-                    .param("status",stage.dependsOnPosition()==null ? "READY" : "BLOCKED")
-                    .param("supervisor",request.roleAssignments().get("SUPERVISOR")).query(Long.class).single();
+                    .param("status",stage.dependsOnPosition()==null ? "READY" : "BLOCKED").query(Long.class).single();
             stageIds.put(i+1,stageId);
             for(String role:stage.requiredRoles().stream().distinct().toList()) jdbc.sql(
                     "insert into site_stage_required_roles(stage_id,role_code) values(:stage,:role)")
@@ -207,12 +209,31 @@ public class ProjectController {
     }
 
     private String date(Date value) { return value == null ? "" : value.toLocalDate().toString(); }
-    private List<String> names(String value) { return value == null || value.isBlank() ? List.of() : List.of(value.split("\\|\\|")); }
+    private List<PersonAssignment> assignmentPairs(String value) {
+        if(value==null || value.isBlank()) return List.of();
+        return java.util.Arrays.stream(value.split("\\|\\|")).map(pair->pair.split("::",2))
+                .filter(parts->parts.length==2).map(parts->new PersonAssignment(parts[0],parts[1])).toList();
+    }
     private String actionRequiredExpression(AppPrincipal user) {
-        if(user.hasRole("ADMIN")) return "(select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and (ssa.status='REVIEW_PENDING' or ssa.supervisor_id is null or ssa.team_id is null))";
+        if(user.hasRole("ADMIN")) return """
+                (select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and
+                 (ssa.status='REVIEW_PENDING'
+                  or (ssa.status not in ('APPROVED','COMPLETED') and exists(
+                    select 1 from site_stage_required_roles rr left join site_role_assignments sra
+                      on sra.site_id=sa.id and sra.role_code=rr.role_code
+                    where rr.stage_id=ssa.id and sra.employee_id is null))
+                  or (ssa.status in ('NOT_STARTED','READY','IN_PROGRESS') and not exists(
+                    select 1 from site_stage_required_roles rr where rr.stage_id=ssa.id))))
+                """;
         return """
                 (select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and
-                 ((p.coordinator_id=:employeeId and (ssa.status='REVIEW_PENDING' or ssa.supervisor_id is null or ssa.team_id is null))
+                 ((p.coordinator_id=:employeeId and (ssa.status='REVIEW_PENDING'
+                    or (ssa.status not in ('APPROVED','COMPLETED') and exists(
+                      select 1 from site_stage_required_roles missing_rr left join site_role_assignments missing_sra
+                        on missing_sra.site_id=sa.id and missing_sra.role_code=missing_rr.role_code
+                      where missing_rr.stage_id=ssa.id and missing_sra.employee_id is null))
+                    or (ssa.status in ('NOT_STARTED','READY','IN_PROGRESS') and not exists(
+                      select 1 from site_stage_required_roles no_role_rr where no_role_rr.stage_id=ssa.id))))
                   or (ssa.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED') and exists(
                     select 1 from site_stage_required_roles rr join site_role_assignments sra
                       on sra.site_id=sa.id and sra.role_code=rr.role_code
@@ -223,6 +244,7 @@ public class ProjectController {
     public record ProjectRequest(@NotBlank String name,@NotBlank String customerName,@NotBlank String customerMobile,
                                  String address,LocalDate targetDate,@NotNull Long coordinatorId) {}
     public record CoordinatorRequest(@NotNull Long coordinatorId) {}
+    public record PersonAssignment(String role,String name) {}
     public record SiteRequest(@NotBlank String name,@NotNull Long siteTypeId,Long teamId,Map<String,Long> roleAssignments,
                               String address,LocalDate targetDate,@NotEmpty List<SiteStageRequest> stages) {
         public SiteRequest { roleAssignments=roleAssignments==null?Map.of():roleAssignments; }

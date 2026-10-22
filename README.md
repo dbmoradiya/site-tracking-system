@@ -38,6 +38,6 @@ Demo accounts (password: `SiteTrack123!`):
 ## Product rules
 
 See [requirements v0.4](docs/requirements-v0.4-working-draft.md). Site status
-automatically becomes `COMPLETED` when every Stage is approved. Project status
+automatically becomes `COMPLETED` when every Stage is approved or directly completed. Project status
 becomes `COMPLETED` when every Site is completed. Every Stage requires at least
 one successfully uploaded evidence file before completion can be submitted.
