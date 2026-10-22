@@ -348,6 +348,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .notification-empty { padding: 18px; border-radius: 10px; color: var(--green); background: var(--green-soft); display: flex; align-items: center; gap: 12px; }
 .notification-empty p { margin: 4px 0 0; color: var(--slate); }
 
+.install-prompt { position: fixed; z-index: 90; right: 22px; bottom: 22px; width: min(620px,calc(100vw - 44px)); padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: #fff; box-shadow: 0 20px 50px rgba(15,23,42,.2); display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; align-items: center; gap: 12px; }
+.install-prompt > img { width: 48px; height: 48px; border-radius: 11px; }
+.install-prompt__copy { min-width: 0; display: grid; gap: 4px; }
+.install-prompt__copy span { color: var(--slate); font-size: .8rem; line-height: 1.4; }
+.install-prompt .icon-button { min-width: 48px; min-height: 48px; }
+
 @media (max-width: 1100px) {
   .metric-grid { grid-template-columns: repeat(2,1fr); }
   .card-grid, .site-list, .work-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -390,6 +396,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   .stage-editor__row > .stage-number { grid-row: 1; grid-column: 1; }
   .stage-editor__row > .row-actions { grid-row: 1; grid-column: 3; }
   .stage-editor__row > .evidence-lock { grid-column: 2; }
+  .install-prompt { right: 12px; bottom: calc(82px + env(safe-area-inset-bottom)); width: calc(100vw - 24px); }
 }
 
 @media (max-width: 560px) {
@@ -423,6 +430,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   .project-site__actions .button { width: 100%; }
   .project-stage__summary { grid-template-columns: auto minmax(0,1fr) auto; }
   .project-stage__summary > .status { grid-column: 2/-1; justify-self: start; }
+  .install-prompt { grid-template-columns: auto minmax(0,1fr) auto; }
+  .install-prompt .button { grid-column: 1/-1; grid-row: 2; width: 100%; min-height: 48px; }
+  .install-prompt .icon-button { grid-column: 3; grid-row: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
