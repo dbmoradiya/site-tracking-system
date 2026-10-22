@@ -11,6 +11,11 @@ communication and requirement notes may be in Gujarati.
 - PostgreSQL 17
 - Docker Compose for the complete local environment
 
+The current product slice includes role-aware Project filters, Dashboard action
+notifications, card-based Setup records, assigned-Project visibility, and
+evidence uploads with comments inside expandable Site/Stage sections on the
+Project detail screen. There is no separate work screen.
+
 ## Run
 
 ```sh

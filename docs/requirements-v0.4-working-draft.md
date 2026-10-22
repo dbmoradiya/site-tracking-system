@@ -20,6 +20,12 @@
 - Android માટે અલગ native app નહીં; responsive installable React PWA web અને Android બંને માટે વાપરવાની.
 - Google Maps/location picker હાલ નહીં રાખવો. Project અને Siteમાં સામાન્ય text address રાખી શકાય.
 - નવા Projectમાં Project name સાથે **customer name અને customer mobile number ફરજિયાત** રાખવાના.
+- અલગ `My work` screen નહીં રાખવી. Project detail screenમાં Site expand કરીને Stage evidence upload, comment અને submission કરવાના. Site detail screen review, assignment અને audit history માટે રહેશે.
+- Evidence upload વખતે optional text comment રાખવાની અને evidence historyમાં uploader તથા comment બતાવવાના.
+- Projects screenમાં location/address, completion date range, Supervisor, Coordinator, status અને current user માટે action required filters રાખવાના.
+- Dashboard notification sectionમાં role પ્રમાણે pending actions બતાવવાના: Admin/Coordinator માટે approval/assignment work અને Supervisor માટે evidence/rejected-work actions.
+- Setupમાં Site Types, Employees અને Teams card gridમાં બતાવવાના. Card click કરતાં read-only popup ખૂલશે; existing recordનું Edit button ફક્ત popupમાં રહેશે.
+- Employee અને Team detailsમાં તેમને સોંપાયેલા Projects બતાવવાના.
 - દરેક Site Type પોતાના default Stages અને તેમની dependencies રાખી શકશે. આ setup ફક્ત Admin બનાવી/બદલી શકશે.
 - દરેક Stage માટે ઓછામાં ઓછો એક સફળ evidence upload ફરજિયાત રહેશે; evidence વગર completion request નહીં જાય.
 - નવી Site બનાવતી વખતે પસંદ કરેલા Site Typeના default Stages load થશે. Admin તે Site માટે Stage name, order અને dependency બદલી શકશે.

@@ -43,12 +43,17 @@ Communicate with the user in simple Gujarati, keep updates short, and avoid long
 17. **Evidence:** every Stage requires at least one successfully uploaded evidence file before completion can be submitted.
 18. **Status rules:** approving every Stage automatically completes the Site. A Project completes when every Site is complete. Otherwise use `IN_PROGRESS` once work has started and `NOT_STARTED` before work starts.
 19. **Project customer:** customer name and customer mobile number are required when an Admin creates a Project.
+20. **No separate work screen:** evidence upload, comment and completion submission live in expandable Site/Stage sections on Project detail. Site detail is for review, assignment and audit history.
+21. **Project filters:** location/address, completion date range, Supervisor, Coordinator, status and role-aware action-required filters.
+22. **Notifications:** every role sees pending actions on the Dashboard. Admin/Coordinator see review and assignment work; Supervisor sees evidence work and requested changes.
+23. **Setup presentation:** Site Types, Employees and Teams use card grids. A card opens read-only details in a modal; editing an existing record begins only from the modal's Edit button.
+24. **Assignment visibility:** Employee and Team detail modals show assigned Projects.
 
 ## Main implemented journey
 
 Admin configures types/stages and creates people/Teams → Admin creates Project → Admin creates Sites inside it and identifies each Site's Coordinator → Admin/Coordinator assigns Supervisor + Team per stage → Supervisor sees work, adds photos online and requests completion → Admin/Site Coordinator reviews and approves or requests changes.
 
-The current vertical slice implements this journey through role-aware pages and APIs. Coordinator photo upload + explicit approval is available through My work and Site detail. Assignment/review audit data is retained by the API.
+The current vertical slice implements this journey through role-aware pages and APIs. Coordinator photo upload + explicit approval is available inside the Project → Site → Stage flow. Assignment/review audit data is retained by the API.
 
 ## Scope not yet settled
 
@@ -63,7 +68,7 @@ Do not label these as confirmed:
 
 - `compose.yaml`: PostgreSQL 17, Spring Boot API on port 8081, React/Nginx PWA on port 8080.
 - `backend/`: Java 21 / Spring Boot 4.1.1, Flyway schema, token authentication, role/access checks, project/site/stage/setup APIs, evidence uploads and automatic statuses.
-- `frontend/`: React 19 / TypeScript / Vite, responsive desktop sidebar and mobile bottom navigation, installable manifest/service worker, Admin setup and creation flows, Site review and My work evidence flow.
+- `frontend/`: React 19 / TypeScript / Vite, responsive desktop sidebar and mobile bottom navigation, installable manifest/service worker, Admin setup and creation flows, Project filters, Dashboard notifications, and evidence work within Site stages.
 - `design-system/site-tracking-system/MASTER.md`: active visual system generated with the UI/UX Pro Max skill.
 - Run with `docker compose up --build`; use the demo accounts in `README.md`.
 

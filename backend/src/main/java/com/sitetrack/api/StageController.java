@@ -56,7 +56,7 @@ public class StageController {
         boolean canManage="ADMIN".equals(user.role()) || ("COORDINATOR".equals(user.role()) && user.employeeId()!=null &&
                 jdbc.sql("select coordinator_id from sites where id=:id").param("id",siteId).query(Long.class).single().equals(user.employeeId()));
         List<Map<String,Object>> stages=jdbc.sql("""
-                select ss.id,ss.name,ss.position,ss.status,ss.evidence_required,ss.depends_on_stage_id,
+                select ss.id,ss.name,ss.position,ss.status,ss.evidence_required,ss.depends_on_stage_id,ss.supervisor_id,
                        sup.name supervisor,tm.name team,count(ev.id) filter(where ev.upload_status='UPLOADED') evidence_count
                 from site_stages ss left join employees sup on sup.id=ss.supervisor_id left join teams tm on tm.id=ss.team_id
                 left join evidence ev on ev.stage_id=ss.id where ss.site_id=:siteId
@@ -67,34 +67,12 @@ public class StageController {
                     row.put("status",rs.getString("status")); row.put("evidenceRequired",rs.getBoolean("evidence_required"));
                     row.put("supervisor",rs.getString("supervisor") == null ? "Unassigned" : rs.getString("supervisor"));
                     row.put("team",rs.getString("team") == null ? "Unassigned" : rs.getString("team"));
-                    row.put("evidenceCount",rs.getLong("evidence_count")); row.put("canManage",canManage); return row;
+                    row.put("evidenceCount",rs.getLong("evidence_count")); row.put("canManage",canManage);
+                    boolean canUpload=canManage || ("SUPERVISOR".equals(user.role()) && user.employeeId()!=null &&
+                            user.employeeId().equals((Long)rs.getObject("supervisor_id")));
+                    row.put("canUpload",canUpload); return row;
                 }).list();
         site.put("canManage",canManage); site.put("stages",stages); return site;
-    }
-
-    @GetMapping("/work")
-    public List<Map<String,Object>> work(@AuthenticationPrincipal AppPrincipal user) {
-        String filter=switch (user.role()) {
-            case "ADMIN" -> "";
-            case "COORDINATOR" -> " where s.coordinator_id=:employeeId";
-            default -> " where ss.supervisor_id=:employeeId";
-        };
-        JdbcClient.StatementSpec spec=jdbc.sql("""
-                select ss.id,ss.name stage_name,ss.status,s.id site_id,s.name site_name,p.name project_name,
-                       tm.name team,tm.contact_name,tm.mobile,
-                       count(ev.id) filter(where ev.upload_status='UPLOADED') evidence_count
-                from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id
-                left join teams tm on tm.id=ss.team_id left join evidence ev on ev.stage_id=ss.id
-                """+filter+" group by ss.id,s.id,p.id,tm.id order by p.target_date nulls last,ss.position");
-        if(!"ADMIN".equals(user.role())) spec=spec.param("employeeId",user.employeeId());
-        return spec.query((rs,n)->{
-            Map<String,Object> row=new LinkedHashMap<>(); row.put("id",rs.getLong("id"));
-            row.put("stageName",rs.getString("stage_name")); row.put("status",rs.getString("status"));
-            row.put("siteId",rs.getLong("site_id")); row.put("siteName",rs.getString("site_name"));
-            row.put("projectName",rs.getString("project_name")); row.put("team",rs.getString("team"));
-            row.put("contactName",rs.getString("contact_name")); row.put("mobile",rs.getString("mobile"));
-            row.put("evidenceCount",rs.getLong("evidence_count")); return row;
-        }).list();
     }
 
     @PostMapping("/stages/{stageId}/assign")
@@ -116,6 +94,7 @@ public class StageController {
     @PostMapping(value="/stages/{stageId}/evidence",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public Map<String,Object> evidence(@PathVariable long stageId,@RequestPart("file") MultipartFile file,
+                                       @RequestPart(value="comment",required=false) String comment,
                                        @AuthenticationPrincipal AppPrincipal user) throws IOException {
         if(file.isEmpty()) throw new ApiException(400,"Choose a non-empty evidence file");
         if(file.getSize()>15L*1024*1024) throw new ApiException(400,"Evidence file must be 15 MB or smaller");
@@ -129,10 +108,11 @@ public class StageController {
         if(!target.startsWith(uploadDir)) throw new ApiException(400,"Invalid file name");
         Files.copy(file.getInputStream(),target, StandardCopyOption.REPLACE_EXISTING);
         long id=jdbc.sql("""
-                insert into evidence(stage_id,file_name,content_type,storage_path,uploaded_by)
-                values(:stage,:name,:type,:path,:user) returning id
+                insert into evidence(stage_id,file_name,content_type,storage_path,uploaded_by,comment)
+                values(:stage,:name,:type,:path,:user,:comment) returning id
                 """).param("stage",stageId).param("name",file.getOriginalFilename()==null?"evidence":file.getOriginalFilename())
-                .param("type",file.getContentType()).param("path",target.toString()).param("user",user.id()).query(Long.class).single();
+                .param("type",file.getContentType()).param("path",target.toString()).param("user",user.id())
+                .param("comment",comment==null||comment.isBlank()?null:comment.trim()).query(Long.class).single();
         jdbc.sql("update site_stages set status=case when status in ('READY','NOT_STARTED','CHANGES_REQUESTED') then 'IN_PROGRESS' else status end,updated_at=now() where id=:id")
                 .param("id",stageId).update();
         workflow.recalculate(workflow.siteIdForStage(stageId));
@@ -205,12 +185,12 @@ public class StageController {
     public List<Map<String,Object>> evidenceList(@PathVariable long stageId,@AuthenticationPrincipal AppPrincipal user) {
         requireStageAccess(stageId,user);
         return jdbc.sql("""
-                select e.id,e.file_name,e.content_type,e.created_at,u.name uploaded_by
+                select e.id,e.file_name,e.content_type,e.comment,e.created_at,u.name uploaded_by
                 from evidence e join app_users u on u.id=e.uploaded_by
                 where e.stage_id=:stage and e.upload_status='UPLOADED' order by e.created_at desc
                 """).param("stage",stageId).query((rs,n)->Map.<String,Object>of(
                         "id",rs.getLong("id"),"fileName",rs.getString("file_name"),
-                        "contentType",value(rs.getString("content_type")),
+                        "contentType",value(rs.getString("content_type")),"comment",value(rs.getString("comment")),
                         "uploadedAt",rs.getTimestamp("created_at").toInstant(),
                         "uploadedBy",rs.getString("uploaded_by"))).list();
     }

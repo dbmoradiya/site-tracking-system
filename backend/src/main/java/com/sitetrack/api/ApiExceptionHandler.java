@@ -6,6 +6,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.Map;
@@ -33,6 +34,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<?> handleConflict(DataIntegrityViolationException ex) {
         return ResponseEntity.status(409).body(error("That record conflicts with existing data"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<?> handleNotFound(NoResourceFoundException ex) {
+        return ResponseEntity.status(404).body(error("Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)

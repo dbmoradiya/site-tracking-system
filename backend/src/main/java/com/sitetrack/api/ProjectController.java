@@ -40,9 +40,12 @@ public class ProjectController {
         JdbcClient.StatementSpec spec=jdbc.sql("""
                 select p.id,p.name,p.customer_name,p.customer_mobile,p.address,p.target_date,p.status,
                        count(distinct s.id) site_count,
-                       count(distinct s.id) filter(where s.status='COMPLETED') completed_sites
+                       count(distinct s.id) filter(where s.status='COMPLETED') completed_sites,
+                       coalesce((select string_agg(distinct ec.name,'||') from sites sc join employees ec on ec.id=sc.coordinator_id where sc.project_id=p.id),'') coordinators,
+                       coalesce((select string_agg(distinct es.name,'||') from sites ss join site_stages stg on stg.site_id=ss.id join employees es on es.id=stg.supervisor_id where ss.project_id=p.id),'') supervisors,
+                       %s action_required
                 from projects p left join sites s on s.project_id=p.id
-                """+filter+" group by p.id order by p.updated_at desc");
+                """.formatted(actionRequiredExpression(user))+filter+" group by p.id order by p.updated_at desc");
         if (!"ADMIN".equals(user.role())) spec=spec.param("employeeId",user.employeeId());
         return spec.query((rs,n)->{
             Map<String,Object> row=new LinkedHashMap<>();
@@ -50,7 +53,9 @@ public class ProjectController {
             row.put("customerName",rs.getString("customer_name")); row.put("customerMobile",rs.getString("customer_mobile"));
             row.put("address",rs.getString("address")); row.put("targetDate",date(rs.getDate("target_date")));
             row.put("status",rs.getString("status")); row.put("siteCount",rs.getLong("site_count"));
-            row.put("completedSites",rs.getLong("completed_sites")); return row;
+            row.put("completedSites",rs.getLong("completed_sites"));
+            row.put("coordinators",names(rs.getString("coordinators"))); row.put("supervisors",names(rs.getString("supervisors")));
+            row.put("actionRequired",rs.getLong("action_required")); return row;
         }).list();
     }
 
@@ -77,14 +82,19 @@ public class ProjectController {
                     row.put("address",rs.getString("address")); row.put("targetDate",date(rs.getDate("target_date")));
                     row.put("status",rs.getString("status")); return row;
                 }).optional().orElseThrow(()->new ApiException(404,"Project not found"));
-        List<Map<String,Object>> sites=jdbc.sql("""
+        String siteFilter="SUPERVISOR".equals(user.role())
+                ? " and exists(select 1 from site_stages access_stage where access_stage.site_id=s.id and access_stage.supervisor_id=:employeeId)" : "";
+        JdbcClient.StatementSpec siteSpec=jdbc.sql("""
                 select s.id,s.name,s.address,s.target_date,s.status,st.name site_type,
                        e.name coordinator,
                        count(ss.id) stage_count,count(ss.id) filter(where ss.status='APPROVED') approved_stages
                 from sites s join site_types st on st.id=s.site_type_id join employees e on e.id=s.coordinator_id
                 left join site_stages ss on ss.site_id=s.id where s.project_id=:id
+                """+siteFilter+"""
                 group by s.id,st.name,e.name order by s.created_at
-                """).param("id",id).query((rs,n)->{
+                """).param("id",id);
+        if("SUPERVISOR".equals(user.role())) siteSpec=siteSpec.param("employeeId",user.employeeId());
+        List<Map<String,Object>> sites=siteSpec.query((rs,n)->{
                     Map<String,Object> row=new LinkedHashMap<>();
                     row.put("id",rs.getLong("id")); row.put("name",rs.getString("name"));
                     row.put("address",rs.getString("address")); row.put("targetDate",date(rs.getDate("target_date")));
@@ -149,6 +159,14 @@ public class ProjectController {
     }
 
     private String date(Date value) { return value == null ? "" : value.toLocalDate().toString(); }
+    private List<String> names(String value) { return value == null || value.isBlank() ? List.of() : List.of(value.split("\\|\\|")); }
+    private String actionRequiredExpression(AppPrincipal user) {
+        return switch (user.role()) {
+            case "ADMIN" -> "(select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and (ssa.status='REVIEW_PENDING' or ssa.supervisor_id is null or ssa.team_id is null))";
+            case "COORDINATOR" -> "(select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and sa.coordinator_id=:employeeId and (ssa.status='REVIEW_PENDING' or ssa.supervisor_id is null or ssa.team_id is null))";
+            default -> "(select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and ssa.supervisor_id=:employeeId and ssa.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED'))";
+        };
+    }
 
     public record ProjectRequest(@NotBlank String name,@NotBlank String customerName,@NotBlank String customerMobile,
                                  String address,LocalDate targetDate) {}

@@ -34,14 +34,25 @@ public class SetupController {
                         "id",rs.getLong("id"),"name",rs.getString("name"),
                         "description",rs.getString("description") == null ? "" : rs.getString("description"),
                         "stages",rs.getString("stages"))).list();
-        List<Map<String, Object>> employees = jdbc.sql("select id,name,email,mobile,role,active from employees order by role,name")
+        List<Map<String, Object>> employees = jdbc.sql("""
+                select e.id,e.name,e.email,e.mobile,e.role,e.active,
+                  case when e.role='COORDINATOR' then coalesce((select string_agg(distinct p.name,'||') from sites s join projects p on p.id=s.project_id where s.coordinator_id=e.id),'')
+                       else coalesce((select string_agg(distinct p.name,'||') from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id where ss.supervisor_id=e.id),'') end assigned_projects
+                from employees e order by e.role,e.name
+                """)
                 .query((rs,n)->Map.<String,Object>of("id",rs.getLong("id"),"name",rs.getString("name"),
                         "email",rs.getString("email"),"mobile",rs.getString("mobile") == null ? "" : rs.getString("mobile"),
-                        "role",rs.getString("role"),"active",rs.getBoolean("active"))).list();
-        List<Map<String, Object>> teams = jdbc.sql("select id,name,contact_name,mobile,notes,active from teams order by name")
+                        "role",rs.getString("role"),"active",rs.getBoolean("active"),
+                        "projects",names(rs.getString("assigned_projects")))).list();
+        List<Map<String, Object>> teams = jdbc.sql("""
+                select t.id,t.name,t.contact_name,t.mobile,t.notes,t.active,
+                  coalesce((select string_agg(distinct p.name,'||') from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id where ss.team_id=t.id),'') assigned_projects
+                from teams t order by t.name
+                """)
                 .query((rs,n)->Map.<String,Object>of("id",rs.getLong("id"),"name",rs.getString("name"),
                         "contactName",rs.getString("contact_name"),"mobile",rs.getString("mobile"),
-                        "notes",rs.getString("notes") == null ? "" : rs.getString("notes"),"active",rs.getBoolean("active"))).list();
+                        "notes",rs.getString("notes") == null ? "" : rs.getString("notes"),"active",rs.getBoolean("active"),
+                        "projects",names(rs.getString("assigned_projects")))).list();
         return Map.of("siteTypes",types,"employees",employees,"teams",teams);
     }
 
@@ -93,6 +104,18 @@ public class SetupController {
         return Map.of("id",id);
     }
 
+    @PutMapping("/employees/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public void updateEmployee(@PathVariable long id,@Valid @RequestBody EmployeeRequest request) {
+        int changed=jdbc.sql("update employees set name=:name,email=:email,mobile=:mobile,role=:role where id=:id")
+                .param("name",request.name()).param("email",request.email()).param("mobile",request.mobile())
+                .param("role",request.role()).param("id",id).update();
+        if(changed==0) throw new ApiException(404,"Employee not found");
+        jdbc.sql("update app_users set name=:name,email=:email,role=:role where employee_id=:id")
+                .param("name",request.name()).param("email",request.email()).param("role",request.role()).param("id",id).update();
+    }
+
     @PostMapping("/teams")
     @PreAuthorize("hasRole('ADMIN')")
     public Map<String,Object> createTeam(@Valid @RequestBody TeamRequest request) {
@@ -101,6 +124,17 @@ public class SetupController {
                 .param("notes",request.notes()).query(Long.class).single();
         return Map.of("id",id);
     }
+
+    @PutMapping("/teams/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void updateTeam(@PathVariable long id,@Valid @RequestBody TeamRequest request) {
+        int changed=jdbc.sql("update teams set name=:name,contact_name=:contact,mobile=:mobile,notes=:notes where id=:id")
+                .param("name",request.name()).param("contact",request.contactName()).param("mobile",request.mobile())
+                .param("notes",request.notes()).param("id",id).update();
+        if(changed==0) throw new ApiException(404,"Team not found");
+    }
+
+    private List<String> names(String value) { return value == null || value.isBlank() ? List.of() : List.of(value.split("\\|\\|")); }
 
     public record SiteTypeRequest(@NotBlank String name, String description, @NotEmpty List<StageTemplateRequest> stages) {}
     public record StageTemplateRequest(@NotBlank String name, Integer dependsOnPosition) {}
