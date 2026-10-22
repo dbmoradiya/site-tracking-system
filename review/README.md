@@ -1,33 +1,38 @@
 # Site Tracking — client review sketches v0.4
 
-આ folderમાં ફક્ત `docs/requirements-v0.4-working-draft.md`ના આધારે બનાવેલા review artifacts છે.
-આ final UI અથવા application implementation નથી.
+This folder contains review artifacts based only on
+`docs/requirements-v0.4-working-draft.md`. They are not final UI or an
+application implementation.
 
-## મુખ્ય files
+All web and Android interface labels are English only. No other product
+language or localization is supported.
 
-- `site-tracking-screen-sketches-v0.4.drawio` — 18-page editable draw.io file; text, boxes, buttons અને arrows native shapes છે.
-- `site-tracking-client-review-v0.4.pdf` — client સાથે સરળ review માટે 18-page PDF.
-- `screen-inventory-v0.4.json` — page IDs, titles, roles અને excluded scopeની machine-readable યાદી.
+## Main files
+
+- `site-tracking-screen-sketches-v0.4.drawio` — 18-page editable draw.io file; text, boxes, buttons and arrows are native shapes.
+- `site-tracking-client-review-v0.4.pdf` — 18-page client-review PDF.
+- `screen-inventory-v0.4.json` — machine-readable page IDs, titles, roles and excluded scope.
 - `screens/` — representative visual-check PNGs.
-- `tools/generate_review.py` — draw.io XML અને matching HTML ફરી બનાવવાનું generator.
+- `tools/generate_review.py` — generator for the draw.io XML and matching HTML.
 
-## Scope નોંધ
+## Scope note
 
-Confirmed flow, roles, permissions, online photo upload, review, reassignment history,
-linked-Site limited access અને failure/retry બતાવ્યાં છે.
+The sketches cover the confirmed flow, roles, permissions, online photo
+uploads, reviews, assignment history, linked-Site access limits, and explicit
+upload failure/retry.
 
-પીળાં boxesમાં રહેલી બાબતો **“નક્કી કરવાનું”** છે. ખાસ કરીને pause/reopen,
-stage dependency, Site/Project status derivation, language scope, exact fields અને
-linked Siteમાં basic progressની detail હજી confirmed નથી.
+Yellow boxes mark decisions that are still pending: pause/reopen behavior,
+stage dependencies, Site/Project status derivation, exact fields, and the
+amount of basic progress shown for another Coordinator's linked Site.
 
-Materials, GPS/location, offline/sync, iOS અને Team login feature તરીકે ઉમેર્યાં નથી.
+Materials, GPS/location, offline/sync, iOS and Team login are not included as
+features.
 
-## ફરી generate કરવું
+## Regenerate
 
 ```sh
 python3 review/tools/generate_review.py
 ```
 
-આ command editable `.drawio`, review `.html` અને inventory `.json` ફરી બનાવે છે.
-PDF export માટે Chromium/Chromeમાં generated HTML print-to-PDF કરી શકાય છે.
-
+This regenerates the editable `.drawio`, review `.html` and inventory `.json`.
+Print the generated HTML to PDF with Chromium or Chrome to refresh the PDF.

@@ -2,56 +2,57 @@
   "version": "0.4",
   "date": "2026-10-22",
   "requirements_source": "docs/requirements-v0.4-working-draft.md",
+  "interface_language": "English only",
   "page_count": 18,
   "pages": [
     {
       "id": "00",
-      "title": "Client review માર્ગદર્શિકા",
+      "title": "Client review guide",
       "role": ""
     },
     {
       "id": "01",
-      "title": "મુખ્ય કામનો પ્રવાહ",
+      "title": "Main workflow",
       "role": ""
     },
     {
       "id": "02",
-      "title": "Roles, platform અને permission",
+      "title": "Roles, platforms and permissions",
       "role": ""
     },
     {
       "id": "03",
-      "title": "Admin setup અને master data",
-      "role": "એડમિન · વેબ"
+      "title": "Admin setup and master data",
+      "role": "Admin · Web"
     },
     {
       "id": "04",
-      "title": "નવો Project બનાવવો",
-      "role": "એડમિન · વેબ"
+      "title": "Create a new Project",
+      "role": "Admin · Web"
     },
     {
       "id": "05",
-      "title": "Projectની અંદર Site બનાવવી",
-      "role": "એડમિન · વેબ"
+      "title": "Create a Site inside a Project",
+      "role": "Admin · Web"
     },
     {
       "id": "06",
-      "title": "Project overview: અલગ Sites, અલગ Coordinators",
-      "role": "એડમિન · વેબ"
+      "title": "Project overview: different Sites, different Coordinators",
+      "role": "Admin · Web"
     },
     {
       "id": "07",
-      "title": "દરેક Stage પર Supervisor + Team સોંપવી",
-      "role": "વેબ"
+      "title": "Assign a Supervisor + Team to each Stage",
+      "role": "Web"
     },
     {
       "id": "08",
-      "title": "Coordinator dashboard અને linked Site access",
-      "role": "Coordinator · વેબ"
+      "title": "Coordinator dashboard and linked Site access",
+      "role": "Coordinator · Web"
     },
     {
       "id": "09",
-      "title": "Supervisor: મારું કામ",
+      "title": "Supervisor: My Work",
       "role": "Supervisor · Android"
     },
     {
@@ -72,7 +73,7 @@
     {
       "id": "13",
       "title": "Admin / Coordinator review",
-      "role": "વેબ + Android"
+      "role": "Web + Android"
     },
     {
       "id": "14",
@@ -81,17 +82,17 @@
     },
     {
       "id": "15",
-      "title": "Assignment handover અને visible history",
-      "role": "વેબ + Android"
+      "title": "Assignment handover and visible history",
+      "role": "Web + Android"
     },
     {
       "id": "16",
-      "title": "Upload failure અને explicit retry",
+      "title": "Upload failure and explicit retry",
       "role": "Android"
     },
     {
       "id": "17",
-      "title": "Client સાથે નક્કી કરવાના મુદ્દા",
+      "title": "Decisions to confirm with the client",
       "role": ""
     }
   ],

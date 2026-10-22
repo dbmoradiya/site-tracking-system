@@ -9,6 +9,8 @@ from pathlib import Path
 import textwrap
 import xml.etree.ElementTree as ET
 
+from english_labels import english
+
 
 ROOT = Path(__file__).resolve().parents[2]
 REVIEW = ROOT / "review"
@@ -17,7 +19,7 @@ OUT_HTML = REVIEW / "site-tracking-client-review-v0.4.html"
 OUT_MANIFEST = REVIEW / "screen-inventory-v0.4.json"
 
 W, H = 1169, 827
-FONT = "Noto Sans Gujarati"
+FONT = "Arial"
 
 COLORS = {
     "ink": "#172033",
@@ -48,9 +50,9 @@ def esc(value: object) -> str:
 class Page:
     def __init__(self, page_id: str, title: str, subtitle: str, role: str = ""):
         self.page_id = page_id
-        self.title = title
-        self.subtitle = subtitle
-        self.role = role
+        self.title = english(title)
+        self.subtitle = english(subtitle)
+        self.role = english(role)
         self.cells: list[dict] = []
         self.svg: list[str] = []
         self._counter = 1
@@ -75,6 +77,7 @@ class Page:
              label="", size=13, color=None, bold=False, align="left", valign="middle",
              dashed=False, stroke_width=1.2) -> str:
         cid = self._id()
+        label = english(label)
         style = (
             f"rounded={1 if radius else 0};whiteSpace=wrap;html=1;"
             f"fillColor={fill};strokeColor={stroke};strokeWidth={stroke_width};"
@@ -100,6 +103,7 @@ class Page:
 
     def text(self, x, y, w, h, label, size=13, color=None, bold=False, align="left") -> str:
         cid = self._id()
+        label = english(label)
         style = (
             f"text;html=1;strokeColor=none;fillColor=none;whiteSpace=wrap;"
             f"fontFamily={FONT};fontSize={size};fontColor={color or COLORS['ink']};"
@@ -158,9 +162,9 @@ class Page:
     def note(self, x, y, w, h, label, pending=False):
         fill = COLORS["amber_soft"] if pending else COLORS["blue_soft"]
         stroke = "#F59E0B" if pending else "#93C5FD"
-        prefix = "નક્કી કરવાનું: " if pending else "Review નોંધ: "
+        prefix = "Decision pending: " if pending else "Review note: "
         return self.rect(x, y, w, h, fill=fill, stroke=stroke, radius=8,
-                         label=prefix + label, size=11, color=COLORS["amber"] if pending else COLORS["ink"])
+                         label=prefix + english(label), size=11, color=COLORS["amber"] if pending else COLORS["ink"])
 
     def button(self, x, y, w, label, primary=True, danger=False):
         if danger:
@@ -173,6 +177,7 @@ class Page:
                          label=label, size=12, color=color, bold=True, align="center")
 
     def field(self, x, y, w, label, value="", required=False, h=56):
+        label = english(label)
         self.text(x, y, w, 18, f"{label}{' *' if required else ''}", size=10, color=COLORS["muted"], bold=True)
         return self.rect(x, y + 20, w, h - 20, fill="#FFFFFF", stroke=COLORS["line"], radius=6,
                          label=value, size=12, color=COLORS["ink"])
@@ -453,7 +458,7 @@ def build_pages() -> list[Page]:
     p.note(454, 150, 674, 92, "Supervisor ફક્ત assigned work અને જરૂરી Site/Team context જુએ છે.")
     p.note(454, 266, 674, 92, "Android navigationમાં મુખ્ય કામ, progress અને profile—ત્રણ જ top-level itemsનું sketch.")
     p.note(454, 382, 674, 92, "No GPS permission, no materials section, no offline/sync indicator.")
-    p.note(454, 498, 674, 110, "Final language scope નક્કી નથી. અહીં Gujarati review માટે Gujarati labels છે.", pending=True)
+    p.note(454, 498, 674, 110, "Final language scope નક્કી નથી. અહીં Gujarati review માટે Gujarati labels છે.")
     pages.append(p)
 
     p = Page("10", "Supervisor: Stage details", "Team contact, progress અને પુરાવા actions એક જગ્યાએ", "Supervisor · Android")
@@ -589,9 +594,8 @@ def build_pages() -> list[Page]:
         ("P-01", "Pause / block / reopen", "ચાલુ stage pause કરવો? Completed stage કોણ અને કેવી રીતે reopen કરે?"),
         ("P-02", "Stage dependency", "Shed પૂરું થયા પછી Solar શરૂ થાય જેવી ફરજિયાત શરતો છે?"),
         ("P-03", "Status calculation", "Final stage approvalથી Site auto-complete? Project status કેવી રીતે ગણાય?"),
-        ("P-04", "Language scope", "Web અને Androidમાં કઈ ભાષાઓ final support કરવી?"),
-        ("P-05", "Exact fields", "Project/Site/employee/Team માટે ફરજિયાત field list શું હશે?"),
-        ("P-06", "Basic progress detail", "બીજી Coordinatorની linked Siteમાં કેટલું progress detail દેખાડવું?"),
+        ("P-04", "Exact fields", "Project/Site/employee/Team માટે ફરજિયાત field list શું હશે?"),
+        ("P-05", "Basic progress detail", "બીજી Coordinatorની linked Siteમાં કેટલું progress detail દેખાડવું?"),
     ]
     for i, (pid, title, body) in enumerate(pending):
         col, row = i % 2, i // 2
@@ -623,12 +627,12 @@ def write_html(pages: list[Page]) -> None:
     css_font = font_path.resolve().as_uri()
     sections = "\n".join(f'<section class="sheet">{p.svg_markup()}</section>' for p in pages)
     document = f'''<!doctype html>
-<html lang="gu"><head><meta charset="utf-8"><title>Site Tracking Client Review v0.4</title>
+<html lang="en"><head><meta charset="utf-8"><title>Site Tracking Client Review v0.4</title>
 <style>
 @font-face {{ font-family: "Noto Sans Gujarati"; src: url("{css_font}") format("truetype"); font-weight: 100 900; }}
 @page {{ size: A4 landscape; margin: 0; }}
 * {{ box-sizing: border-box; }}
-html, body {{ margin: 0; padding: 0; background: #d7dee8; font-family: "Noto Sans Gujarati", sans-serif; }}
+html, body {{ margin: 0; padding: 0; background: #d7dee8; font-family: Arial, sans-serif; }}
 .sheet {{ width: 297mm; height: 210mm; margin: 0 auto 8mm; background: white; page-break-after: always; overflow: hidden; }}
 .sheet:last-child {{ page-break-after: auto; }}
 svg {{ display: block; width: 100%; height: 100%; }}
@@ -642,6 +646,7 @@ def write_manifest(pages: list[Page]) -> None:
         "version": "0.4",
         "date": "2026-10-22",
         "requirements_source": "docs/requirements-v0.4-working-draft.md",
+        "interface_language": "English only",
         "page_count": len(pages),
         "pages": [{"id": p.page_id, "title": p.title, "role": p.role} for p in pages],
         "scope_excluded": ["materials", "GPS/location", "offline/sync", "iOS", "Team login"],
