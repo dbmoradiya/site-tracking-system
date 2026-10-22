@@ -141,7 +141,7 @@ public class StageController {
         if(file.getSize()>15L*1024*1024) throw new ApiException(400,"Evidence file must be 15 MB or smaller");
         requireStageAccess(stageId,user);
         String current=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
-        if(List.of("BLOCKED","REVIEW_PENDING","APPROVED").contains(current))
+        if(List.of("BLOCKED","REVIEW_PENDING","APPROVED","COMPLETED").contains(current))
             throw new ApiException(409,"Evidence cannot be added while this Stage is "+current.toLowerCase().replace('_',' '));
         Files.createDirectories(uploadDir);
         String safeName=UUID.randomUUID()+"-"+Path.of(file.getOriginalFilename()==null?"evidence":file.getOriginalFilename()).getFileName();
@@ -164,6 +164,9 @@ public class StageController {
     @Transactional
     public void submit(@PathVariable long stageId,@AuthenticationPrincipal AppPrincipal user) {
         requireStageAccess(stageId,user);
+        long requiredRoleCount=jdbc.sql("select count(*) from site_stage_required_roles where stage_id=:id")
+                .param("id",stageId).query(Long.class).single();
+        if(requiredRoleCount==0) throw new ApiException(400,"A Stage with no required roles must be completed directly");
         long evidenceCount=jdbc.sql("select count(*) from evidence where stage_id=:id and upload_status='UPLOADED'")
                 .param("id",stageId).query(Long.class).single();
         if(evidenceCount==0) throw new ApiException(400,"At least one successfully uploaded evidence file is required");
@@ -201,6 +204,31 @@ public class StageController {
                 update site_stages set status='READY',updated_at=now()
                 where depends_on_stage_id=:approved and status='BLOCKED'
                 """).param("approved",stageId).update();
+        workflow.recalculate(siteId);
+    }
+
+    @PostMapping("/stages/{stageId}/complete")
+    @Transactional
+    public void complete(@PathVariable long stageId,@AuthenticationPrincipal AppPrincipal user) {
+        long siteId=workflow.siteIdForStage(stageId); workflow.requireSiteManager(siteId,user);
+        long requiredRoleCount=jdbc.sql("select count(*) from site_stage_required_roles where stage_id=:id")
+                .param("id",stageId).query(Long.class).single();
+        if(requiredRoleCount>0) throw new ApiException(400,"Only a Stage with no required roles can be completed directly");
+        long evidenceCount=jdbc.sql("select count(*) from evidence where stage_id=:id and upload_status='UPLOADED'")
+                .param("id",stageId).query(Long.class).single();
+        if(evidenceCount==0) throw new ApiException(400,"At least one successfully uploaded evidence file is required");
+        String current=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
+        if("BLOCKED".equals(current)) throw new ApiException(409,"Complete the dependency before completing this Stage");
+        if(!List.of("READY","NOT_STARTED","IN_PROGRESS").contains(current))
+            throw new ApiException(409,"This Stage cannot be completed from its current status");
+        jdbc.sql("update site_stages set status='COMPLETED',completed_by=:user,completed_at=now(),updated_at=now() where id=:id")
+                .param("user",user.id()).param("id",stageId).update();
+        jdbc.sql("insert into stage_reviews(stage_id,action,action_by) values(:stage,'COMPLETED',:user)")
+                .param("stage",stageId).param("user",user.id()).update();
+        jdbc.sql("""
+                update site_stages set status='READY',updated_at=now()
+                where depends_on_stage_id=:completed and status='BLOCKED'
+                """).param("completed",stageId).update();
         workflow.recalculate(siteId);
     }
 

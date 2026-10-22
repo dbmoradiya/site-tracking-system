@@ -223,7 +223,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .timeline-item { display: grid; grid-template-columns: 48px 1fr; }
 .timeline-item__rail { display: grid; grid-template-rows: 42px 1fr; justify-items: center; }
 .timeline-item__rail > span { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--slate); background: var(--muted); font-weight: 800; font-size: .8rem; }
-.timeline-item--approved .timeline-item__rail > span { color: #fff; background: var(--green); }
+.timeline-item--approved .timeline-item__rail > span, .timeline-item--completed .timeline-item__rail > span { color: #fff; background: var(--green); }
 .timeline-item__rail i { width: 2px; height: 100%; background: var(--line); }
 .timeline-item__card { margin: 0 0 20px 8px; padding: 18px; border: 1px solid var(--line); border-radius: 13px; }
 .timeline-item__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }

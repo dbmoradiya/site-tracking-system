@@ -61,9 +61,9 @@ public class WorkflowService {
         String siteStatus = jdbc.sql("""
                 select case
                   when count(*) = 0 then 'NOT_STARTED'
-                  when count(*) filter (where status='APPROVED') = count(*) then 'COMPLETED'
+                  when count(*) filter (where status in ('APPROVED','COMPLETED')) = count(*) then 'COMPLETED'
                   when count(*) filter (where status not in ('NOT_STARTED','BLOCKED','READY')) > 0
-                       or count(*) filter (where status='APPROVED') > 0 then 'IN_PROGRESS'
+                       or count(*) filter (where status in ('APPROVED','COMPLETED')) > 0 then 'IN_PROGRESS'
                   else 'NOT_STARTED'
                 end
                 from site_stages where site_id=:siteId
