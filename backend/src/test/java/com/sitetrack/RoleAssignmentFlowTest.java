@@ -145,6 +145,38 @@ class RoleAssignmentFlowTest {
         assertEquals(200, upload(admin, stage1, "plan.pdf", "application/pdf"));
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void teamCanBeRequiredPerStage() {
+        String admin = login("admin@sitetrack.local");
+        String coordinator = login("coordinator@sitetrack.local");
+        Map<String, Object> setup = get(admin, "/setup", Map.class);
+        List<Map<String, Object>> teams = (List<Map<String, Object>>) setup.get("teams");
+        long teamId = ((Number) teams.get(0).get("id")).longValue();
+        long coordinatorId = idOf((List<Map<String, Object>>) setup.get("employees"), "coordinator@sitetrack.local");
+        // a Team is not a valid employee role
+        assertEquals(400, send(HttpMethod.POST, admin, "/setup/employees", Map.of("name", "Bad Role", "email", "bad@sitetrack.local", "mobile", "9000000000", "roles", List.of("TEAM"), "password", "Sample1234!")));
+        long project = post(admin, "/projects", Map.of("name", "Team Project", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
+        long site = post(admin, "/projects/" + project + "/sites", Map.of("name", "Team Site", "siteTypeId", 1, "stages", List.of(
+                Map.of("name", "Civil", "requiredRoles", List.of("TEAM", "SUPERVISOR")))));
+        Map<String, Object> detail = get(admin, "/sites/" + site, Map.class);
+        Map<String, Object> stage = ((List<Map<String, Object>>) detail.get("stages")).get(0);
+        long stageId = ((Number) stage.get("id")).longValue();
+        String uri = "/sites/" + site + "/stages/" + stageId + "/assignments";
+        assertEquals(400, send(HttpMethod.PUT, admin, uri, Map.of("roleAssignments", Map.of("TEAM", 999999))));
+        assertEquals(200, send(HttpMethod.PUT, coordinator, uri, Map.of("roleAssignments", Map.of("TEAM", teamId))));
+        stage = ((List<Map<String, Object>>) get(admin, "/sites/" + site, Map.class).get("stages")).get(0);
+        Map<String, Object> teamAssignment = ((List<Map<String, Object>>) stage.get("assignments")).stream()
+                .filter(a -> "TEAM".equals(a.get("role"))).findFirst().orElseThrow();
+        assertEquals(teamId, ((Number) teamAssignment.get("employeeId")).longValue());
+        assertNotNull(teamAssignment.get("employeeName"));
+        // clearing works
+        Map<String, Object> clear = new java.util.HashMap<>(); clear.put("TEAM", null);
+        assertEquals(200, send(HttpMethod.PUT, admin, uri, Map.of("roleAssignments", clear)));
+        stage = ((List<Map<String, Object>>) get(admin, "/sites/" + site, Map.class).get("stages")).get(0);
+        assertNull(((List<Map<String, Object>>) stage.get("assignments")).stream().filter(a -> "TEAM".equals(a.get("role"))).findFirst().orElseThrow().get("employeeId"));
+    }
+
     int upload(String token, long stage, String filename, String type) {
         MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
         parts.add("file", new ByteArrayResource("data".getBytes()) {

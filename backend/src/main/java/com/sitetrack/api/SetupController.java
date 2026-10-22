@@ -157,7 +157,7 @@ public class SetupController {
     }
 
     private void validateRequiredRoles(List<String> roles) {
-        if (roles.stream().anyMatch(role -> !allowedRole(role)))
+        if (roles.stream().anyMatch(role -> !allowedRole(role) && !"TEAM".equals(role)))
             throw new ApiException(400,"Required Roles contains an invalid role");
     }
 

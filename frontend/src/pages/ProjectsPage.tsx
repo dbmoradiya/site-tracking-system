@@ -1,4 +1,5 @@
-import { ArrowRight, Filter, Plus, Search, X } from 'lucide-react'
+import { Anchor, Badge, Button, Collapse, Group, NativeSelect, Paper, SimpleGrid, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { Filter, Plus, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/EmptyState'
@@ -25,13 +26,35 @@ export function ProjectsPage(){
   const change=(key:keyof Filters,value:string)=>{setFilters({...filters,[key]:value,...(key==='role'?{assignee:''}:{})});if(key==='status'){const next=new URLSearchParams(searchParams);if(value)next.set('status',value);else next.delete('status');setSearchParams(next)}}
   const clearFilters=()=>{setFilters(emptyFilters);const next=new URLSearchParams(searchParams);next.delete('status');setSearchParams(next)}
   if(!items)return <Loading label="Loading projects"/>
-  return <div className="page"><header className="page-header"><div><p className="eyebrow">Portfolio</p><h1>Projects</h1><p>Find work by delivery date, people, location, status or pending action.</p></div>{hasRole(user,'ADMIN')&&<Link className="button button--primary" to="/projects/new"><Plus/>New project</Link>}</header>
-    <div className="toolbar project-toolbar"><label className="search"><Search aria-hidden="true"/><span className="sr-only">Search projects</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search projects, customers or locations"/></label><button className={`button button--secondary ${activeCount?'filter-active':''}`} onClick={()=>setShowFilters(!showFilters)} aria-expanded={showFilters}><Filter/>Advanced filters {activeCount>0&&<span className="filter-count">{activeCount}</span>}</button><span>{filtered.length} projects</span></div>
-    {showFilters&&<section className="filter-panel" aria-label="Advanced project filters"><div className="filter-panel__heading"><div><p className="eyebrow">Refine portfolio</p><h2>Advanced filters</h2></div><button className="icon-button" onClick={()=>setShowFilters(false)} aria-label="Close filters"><X/></button></div><div className="filter-grid"><label>Location<input value={filters.location} onChange={e=>change('location',e.target.value)} placeholder="City, area or address"/></label><label>Completion date from<input type="date" value={filters.dateFrom} onChange={e=>change('dateFrom',e.target.value)}/></label><label>Completion date to<input type="date" value={filters.dateTo} onChange={e=>change('dateTo',e.target.value)}/></label><label>Assigned role<select value={filters.role} onChange={e=>change('role',e.target.value)}><option value="">All roles</option>{roles.map(role=><option key={role} value={role}>{titleCase(role)}</option>)}</select></label><label>Assignee<select value={filters.assignee} onChange={e=>change('assignee',e.target.value)}><option value="">All assignees</option>{assignees.map(name=><option key={name}>{name}</option>)}</select></label><label>Project Coordinator<select value={filters.coordinator} onChange={e=>change('coordinator',e.target.value)}><option value="">All Coordinators</option>{coordinators.map(name=><option key={name}>{name}</option>)}</select></label><label>Status<select value={filters.status} onChange={e=>change('status',e.target.value)}><option value="">All statuses</option><option value="NOT_STARTED">Not started</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option></select></label><label>Action required<select value={filters.action} onChange={e=>change('action',e.target.value)}><option value="">All projects</option><option value="required">Action required</option><option value="clear">No action required</option></select></label></div><button className="button button--ghost" onClick={clearFilters} disabled={activeCount===0}>Clear all filters</button></section>}
-    {filtered.length===0?<EmptyState title="No projects found" description="Change or clear filters to see more Projects."/>:<div className="card-grid">
-      {filtered.map(p=><Link className="project-card" to={`/projects/${p.id}`} key={p.id}><div className="project-card__top"><span className="project-card__mark">{p.name.slice(0,2).toUpperCase()}</span><StatusBadge status={p.status}/></div><h2>{p.name}</h2><p>{p.customerName} · {p.address||'No location'}</p>{p.actionRequired>0&&<span className="action-pill">{p.actionRequired} action{p.actionRequired===1?'':'s'} required</span>}<dl><div><dt>Sites</dt><dd>{p.siteCount}</dd></div><div><dt>Completed</dt><dd>{p.completedSites}</dd></div><div><dt>Target</dt><dd>{p.targetDate||'Not set'}</dd></div></dl><span className="card-link">Open project <ArrowRight/></span></Link>)}
-    </div>}
-  </div>
+  const sel=(label:string,key:keyof Filters,data:{value:string;label:string}[])=><NativeSelect size="xs" label={label} value={filters[key]} onChange={e=>change(key,e.currentTarget.value)} data={data}/>
+  return <Stack gap="sm" className="page-compact">
+    <Group justify="space-between" align="flex-end"><div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Portfolio</Text><Title order={2}>Projects</Title></div>
+      {hasRole(user,'ADMIN')&&<Button component={Link} to="/projects/new" size="xs" leftSection={<Plus size={14}/>}>New project</Button>}</Group>
+    <Group gap="xs" wrap="wrap"><TextInput aria-label="Search projects" style={{flex:'1 1 220px'}} size="xs" leftSection={<Search size={14}/>} value={query} onChange={e=>setQuery(e.currentTarget.value)} placeholder="Search projects, customers or locations"/>
+      <Button size="xs" variant={activeCount?'filled':'default'} leftSection={<Filter size={14}/>} onClick={()=>setShowFilters(!showFilters)} aria-expanded={showFilters}>Filters{activeCount>0?` (${activeCount})`:''}</Button>
+      <Text size="xs" c="dimmed">{filtered.length} projects</Text></Group>
+    <Collapse expanded={showFilters}><Paper withBorder p="sm" aria-label="Advanced project filters"><SimpleGrid cols={{base:1,xs:2,md:4}} spacing="xs">
+      <TextInput size="xs" label="Location" value={filters.location} onChange={e=>change('location',e.currentTarget.value)} placeholder="City, area or address"/>
+      <TextInput size="xs" type="date" label="Completion from" value={filters.dateFrom} onChange={e=>change('dateFrom',e.currentTarget.value)}/>
+      <TextInput size="xs" type="date" label="Completion to" value={filters.dateTo} onChange={e=>change('dateTo',e.currentTarget.value)}/>
+      {sel('Assigned role','role',[{value:'',label:'All roles'},...roles.map(r=>({value:r,label:titleCase(r)}))])}
+      {sel('Assignee','assignee',[{value:'',label:'All assignees'},...assignees.map(n=>({value:n,label:n}))])}
+      {sel('Project Coordinator','coordinator',[{value:'',label:'All Coordinators'},...coordinators.map(n=>({value:n,label:n}))])}
+      {sel('Status','status',[{value:'',label:'All statuses'},{value:'NOT_STARTED',label:'Not started'},{value:'IN_PROGRESS',label:'In progress'},{value:'COMPLETED',label:'Completed'}])}
+      {sel('Action required','action',[{value:'',label:'All projects'},{value:'required',label:'Action required'},{value:'clear',label:'No action required'}])}
+    </SimpleGrid><Group justify="flex-end" mt="xs"><Button size="xs" variant="subtle" onClick={clearFilters} disabled={activeCount===0}>Clear all filters</Button></Group></Paper></Collapse>
+    {filtered.length===0?<EmptyState title="No projects found" description="Change or clear filters to see more Projects."/>:
+    <Paper withBorder><Table.ScrollContainer minWidth={640}><Table verticalSpacing={6} horizontalSpacing="sm" highlightOnHover fz="sm">
+      <Table.Thead><Table.Tr><Table.Th>Project</Table.Th><Table.Th>Customer</Table.Th><Table.Th>Sites</Table.Th><Table.Th>Target</Table.Th><Table.Th>Status</Table.Th><Table.Th>Actions</Table.Th></Table.Tr></Table.Thead>
+      <Table.Tbody>{filtered.map(p=><Table.Tr key={p.id}>
+        <Table.Td><Anchor component={Link} to={`/projects/${p.id}`} fw={600} size="sm">{p.name}</Anchor><Text size="xs" c="dimmed" lineClamp={1}>{p.address||'No location'}</Text></Table.Td>
+        <Table.Td>{p.customerName}</Table.Td>
+        <Table.Td>{p.completedSites}/{p.siteCount}</Table.Td>
+        <Table.Td>{p.targetDate||'Not set'}</Table.Td>
+        <Table.Td><StatusBadge status={p.status}/></Table.Td>
+        <Table.Td>{p.actionRequired>0?<Badge color="red" variant="filled" size="sm">{p.actionRequired}</Badge>:<Text size="xs" c="dimmed">None</Text>}</Table.Td>
+      </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer></Paper>}
+  </Stack>
 }
 
 function unique(values:string[]){return [...new Set(values)].sort((a,b)=>a.localeCompare(b))}

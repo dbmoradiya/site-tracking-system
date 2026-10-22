@@ -1,15 +1,25 @@
 import { ArrowRight, CheckCircle2, HardHat, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+
+const demoAccounts = [
+  { key: 'admin', label: 'Admin' },
+  { key: 'coordinator', label: 'Coordinator' },
+  { key: 'supervisor', label: 'Supervisor' },
+  { key: 'design', label: 'Design Engineer' },
+  { key: 'procurement', label: 'Procurement Manager' },
+]
 
 export function LoginPage() {
   const { login, loading } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('admin@sitetrack.local')
   const [password, setPassword] = useState('SiteTrack123!')
   const [error, setError] = useState('')
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError('')
-    try { await login(email, password) } catch (err) { setError(err instanceof Error ? err.message : 'Sign in failed') }
+    try { await login(email, password); navigate('/', { replace: true }) } catch (err) { setError(err instanceof Error ? err.message : 'Sign in failed') }
   }
   return <main className="login-page">
     <section className="login-hero">
@@ -38,7 +48,7 @@ export function LoginPage() {
         <button className="button button--primary button--wide" disabled={loading}>{loading ? 'Signing in…' : <>Sign in <ArrowRight /></>}</button>
         <div className="demo-accounts">
           <strong>Demo accounts</strong>
-          {['admin', 'coordinator', 'supervisor'].map(role => <button type="button" key={role} onClick={() => setEmail(`${role}@sitetrack.local`)}>{role}</button>)}
+          {demoAccounts.map(account => <button type="button" key={account.key} onClick={() => setEmail(`${account.key}@sitetrack.local`)}>{account.label}<small>{account.key}@sitetrack.local</small></button>)}
         </div>
       </form>
     </section>

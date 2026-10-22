@@ -554,3 +554,18 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
   .mantine-Table-td, .mantine-Table-th { white-space: nowrap; }
   .mantine-Table-root { display: block; overflow-x: auto; }
 }
+
+.demo-accounts button { text-transform: none; display: inline-flex; flex-direction: column; align-items: flex-start; border-radius: 8px; line-height: 1.2; }
+.demo-accounts button small { font-size: .65rem; color: var(--slate); opacity: .8; }
+.page-compact { padding: 2px 0 24px; }
+@media (max-width: 48em) {
+  .mantine-InputWrapper-root input, .mantine-InputWrapper-root select, .mantine-InputWrapper-root textarea, .demo-accounts button { min-height: 44px; }
+}
+
+/* Setup cards: compact */
+@media (min-width: 48.01em) {
+  .setup-card-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .setup-card { padding: 10px 12px; gap: 10px; border-radius: 8px; box-shadow: none; }
+  .setup-card__icon { width: 32px; height: 32px; }
+  .modal-card { padding: 16px; }
+}

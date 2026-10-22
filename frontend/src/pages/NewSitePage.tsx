@@ -3,8 +3,8 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, post } from '../lib/api'
 
-type BusinessRole='COORDINATOR'|'SUPERVISOR'|'DESIGN_ENGINEER'|'PROCUREMENT_MANAGER'
-const businessRoles:BusinessRole[]=['COORDINATOR','SUPERVISOR','DESIGN_ENGINEER','PROCUREMENT_MANAGER']
+type BusinessRole='COORDINATOR'|'SUPERVISOR'|'DESIGN_ENGINEER'|'PROCUREMENT_MANAGER'|'TEAM'
+const businessRoles:BusinessRole[]=['COORDINATOR','SUPERVISOR','DESIGN_ENGINEER','PROCUREMENT_MANAGER','TEAM']
 type Employee={id:number;name:string;roles:string[];active:boolean}
 type SiteType={id:number;name:string}
 type Team={id:number;name:string}

@@ -84,9 +84,9 @@ public class StageController {
                             .param("roles",requiredRoles.toArray(String[]::new)).query(Long.class).single()>0);
                     row.put("canUpload",canUpload);
                     row.put("assignments",jdbc.sql("""
-                            select rr.role_code,e.id employee_id,e.name employee_name from site_stage_required_roles rr
+                            select rr.role_code,coalesce(e.id,t.id) employee_id,coalesce(e.name,t.name) employee_name from site_stage_required_roles rr
                             left join site_stage_role_assignments sra on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
-                            left join employees e on e.id=sra.employee_id where rr.stage_id=:stage order by rr.role_code
+                            left join employees e on e.id=sra.employee_id left join teams t on t.id=sra.team_id where rr.stage_id=:stage order by rr.role_code
                             """).param("stage",rs.getLong("id")).query((r2,n2)->{
                                 Map<String,Object> a=new LinkedHashMap<>();a.put("role",r2.getString("role_code"));
                                 a.put("employeeId",r2.getObject("employee_id"));a.put("employeeName",r2.getString("employee_name"));return a;
@@ -94,9 +94,9 @@ public class StageController {
                     return row;
                 }).list();
         List<Map<String,Object>> assignmentHistory=new ArrayList<>(jdbc.sql("""
-                select h.role_code,h.created_at,oe.name old_employee,ne.name new_employee,u.name changed_by,hs.name stage_name
+                select h.role_code,h.created_at,coalesce(oe.name,ot.name) old_employee,coalesce(ne.name,nt.name) new_employee,u.name changed_by,hs.name stage_name
                 from site_role_assignment_history h left join site_stages hs on hs.id=h.stage_id left join employees oe on oe.id=h.old_employee_id
-                left join employees ne on ne.id=h.new_employee_id join app_users u on u.id=h.changed_by
+                left join employees ne on ne.id=h.new_employee_id left join teams ot on ot.id=h.old_team_id left join teams nt on nt.id=h.new_team_id join app_users u on u.id=h.changed_by
                 where h.site_id=:site order by h.created_at desc
                 """).param("site",siteId).query((rs,n)->{
                     Map<String,Object> row=new LinkedHashMap<>();row.put("type","ROLE");row.put("role",rs.getString("role_code"));row.put("stage",value(rs.getString("stage_name")));
