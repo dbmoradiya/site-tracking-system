@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Badge, Button, Group, Modal, NativeSelect, Paper, Stack, Table, Tabs, Text, TextInput, Textarea, Title } from '@mantine/core'
+import { ActionIcon, Alert, Badge, Button, Group, Modal, NativeSelect, Paper, Stack, Table, Tabs, Text, TextInput, Textarea, Title, SimpleGrid } from '@mantine/core'
 import { ChevronDown, ChevronUp, Layers3, Pencil, Plus, Save, Trash2, UsersRound, Wrench } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { api, post, put } from '../lib/api'
@@ -64,7 +64,7 @@ function SiteTypeForm({item,onCancel,onSaved}:{item:SiteType;onCancel:()=>void;o
   const setStage=(index:number,patch:Partial<StageDraft>)=>setForm({...form,stages:form.stages.map((s,i)=>i===index?{...s,...patch}:s)})
   const save=async(e:FormEvent)=>{e.preventDefault();setSaving(true);setError('');try{if(item.id)await put(`/setup/site-types/${item.id}`,form);else await post('/setup/site-types',form);onSaved()}catch(err){setError(err instanceof Error?err.message:'Save failed')}finally{setSaving(false)}}
   return <form onSubmit={save}>{error&&<Alert color="red" mb="xs" role="alert">{error}</Alert>}
-    <Group grow align="flex-start"><TextInput required label="Site Type name" value={form.name} onChange={e=>setForm({...form,name:e.currentTarget.value})}/><TextInput label="Description" value={form.description} onChange={e=>setForm({...form,description:e.currentTarget.value})}/></Group>
+    <SimpleGrid cols={{base:1,sm:2}}><TextInput required label="Site Type name" value={form.name} onChange={e=>setForm({...form,name:e.currentTarget.value})}/><TextInput label="Description" value={form.description} onChange={e=>setForm({...form,description:e.currentTarget.value})}/></SimpleGrid>
     <Group justify="space-between" mt="md" mb="xs"><div><Title order={5}>Default stages</Title><Text size="xs" c="dimmed">Every Stage requires evidence. Required Roles may be empty. A Stage can also require a Team.</Text></div>
       <Button size="xs" variant="default" leftSection={<Plus size={14}/>} onClick={()=>setForm({...form,stages:[...form.stages,{name:'',dependsOnPosition:form.stages.length||null,requiredRoles:[]}]})}>Add Stage</Button></Group>
     <Stack gap="xs">{form.stages.map((stage,index)=><Paper withBorder p="xs" key={index}><Group align="flex-end" gap="xs" wrap="wrap">

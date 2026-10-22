@@ -31,7 +31,7 @@ public class NotificationController {
                                    @RequestParam(defaultValue="") String search) {
         if(page<0) throw new ApiException(400,"Page must be zero or greater");
         if(size<1 || size>100) throw new ApiException(400,"Page size must be between 1 and 100");
-        type=type.trim().toUpperCase(); status=status.trim().toUpperCase(); search=search.trim();
+        type=type.trim().toUpperCase(); status=status.trim().toUpperCase(); search=search.trim().replace("\\","\\\\").replace("%","\\%").replace("_","\\_");
         if(!type.isEmpty() && !TYPES.contains(type)) throw new ApiException(400,"Invalid notification type");
         if(!status.isEmpty() && !STATUSES.contains(status)) throw new ApiException(400,"Invalid Stage status");
 
@@ -66,7 +66,7 @@ public class NotificationController {
                 """;
         String filters="""
                 where (:type='' or notification_type=:type) and (:status='' or status=:status)
-                  and (:search='' or lower(project_name||' '||site_name||' '||stage_name) like lower('%'||:search||'%'))
+                  and (:search='' or lower(project_name||' '||site_name||' '||stage_name) like lower('%'||:search||'%') escape '\\')
                 """;
         long employeeId=user.employeeId()==null ? -1 : user.employeeId();
         long total=parameters(jdbc.sql(cte+"select count(*) from pending "+filters),user,employeeId,type,status,search)

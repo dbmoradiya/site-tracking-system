@@ -590,3 +590,5 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
   .back-link, a[href^="/projects/"] { min-height: 44px; display: inline-flex; align-items: center; }
 }
 @media (max-width: 820px) { main button, main summary { min-height: 44px; } }
+
+@media (max-width: 820px) { .text-button, .stage-details__toggle, .mantine-FileInput-input, main button.text-button { min-height: 44px !important; } }

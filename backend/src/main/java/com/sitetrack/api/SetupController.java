@@ -64,6 +64,8 @@ public class SetupController {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public Map<String, Object> createSiteType(@Valid @RequestBody SiteTypeRequest request) {
+        if(jdbc.sql("select count(*) from site_types where lower(regexp_replace(trim(name),'\\s+',' ','g'))=lower(regexp_replace(trim(:n),'\\s+',' ','g'))").param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"A Site Type with this name already exists");
         long typeId = jdbc.sql("insert into site_types(name,description) values(:name,:description) returning id")
                 .param("name",request.name()).param("description",request.description()).query(Long.class).single();
         saveTemplates(typeId, request.stages());
@@ -74,6 +76,8 @@ public class SetupController {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void updateSiteType(@PathVariable long id, @Valid @RequestBody SiteTypeRequest request) {
+        if(jdbc.sql("select count(*) from site_types where id<>:id and lower(regexp_replace(trim(name),'\\s+',' ','g'))=lower(regexp_replace(trim(:n),'\\s+',' ','g'))").param("id",id).param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"A Site Type with this name already exists");
         jdbc.sql("update site_types set name=:name,description=:description where id=:id")
                 .param("name",request.name()).param("description",request.description()).param("id",id).update();
         jdbc.sql("delete from stage_templates where site_type_id=:id").param("id",id).update();

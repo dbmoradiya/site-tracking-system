@@ -36,7 +36,13 @@ public class ApiExceptionHandler {
         Throwable root=ex.getMostSpecificCause();
         String state=root instanceof java.sql.SQLException sql?sql.getSQLState():null;
         if("22001".equals(state)) return ResponseEntity.badRequest().body(error("One of the values is too long"));
+        if("23505".equals(state)) return ResponseEntity.status(409).body(error("A record with these details already exists"));
         return ResponseEntity.status(409).body(error("That record conflicts with existing data"));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ResponseEntity<?> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest().body(error("Invalid value for " + ex.getName()));
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
