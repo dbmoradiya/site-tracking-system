@@ -26,7 +26,7 @@ Versions are identical to `develop`: Spring Boot 4.1.1, Java 21, React 19.3.1, N
 cp deploy/.env.example deploy/.env   # edit values
 docker compose -f deploy/compose.prod.yaml --env-file deploy/.env up -d --build
 ```
-Caddy gets a free HTTPS certificate automatically once `SITE_ADDRESS` points at the server (ports 80 and 443 open). Health: `curl https://SITE_ADDRESS/api/../actuator/health` is not proxied; check inside with `docker compose exec backend wget -qO- localhost:8081/actuator/health` (the backend image also has a Docker HEALTHCHECK).
+Caddy gets a free HTTPS certificate automatically once `SITE_ADDRESS` points at the server (ports 80 and 443 open). Health is not exposed publicly; check with `docker compose exec backend wget -qO- localhost:8081/actuator/health` (the backend image also has a Docker HEALTHCHECK).
 
 ## Backups (do this, uploads and DB are the only state)
 ```
