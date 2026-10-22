@@ -1,14 +1,14 @@
-# Start here — draw.io review session
+# Start here — SiteTrack application development
 
 Updated: 22 October 2026, Asia/Kolkata.
 
 ## Immediate task
 
-The user explicitly asked to create neat, organized **screen-by-screen sketches in draw.io**, so they can understand the product and review it with a client. They then asked to move that work to a fresh session. Continue with the new requirements only; do not restore the old designs.
+The user approved moving beyond the draw.io review into actual application development. The repository now contains a Dockerized PostgreSQL database, Spring Boot API and responsive installable React PWA. Continue with the current requirements only; do not restore old designs or removed features.
 
 Read `docs/requirements-v0.4-working-draft.md` first. It is the current, concise Gujarati requirements baseline. This handoff explains context and next work; it does not add product requirements.
 
-Communicate with the user in simple Gujarati, keep updates short, and avoid long explanations. They have little time to read. Work autonomously on the already authorized sketches. Ask only material unresolved product questions; show proposals as proposals.
+Communicate with the user in simple Gujarati, keep updates short, and avoid long explanations. The product interface itself must remain English-only. Ask only material unresolved product questions; show proposals as proposals.
 
 ## Repository and reset
 
@@ -18,13 +18,15 @@ Communicate with the user in simple Gujarati, keep updates short, and avoid long
 - `fa351c4` deliberately removed ALL previous screens, Penpot designs, PDFs, old system design, tests, generators, dependencies and local runtime configuration. The user wanted a fresh start from the reduced requirements.
 - `f6da388` limited mobile to Android.
 - Old work remains in Git history only for recovery. It is **not** the active baseline. Do not revive its large screen catalogue, Docker/Penpot setup or removed features.
-- No production backend, web application or Android application exists in the current tree.
+- The active implementation uses one React PWA for web and Android, a Spring Boot API, and PostgreSQL through Docker Compose.
 
 ## Confirmed product model
 
 1. **Roles:** Admin, Project Coordinator, Supervisor. These are independent account roles. Execution Team is a contact record, not an app user.
 2. **Platforms:** Admin and Coordinator both use web + Android; Supervisor uses Android only. No iOS.
 3. **Interface language:** web and Android interfaces are always English only. No Gujarati, Hindi or other product localization is supported. Continue communicating with the user in Gujarati.
+3a. **Delivery platform:** use one responsive installable React PWA for web and Android. Do not create a separate native Android codebase at this stage.
+3b. **Location:** Google Maps/location picker is removed for now. Keep ordinary text address fields; do not add GPS permissions.
 4. **Project required:** every Site belongs to exactly one Project, even if that Project has only one Site. A Project can group multiple different Site types, such as Shed and Solar. No standalone Site.
 5. **Creation/configuration:** Admin alone creates and edits Projects/Sites, their details and Project links; only Admin moves a Site between Projects. Admin defines Site types and default stages, creates Coordinator/Supervisor employees, and creates/edits Team contact records.
 6. **Coordinator per Site:** one Coordinator for each Site, not one for an entire Project. Linked Sites may have different Coordinators.
@@ -37,59 +39,46 @@ Communicate with the user in simple Gujarati, keep updates short, and avoid long
 13. **Teams:** name and contact person details only; no account/login. Admin alone adds/edits Team details. Coordinator/Supervisor can view contacts connected to their authorized work. Assignment rights do not imply Team contact-edit rights.
 14. **Online photo uploads:** internet is mandatory for uploading. No offline work queue, automatic synchronization or seven-day offline unlock. Interrupted/failed uploads must not appear successful or count as completion evidence; allow explicit retry when connected.
 15. **Removed:** entire materials/inventory/requests/dispatch/consumption/returns module; all GPS/location permissions and photo-location requirements; offline/sync; iOS; Team logins.
+16. **Stage templates:** each Site Type owns its default Stages and dependencies. Admin alone maintains templates. Creating a Site loads those defaults, and Admin may customize that Site's Stage names, order and dependencies.
+17. **Evidence:** every Stage requires at least one successfully uploaded evidence file before completion can be submitted.
+18. **Status rules:** approving every Stage automatically completes the Site. A Project completes when every Site is complete. Otherwise use `IN_PROGRESS` once work has started and `NOT_STARTED` before work starts.
+19. **Project customer:** customer name and customer mobile number are required when an Admin creates a Project.
 
-## Main journey to illustrate
+## Main implemented journey
 
 Admin configures types/stages and creates people/Teams → Admin creates Project → Admin creates Sites inside it and identifies each Site's Coordinator → Admin/Coordinator assigns Supervisor + Team per stage → Supervisor sees work, adds photos online and requests completion → Admin/Site Coordinator reviews and approves or requests changes.
 
-Also illustrate: direct Coordinator photo upload + explicit self-approval; Supervisor/Team handover with visible history; linked Sites with different Coordinators and limited cross-Site access; online upload failure/retry.
+The current vertical slice implements this journey through role-aware pages and APIs. Coordinator photo upload + explicit approval is available through My work and Site detail. Assignment/review audit data is retained by the API.
 
 ## Scope not yet settled
 
 Do not label these as confirmed:
 
 - Blocking/pausing work and reopening completed work.
-- Dependencies such as Shed must finish before Solar starts. Project grouping itself **is confirmed**.
-- Whether final stage approval automatically completes a Site, and precise Site/Project status derivation. This was in the removed design; confirm or clearly label a proposal in the new review.
+- Cross-Site dependencies such as Shed finishing before Solar starts are still not defined. Dependencies inside each Site's Stage list are confirmed.
 - Other old features such as audio notes, daily reminders, advanced dashboards, bulk actions, old eligibility restrictions and account/password policies must not be silently restored.
-- Historical stack choice was Spring Boot + SQLite + React + Flutter. This is background, not authorization to implement the application now.
+- Advanced dashboards, bulk actions and account/password policies remain undefined.
 
-## Deliverable direction already discussed
+## Current implementation
 
-- Editable multi-page `.drawio` file with actual native shapes/text, not screenshots embedded as one image.
-- Organized role/platform sections, an overall flow diagram and a simple permissions summary.
-- Neat English-only screen sketches: meaningful name/ID, purpose, fields, main actions, next-screen references, and short English review annotations. Show role differences accurately.
-- Practical reusable layouts; simple employee flow and readable controls. The user cares about a polished, uncluttered appearance, even for sketches.
-- One convenient client review PDF with sketches and concise notes. A short guided review plus a full appendix is a possible approach, not a fixed page-count requirement.
-- Keep unconfirmed decisions clearly marked. These are wireframes, not final visual UI or an implemented app.
-- Independently validate permissions, source consistency, page links, editable shape import, Gujarati font rendering and text bounds; visually inspect representative web/Android/history/review/error pages.
-- No old Penpot infrastructure or Docker is needed. Do not create a production app or a new large dependency setup for diagram work.
+- `compose.yaml`: PostgreSQL 17, Spring Boot API on port 8081, React/Nginx PWA on port 8080.
+- `backend/`: Java 21 / Spring Boot 4.1.1, Flyway schema, token authentication, role/access checks, project/site/stage/setup APIs, evidence uploads and automatic statuses.
+- `frontend/`: React 19 / TypeScript / Vite, responsive desktop sidebar and mobile bottom navigation, installable manifest/service worker, Admin setup and creation flows, Site review and My work evidence flow.
+- `design-system/site-tracking-system/MASTER.md`: active visual system generated with the UI/UX Pro Max skill.
+- Run with `docker compose up --build`; use the demo accounts in `README.md`.
 
-## Actual preparation completed before handoff
+## Verification completed
 
-**No draw.io sketches, diagrams or PDFs have been created yet.** Only initial research and font preparation were done:
+- Frontend production TypeScript/Vite build passes.
+- Backend Maven package build passes in Docker.
+- Flyway migration applies successfully to PostgreSQL.
+- Login, dashboard/setup/project reads, evidence upload, submit, approval, automatic Site completion and automatic Project completion were exercised through the API.
+- Direct unauthorized Project access returns 403; invalid dependencies return 400; resubmitting/re-uploading to an approved Stage returns 409.
+- Docker services are left running and healthy after delivery.
 
-- `review/assets/NotoSansGujarati.ttf`: Google Fonts Noto Sans Gujarati variable font.
-- `review/assets/OFL-NotoSansGujarati.txt`: accompanying license.
-- Empty `review/tools` and `review/screens` directories may exist locally; Git does not retain empty directories.
-- Playwright 1.64.1 was installed in `/tmp/site-tracking-drawio-tools` only, outside the repository. It may disappear; do not rely on it being permanent.
-- Available local headless executable at the time of handoff: `/Users/dixit/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell`. Check before use. Earlier installed Google Chrome did not consistently start its automation pipe; cached headless shell worked.
-- Old Python preview server on port 4173 was stopped. Local `site-tracking-design` Docker/Penpot containers were stopped/removed during reset. Do not start them for this task.
-
-A lightweight suggested implementation is a small reproducible generator for native draw.io XML and review exports, with tooling limited to `review/`. The implementation method and page count are not decided; prioritize the requested artifact over overengineering.
-
-## Official references checked
-
-- Native `.drawio` format is uncompressed XML: https://www.drawio.com/docs/manual/editor/save-file-formats/
-- Diagram types, including wireframes: https://www.drawio.com/docs/diagram-types/
-- Multi-page PDF export: https://www.drawio.com/docs/manual/export/export-to-pdf/
-- Embedding/import/export protocol: https://www.drawio.com/docs/reference/embed-mode/
-
-Embed API can load XML with `{action:'load', xml:'<mxfile>...</mxfile>'}`. After initialization, it supports export messages such as `{action:'export', format:'svg', pageId:'...'}` and JSON exports for model inspection. Verify the live official docs if using this route. This can help prove import into the actual draw.io editor rather than only validating generated XML. Use sample records only; no real employee/client data has been supplied.
-
-## Suggested first steps
+## Suggested next steps
 
 1. Read this file and the Gujarati baseline; check Git state and any applicable instructions.
-2. Build a compact screen inventory against only confirmed requirements, with pending decisions noted.
-3. Create the editable draw.io sketches and an easy client review PDF.
-4. Test and visually inspect, then commit/push the completed review artifacts to `develop` and give the user direct file links with a short Gujarati explanation.
+2. Preserve the current vertical slice and do not reintroduce removed features.
+3. Prioritize visible evidence/history views and Admin editing for existing Project/Site records if the user wants the next implementation increment.
+4. Keep unresolved pause/reopen and cross-Site dependency rules out until the user decides them.

@@ -1,0 +1,29 @@
+server:
+  port: 8081
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: sitetrack-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/sitetrack}
+    username: ${DB_USERNAME:sitetrack}
+    password: ${DB_PASSWORD:sitetrack}
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 20MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt-secret: ${APP_JWT_SECRET:local-development-secret-change-me}
+  upload-dir: ${APP_UPLOAD_DIR:./data/uploads}
+  allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:8080}

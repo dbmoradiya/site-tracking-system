@@ -2,7 +2,7 @@
 
 **તારીખ: ૨૨ ઑક્ટોબર ૨૦૨૬ · આવૃત્તિ: ૦.૪**
 
-હાલ ફક્ત આ જરૂરિયાત અને કામનો ક્રમ નક્કી કરીએ છીએ. **જૂની સ્ક્રીન, ડિઝાઇન, PDF અને તેને લગતી બધી ફાઇલો પ્રોજેક્ટમાંથી કાઢી નાખી છે.** આગળનું કામ આ નોંધના આધારે જ થશે. હવે client review માટે draw.ioમાં ગોઠવેલા screen sketches બનાવવાની મંજૂરી છે; final UI કે application બનાવવાનું હજી શરૂ કરવાનું નથી.
+આ નોંધ હાલની product baseline છે. Userની નવી મંજૂરી પ્રમાણે draw.io sketches પછી હવે actual application development શરૂ થઈ ગયું છે. અમલમાં કોઈ જૂની design ફરી લાવવાની નહીં; આ નોંધમાં નક્કી થયેલા નિયમો જ source of truth રહેશે.
 
 ## કોણ શું કરશે?
 
@@ -17,6 +17,13 @@
 
 - **મોબાઇલ એપ હાલ ફક્ત Android માટે બનાવવાની છે. iOSની જરૂર નથી.**
 - **Web app અને Android mobile appનું interface હંમેશાં ફક્ત Englishમાં રહેશે.** Gujarati, Hindi અથવા બીજી કોઈ ભાષાનું interface/localization support નહીં હોય. Gujarati ફક્ત user સાથેની વાતચીત માટે છે.
+- Android માટે અલગ native app નહીં; responsive installable React PWA web અને Android બંને માટે વાપરવાની.
+- Google Maps/location picker હાલ નહીં રાખવો. Project અને Siteમાં સામાન્ય text address રાખી શકાય.
+- નવા Projectમાં Project name સાથે **customer name અને customer mobile number ફરજિયાત** રાખવાના.
+- દરેક Site Type પોતાના default Stages અને તેમની dependencies રાખી શકશે. આ setup ફક્ત Admin બનાવી/બદલી શકશે.
+- દરેક Stage માટે ઓછામાં ઓછો એક સફળ evidence upload ફરજિયાત રહેશે; evidence વગર completion request નહીં જાય.
+- નવી Site બનાવતી વખતે પસંદ કરેલા Site Typeના default Stages load થશે. Admin તે Site માટે Stage name, order અને dependency બદલી શકશે.
+- Final Stage સહિત Siteના બધા Stages approve થાય એટલે Site આપમેળે `COMPLETED` થશે. Projectની બધી Sites complete થાય એટલે Project `COMPLETED` થશે. થોડું કામ શરૂ થયું હોય તો status `IN_PROGRESS`, નહિતર `NOT_STARTED` રહેશે.
 
 - **પ્રોજેક્ટ અને સાઇટ ફક્ત એડમિન બનાવશે અને તેની વિગતો બદલશે.** નામ, સરનામું, કામ પૂરું કરવાની તારીખ વગેરે બદલવાનો અધિકાર કોઓર્ડિનેટર કે સુપરવાઇઝરને નહીં હોય.
 - **સાઇટને બીજા પ્રોજેક્ટમાં ખસેડવી કે પ્રોજેક્ટ સાથેની લિંક બદલવી, ફક્ત એડમિન કરી શકશે.** સાઇટ હંમેશાં કોઈ એક પ્રોજેક્ટની અંદર જ રહેશે.
@@ -48,7 +55,7 @@
 
 ## હજી નક્કી કરવાનું
 
-- ચાલુ કામ અટકાવવું, ફરી ખોલવું અને એક સાઇટનું કામ પૂરું થયા પછી બીજી શરૂ કરવાની શરતો.
+- ચાલુ કામ અટકાવવું અને approved/completed કામ ફરી ખોલવાની ચોક્કસ પ્રક્રિયા.
 - બાકીની જૂની સુવિધાઓમાંથી હવે શું રાખવું. Offline અને Sync કાઢી નાખવાનો નિર્ણય નક્કી છે.
 
-**હાલ draw.ioના sketchesમાં બાકી મુદ્દા સ્પષ્ટ રીતે “નક્કી કરવાનું” બતાવીશું. Final design અને development પહેલાં આ મુદ્દા નક્કી કરીશું.**
+**આ મુદ્દા હાલના buildમાં અનુમાનથી ઉમેરવાના નહીં. નિર્ણય થાય ત્યાં સુધી approved/completed Stage ફરી ખોલી શકાશે નહીં.**

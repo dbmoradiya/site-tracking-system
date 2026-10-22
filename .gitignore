@@ -1,3 +1,11 @@
 .DS_Store
 .env
 .env.*
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/vite.config.js
+frontend/vite.config.d.ts
+*.tsbuildinfo
+data/
+*.log

@@ -1,6 +1,34 @@
-# સાઇટ ટ્રેકિંગ સિસ્ટમ
+# SiteTrack
 
-- [સરળ ગુજરાતી જરૂરિયાત નોંધ](docs/requirements-v0.4-working-draft.md)
-- [નવી session માટે handoff અને draw.ioનું આગળનું કામ](docs/NEXT-SESSION-HANDOFF.md)
+Responsive project and Site execution tracking for Admins, Project
+Coordinators and Supervisors. The product interface is English only; team
+communication and requirement notes may be in Gujarati.
 
-જૂની સ્ક્રીન, ડિઝાઇન અને tools કાઢી નાખ્યાં છે. હવે ફક્ત નવી જરૂરિયાતો પરથી client review માટે draw.ioમાં screen sketches તૈયાર કરવાના છે. હજી કોઈ sketch કે production application બનાવેલી નથી. `review/assets/`માં ગુજરાતી font અને તેની licenseની તૈયારી છે. અગાઉનું કામ Git historyમાં ઉપલબ્ધ છે.
+## Stack
+
+- React 19 + TypeScript + Vite PWA frontend
+- Spring Boot 4 REST API
+- PostgreSQL 17
+- Docker Compose for the complete local environment
+
+## Run
+
+```sh
+docker compose up --build
+```
+
+Open <http://localhost:8080>. The API health endpoint is
+<http://localhost:8081/actuator/health>.
+
+Demo accounts (password: `SiteTrack123!`):
+
+- `admin@sitetrack.local`
+- `coordinator@sitetrack.local`
+- `supervisor@sitetrack.local`
+
+## Product rules
+
+See [requirements v0.4](docs/requirements-v0.4-working-draft.md). Site status
+automatically becomes `COMPLETED` when every Stage is approved. Project status
+becomes `COMPLETED` when every Site is completed. Every Stage requires at least
+one successfully uploaded evidence file before completion can be submitted.
