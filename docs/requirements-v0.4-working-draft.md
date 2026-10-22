@@ -1,67 +1,243 @@
-# સાઇટ ટ્રેકિંગ એપ — ટૂંકી જરૂરિયાત નોંધ
+# SiteTrack — Working Requirements
 
-**તારીખ: ૨૨ ઑક્ટોબર ૨૦૨૬ · આવૃત્તિ: ૦.૪**
+**Date: 22 October 2026 · Working version: 0.5**
 
-આ નોંધ હાલની product baseline છે. Userની નવી મંજૂરી પ્રમાણે draw.io sketches પછી હવે actual application development શરૂ થઈ ગયું છે. અમલમાં કોઈ જૂની design ફરી લાવવાની નહીં; આ નોંધમાં નક્કી થયેલા નિયમો જ source of truth રહેશે.
+આ document હાલની confirmed product baseline છે. Applicationના બધા Web/PWA screens અને user-facing text હંમેશાં ફક્ત Englishમાં રહેશે. Gujarati ફક્ત stakeholder સાથેની વાતચીત માટે છે.
 
-## કોણ શું કરશે?
+## 1. Product અને platform
 
-| વ્યક્તિ | કામ | એપ ક્યાં વાપરશે? |
-|---|---|---|
-| **એડમિન** | સાઇટના પ્રકાર અને સ્ટેજ બનાવશે; કર્મચારીઓ અને ટીમની વિગતો ઉમેરશે; પ્રોજેક્ટ/સાઇટ બનાવશે, વિગતો અને લિંક બદલશે | વેબ અને Android મોબાઇલ |
-| **પ્રોજેક્ટ કોઓર્ડિનેટર** | પોતાની સાઇટના સ્ટેજ પર સુપરવાઇઝર અને ટીમ સોંપશે; ફોટા જોશે અને કામ મંજૂર કરશે | વેબ અને Android મોબાઇલ |
-| **સુપરવાઇઝર** | સોંપેલા સ્ટેજનું કામ ટીમ પાસે કરાવશે; ફોટા અપલોડ કરીને મંજૂરી માગશે | ફક્ત Android મોબાઇલ |
-| **કામ કરતી ટીમ** | સ્થળ પર કામ કરશે; તેનું નામ અને સંપર્ક વ્યક્તિની વિગતો રાખવાની | એપ નહીં વાપરે |
+- SiteTrack project અને site execution tracking application છે.
+- Responsive React PWA desktop Web અને Android Chrome બંનેમાં વપરાશે.
+- અલગ native Android અથવા iOS application હાલ બનાવવાની નથી.
+- Google Maps/location picker નહીં રાખવો. Project અને Siteમાં સામાન્ય text address રહેશે.
+- Offline evidence queue અથવા background sync હાલ scopeમાં નથી.
+- અલગ `My Work` screen નહીં બનાવવી.
 
-## નક્કી થયેલા નિયમો
+## 2. Roles અને access
 
-- **મોબાઇલ એપ હાલ ફક્ત Android માટે બનાવવાની છે. iOSની જરૂર નથી.**
-- **Web app અને Android mobile appનું interface હંમેશાં ફક્ત Englishમાં રહેશે.** Gujarati, Hindi અથવા બીજી કોઈ ભાષાનું interface/localization support નહીં હોય. Gujarati ફક્ત user સાથેની વાતચીત માટે છે.
-- Android માટે અલગ native app નહીં; responsive installable React PWA web અને Android બંને માટે વાપરવાની.
-- Google Maps/location picker હાલ નહીં રાખવો. Project અને Siteમાં સામાન્ય text address રાખી શકાય.
-- નવા Projectમાં Project name સાથે **customer name અને customer mobile number ફરજિયાત** રાખવાના.
-- અલગ `My work` screen નહીં રાખવી. Project detail screenમાં Site expand કરીને Stage evidence upload, comment અને submission કરવાના. Site detail screen review, assignment અને audit history માટે રહેશે.
-- Evidence upload વખતે optional text comment રાખવાની અને evidence historyમાં uploader તથા comment બતાવવાના.
-- Projects screenમાં location/address, completion date range, Supervisor, Coordinator, status અને current user માટે action required filters રાખવાના.
-- Dashboard notification sectionમાં role પ્રમાણે pending actions બતાવવાના: Admin/Coordinator માટે approval/assignment work અને Supervisor માટે evidence/rejected-work actions.
-- Setupમાં Site Types, Employees અને Teams card gridમાં બતાવવાના. Card click કરતાં read-only popup ખૂલશે; existing recordનું Edit button ફક્ત popupમાં રહેશે.
-- Employee અને Team detailsમાં તેમને સોંપાયેલા Projects બતાવવાના.
-- દરેક Site Type પોતાના default Stages અને તેમની dependencies રાખી શકશે. આ setup ફક્ત Admin બનાવી/બદલી શકશે.
-- દરેક Stage માટે ઓછામાં ઓછો એક સફળ evidence upload ફરજિયાત રહેશે; evidence વગર completion request નહીં જાય.
-- નવી Site બનાવતી વખતે પસંદ કરેલા Site Typeના default Stages load થશે. Admin તે Site માટે Stage name, order અને dependency બદલી શકશે.
-- Final Stage સહિત Siteના બધા Stages approve થાય એટલે Site આપમેળે `COMPLETED` થશે. Projectની બધી Sites complete થાય એટલે Project `COMPLETED` થશે. થોડું કામ શરૂ થયું હોય તો status `IN_PROGRESS`, નહિતર `NOT_STARTED` રહેશે.
+Systemમાં આ business roles રહેશે:
 
-- **પ્રોજેક્ટ અને સાઇટ ફક્ત એડમિન બનાવશે અને તેની વિગતો બદલશે.** નામ, સરનામું, કામ પૂરું કરવાની તારીખ વગેરે બદલવાનો અધિકાર કોઓર્ડિનેટર કે સુપરવાઇઝરને નહીં હોય.
-- **સાઇટને બીજા પ્રોજેક્ટમાં ખસેડવી કે પ્રોજેક્ટ સાથેની લિંક બદલવી, ફક્ત એડમિન કરી શકશે.** સાઇટ હંમેશાં કોઈ એક પ્રોજેક્ટની અંદર જ રહેશે.
-- **દરેક સાઇટ કોઈ એક પ્રોજેક્ટનો ભાગ હોવી ફરજિયાત છે.** એક જ સાઇટ હોય તો પણ તેને પ્રોજેક્ટની અંદર જ રાખવાની; પ્રોજેક્ટ વગર સાઇટ નહીં બને.
-- એક પ્રોજેક્ટમાં એક અથવા વધુ સાઇટ હોઈ શકે. Solar અને Shed જેવી અલગ પ્રકારની સાઇટ પણ એ જ પ્રોજેક્ટમાં રાખી શકાશે.
-- **દરેક સાઇટનો એક કોઓર્ડિનેટર રહેશે.** એક પ્રોજેક્ટની સાઇટના કોઓર્ડિનેટર અલગ હોઈ શકે.
-- **દરેક સ્ટેજ પર સુપરવાઇઝર અને ટીમ અલગ સોંપી શકાશે.** આ કામ એડમિન અને તે સાઇટનો કોઓર્ડિનેટર બંને કરી શકશે.
-- **ચાલુ સ્ટેજમાં પણ સુપરવાઇઝર અથવા ટીમ, કે બંને બદલી શકાશે.** એડમિન અથવા તે સાઇટનો કોઓર્ડિનેટર આ ફેરફાર કરી શકશે.
-- **ફેરફારની હિસ્ટ્રી સ્ક્રીન પર દેખાવાની:** પહેલાંના અને નવા સુપરવાઇઝર/ટીમ, કોણે બદલ્યાં અને ક્યારે બદલ્યાં. જેટલી વાર બદલાય તેટલી બધી નોંધ સાચવવાની.
-- વ્યક્તિ કે ટીમ બદલવાથી પહેલાંના ફોટા, કામની નોંધ અને મંજૂરીની હિસ્ટ્રી નહીં મિટે; તે મૂળ વ્યક્તિના નામે જ રહેશે. ચાલુ કામની પ્રગતિ પણ ફરીથી શરૂ નહીં થાય.
-- સુપરવાઇઝર કોઈ એક કોઓર્ડિનેટર સાથે કાયમ જોડાયેલો નહીં હોય. કોઈપણ કોઓર્ડિનેટર પોતાની સાઇટ માટે કોઈપણ સુપરવાઇઝરને કામ આપી શકશે.
-- ટીમનું નામ અને સંપર્કની વિગતો **ફક્ત એડમિન ઉમેરશે કે બદલશે**. કોઓર્ડિનેટર અને સુપરવાઇઝર પોતાના કામ સાથે જોડાયેલી ટીમની વિગતો જોઈ શકશે.
-- એડમિન કોઈપણ સાઇટ પર ફોટા અપલોડ અને કામ મંજૂર કરી શકશે. કોઓર્ડિનેટર ફક્ત પોતાની સાઇટમાં કરી શકશે.
-- બીજી કોઓર્ડિનેટરની લિંક થયેલી સાઇટનું ફક્ત કામ કેટલું થયું તે દેખાશે; તેના ફોટા કે કામ બદલવાનો અધિકાર નહીં મળે.
+- `Coordinator`
+- `Supervisor`
+- `Design Engineer`
+- `Procurement Manager`
 
-## કામ કેવી રીતે ચાલશે?
+Rules:
 
-**એડમિન પ્રોજેક્ટ બનાવે → તેની અંદર સાઇટ બનાવે → સાઇટનો કોઓર્ડિનેટર નક્કી થાય → દરેક સ્ટેજને સુપરવાઇઝર અને ટીમ સોંપાય → સુપરવાઇઝર ફોટા સાથે કામ પૂરું થયાની વિનંતી મોકલે → એડમિન અથવા સાઇટનો કોઓર્ડિનેટર મંજૂર કરે અથવા સુધારો માગે.**
+- એક employee પાસે એકથી વધારે roles હોઈ શકે.
+- Employee create/edit formમાં roles multi-select રહેશે.
+- Design Engineer અને Procurement Managerને assigned work માટે Supervisor જેવી operational permissions મળશે.
+- Multi-role employeeને તેના બધા assigned rolesનું combined access મળશે.
+- `Admin` system-level role છે અને તેને સંપૂર્ણ setup તથા management access રહેશે.
+- Team માટે login/account નહીં હોય.
 
-સુપરવાઇઝર હાજર ન હોય તો કોઓર્ડિનેટર ટીમ પાસેથી ફોટા મંગાવીને પોતે અપલોડ કરી શકશે. ફોટા કોણે અપલોડ કર્યા તે નોંધાશે. **ફોટા અપલોડ કરવા અને કામ મંજૂર કરવું અલગ પગલાં રહેશે**, ભલે બંને કોઓર્ડિનેટર પોતે કરે.
+## 3. Setup
 
-## હાલ શું નથી રાખવાનું?
+Setup screenમાં ત્રણ tabs રહેશે:
 
-- **મટિરિયલનો આખો વિભાગ:** સ્ટોક, માગણી, મોકલવું, વપરાશ અને પરત લેવું.
-- **GPS / લોકેશન:** ફોટા અપલોડ કરવા માટે લોકેશન કે તેની પરવાનગી નહીં જોઈએ.
-- **Offline અને Sync:** હાલ આ સુવિધાઓ નહીં રાખીએ. ફોટા અપલોડ કરવા ઇન્ટરનેટ ફરજિયાત રહેશે; ઇન્ટરનેટ વગર ફોટા સાચવીને પછી આપમેળે અપલોડ કરવાની queue નહીં હોય.
-- ઇન્ટરનેટ ન હોય અથવા અપલોડ અધવચ્ચે અટકે તો ફોટો અપલોડ થયો છે એવું નહીં બતાવાય. ઇન્ટરનેટ આવે પછી ફરી અપલોડ કરવાનો વિકલ્પ રહેશે; અધૂરો ફોટો completion requestમાં નહીં ગણાય.
-- ટીમ માટે લૉગિન કે એપ એકાઉન્ટ નહીં હોય.
+- Site Types
+- Employees
+- Teams
 
-## હજી નક્કી કરવાનું
+બધા records card gridમાં દેખાશે. Card click કરતાં read-only popup ખુલશે. Existing record માટે `Edit` button ફક્ત popupમાં રહેશે.
 
-- ચાલુ કામ અટકાવવું અને approved/completed કામ ફરી ખોલવાની ચોક્કસ પ્રક્રિયા.
-- બાકીની જૂની સુવિધાઓમાંથી હવે શું રાખવું. Offline અને Sync કાઢી નાખવાનો નિર્ણય નક્કી છે.
+Employee અને Team detail popupમાં તેમને સોંપાયેલા Projects બતાવવાના.
 
-**આ મુદ્દા હાલના buildમાં અનુમાનથી ઉમેરવાના નહીં. નિર્ણય થાય ત્યાં સુધી approved/completed Stage ફરી ખોલી શકાશે નહીં.**
+## 4. Site Types અને default Stages
+
+- દરેક Site Type પોતાના default Stages રાખશે.
+- Admin Stage name, order અને dependency configure કરી શકશે.
+- દરેક Stageમાં zero, one અથવા multiple `Required Roles` હોઈ શકે.
+- દરેક Stage માટે evidence ફરજિયાત રહેશે.
+- Site Type create/edit કરતી વખતે Required Roles multi-select રહેશે.
+- Required Roles empty રાખવાની મંજૂરી રહેશે.
+- Site Typeના Stages અને dependencies ફક્ત Admin બનાવી કે બદલી શકશે.
+
+## 5. Projects
+
+New Projectમાં આ fields રહેશે:
+
+- Project name — required
+- Customer name — required
+- Customer mobile number — required
+- Project address — optional text
+- Target completion date — optional
+- Project Coordinator — required
+
+Rules:
+
+- Project ફક્ત Admin બનાવી અને તેની master details બદલી શકશે.
+- Project Coordinator project level પર રહેશે.
+- Admin Project Coordinator બદલી શકશે.
+- Coordinator change historyમાં previous coordinator, new coordinator, changed by અને date/time સાચવવાના.
+- Admin Project delete કરી શકશે.
+- Delete કરતાં પહેલાં સ્પષ્ટ confirmation dialog ફરજિયાત રહેશે.
+- Project delete થયા પછી તેની Sites, Stages, evidence records અને uploaded evidence files પણ delete થશે.
+
+## 6. Sites અને role assignments
+
+- દરેક Site કોઈ એક Projectની અંદર જ રહેશે.
+- એક Projectમાં એક અથવા વધુ Sites હોઈ શકે.
+- એક જ Projectમાં અલગ Site Typesની Sites હોઈ શકે.
+- Site ફક્ત Admin બનાવી અને તેની master details બદલી શકશે.
+- Siteને બીજા Projectમાં ખસેડવાની permission ફક્ત Admin પાસે રહેશે.
+- Site create કરતી વખતે પસંદ કરેલા Site Typeના default Stages, dependencies અને required roles load થશે.
+- Admin નવી Site માટે Stage name, order, dependency અને required roles customize કરી શકશે.
+- Operational role assignment Project level પર નહીં, Site level પર રહેશે.
+- Siteના Stagesમાંથી distinct required roles calculate થશે.
+- દરેક required role માટે તે role ધરાવતા eligible employeesનું dropdown બતાવવાનું.
+- એક employee એક જ Site પર multiple roles માટે assign થઈ શકે.
+- Admin અને Project Coordinator ચાલુ Siteમાં role assignments બદલી શકશે.
+- Role assignment historyમાં role, previous employee, new employee, changed by અને date/time સાચવવાના.
+- Assignment બદલવાથી જૂનું evidence, comments, review history અથવા progress delete/reset નહીં થાય.
+
+## 7. Teams
+
+- Teamનું નામ, contact person, mobile અને notes ફક્ત Admin create/edit કરી શકશે.
+- Team login નહીં કરે.
+- Team assignment fixed Stage roleનો ભાગ નહીં હોય.
+- Site સાથે optional Team assignment રાખવામાં આવશે, જેથી Team detailમાં assigned Projects બતાવી શકાય.
+- Team assignment બદલાય તો history સાચવવાની.
+
+## 8. Stage workflow — required role ધરાવતો Stage
+
+- Stageના required role માટે Site પર assign થયેલા employees evidence upload કરી શકશે.
+- Evidence સાથે optional text comment ઉમેરી શકાશે.
+- Evidence historyમાં file, uploader, comment અને upload date/time દેખાશે.
+- Stage submit કરતાં પહેલાં ઓછામાં ઓછું એક successful evidence upload ફરજિયાત રહેશે.
+- Dependency complete ન હોય તો Stage blocked રહેશે.
+- બધા required roles માટે employee assigned ન હોય તો Stage submit નહીં કરી શકાય.
+- Assigned employee `Submit for approval` કરી શકશે.
+- Admin અથવા Project Coordinator Stage approve કરી શકશે અથવા changes request કરી શકશે.
+- Changes request માટે reason ફરજિયાત રહેશે.
+- Rejected/changes-requested Stage assigned employeesના pending actionsમાં દેખાશે.
+
+## 9. Stage workflow — કોઈ required role ન ધરાવતો Stage
+
+- Stageમાં employee assignment નહીં હોય.
+- Admin અથવા Project Coordinator evidence upload અને text comment ઉમેરી શકશે.
+- Evidence વગર Stage complete નહીં કરી શકાય.
+- Admin અથવા Project Coordinator Stageને સીધો `Mark Complete` કરી શકશે.
+- આ Stage માટે employee submission/approval round-trip નહીં હોય.
+- Completion historyમાં completed by અને date/time સાચવવાના.
+- Complete થયા પછી dependent Stage unlock થશે.
+
+## 10. Status calculation
+
+- નવા Project અને Siteની શરૂઆત `NOT_STARTED`થી થશે.
+- કોઈ Stage પર valid work/evidence શરૂ થાય એટલે Site `IN_PROGRESS` થશે.
+- Siteના બધા Stages approved/completed થાય એટલે Site automatically `COMPLETED` થશે.
+- Projectમાં કોઈ Site progressમાં કે completed હોય અને બધી Sites complete ન હોય તો Project `IN_PROGRESS` રહેશે.
+- Projectની બધી Sites complete થાય એટલે Project automatically `COMPLETED` થશે.
+- Final Stageની approval/completion Siteને complete કરવામાં અલગ manual action માંગશે નહીં.
+
+## 11. Overview અને Projects
+
+Overview metrics clickable રહેશે:
+
+- `All Projects` → Projects page, કોઈ status filter નહીં
+- `In Progress` → Projects page with `IN_PROGRESS` filter
+- `Not Started` → Projects page with `NOT_STARTED` filter
+- `Completed` → Projects page with `COMPLETED` filter
+
+Projects page status filter URL query parameterમાં રહેશે, જેથી refresh/back પછી filter જળવાય.
+
+Projects pageમાં advanced filters રહેશે:
+
+- Location/address
+- Completion date range
+- Supervisor
+- Coordinator
+- Status
+- Action required
+
+Dynamic roles લાગુ થયા પછી people filters role-aware બનાવવાના; ફક્ત hardcoded Supervisor field પર આધારિત નહીં રહેવાના.
+
+## 12. Notifications
+
+- Notifications માટે અલગ `/notifications` page રહેશે.
+- Overview પર latest 8 pending notifications અને total pending count દેખાશે.
+- `View all notifications`થી full Notifications page ખુલશે.
+- Notifications page પર current userના બધા pending actions દેખાશે.
+- Notification click કરતાં relevant Site Detail અને Stage ખૂલશે.
+- Admin/Coordinator માટે approval requests, missing assignments અને no-role Stage actions દેખાશે.
+- Assigned operational roles માટે ready work, evidence actions અને changes requested દેખાશે.
+- Notifications pageમાં useful type/status filter અને search રહેશે.
+
+## 13. Project Detail અને Site Detail
+
+Project Detail project-level overview રહેશે:
+
+- Project/customer information
+- Project Coordinator અને history
+- Site cards અને progress
+- `Open Site Details`
+- Admin edit/delete actions
+
+Project Detailમાંથી `Show Stages`, inline evidence upload અને inline submission સંપૂર્ણપણે દૂર કરવાના.
+
+Site Detail એકમાત્ર execution screen રહેશે. તેમાં:
+
+- Stage timeline
+- Dependencies અને required roles
+- Site-level role assignments
+- Team assignment
+- Evidence upload
+- Evidence comment
+- Submit for approval
+- Approve/request changes
+- No-role Stage માટે Mark Complete
+- Evidence files/history
+- Assignment history
+- Review/completion history
+
+## 14. UI density
+
+- આખી applicationની oversized feeling ઘટાડીને compact professional dashboard બનાવવો.
+- Desktop પર heading sizes, page padding, card padding, grid gaps, buttons, inputs અને rows થોડાં compact કરવાના.
+- એક screenમાં વધારે useful information દેખાય તેવી density રાખવાની.
+- Mobile પર touch targets 44–48pxથી નાના નહીં કરવા.
+- Keyboard focus, readable contrast, safe areas અને reduced-motion support જાળવવાના.
+- UI cramped કે difficult-to-tap ન બનવી જોઈએ.
+
+## 15. Evidence અને network behavior
+
+- Evidence માટે image અને PDF support રહેશે.
+- Failed/incomplete upload completion માટે ગણાશે નહીં.
+- Upload fail થાય તો userને retry કરી શકાય એવો clear error બતાવવો.
+- Internet વગર local queue અથવા automatic later upload નહીં થાય.
+- Evidence કોણે upload કર્યું તે audit trailમાં હંમેશાં રહેશે.
+
+## 16. Client setup data backup અને reset decision
+
+22 October 2026ના current client setup dataમાંથી આ records backupમાં રાખવાના:
+
+- Employees
+- Teams
+- Site Types
+- Site Type Stage definitions અને dependencies
+
+Projects, Sites, evidence અને workflow history preserve કરવાની જરૂર નથી.
+
+નવી schema લાગુ કરતાં development database અને uploaded evidence reset કરી શકાય. પછી backupમાંથી Employees, Teams અને Site Types ફરી populate કરવાના.
+
+Restore સમયે નવા schemaમાં કોઈ જરૂરી field backupમાં ન હોય—ખાસ કરીને employee multiple roles, Stage required roles અથવા Team assignment સંબંધિત field—તો value અનુમાનથી ભરવાની નહીં. પહેલા stakeholder સાથે discuss અને confirm કરવાનું.
+
+Sensitive client setup backup Gitમાં commit કરવાનો નહીં.
+
+## 17. હાલ scopeમાં નથી
+
+- Material stock/request/dispatch/usage/return module
+- Google Maps અથવા GPS capture
+- Offline evidence queue અને sync
+- Native Android/iOS application
+- Team login/account
+
+## 18. હજી નક્કી કરવાનું
+
+- Approved/completed Stage reopen કરવાની ચોક્કસ process.
+- Backupમાંથી restore કરતી વખતે નવા `Required Roles` દરેક existing Stage માટે શું રહેશે.
+- Existing employeesના multiple rolesમાં કોઈ additional role ઉમેરવાનો હોય તો stakeholder confirmation.
+- Existing Teamsને restore કર્યા પછી કઈ Sites/Projects પર assign કરવાના તે નવા Projects create થાય ત્યારે નક્કી કરવાનું.
+
+આ open decisions implementationમાં અનુમાનથી ભરવાના નહીં. નિર્ણય થાય ત્યાં સુધી approved/completed Stage ફરી ખોલી શકાશે નહીં.
