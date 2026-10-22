@@ -1,13 +1,13 @@
 # FIELDWORK — Design verification report
 
-Source: system design v0.2 · SHA-256 `6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62`.
+Source: system design v0.3 · SHA-256 `dffaaa26361ef9a9cdca738579e9e02538361273dd3892e0d54c1bc5d9b63236`.
 
 ## What was checked
 
-- 216 screen/state designs, 232 total native boards, 9 journeys, 6 reusable native components and shared colors/typographies/tokens.
-- All 216 SVG screens rendered in Chromium; 4365 text nodes measured; 0 overflow/out-of-board findings and 0 page errors.
-- 25 automated design-contract tests passed, covering native editable shapes, real prototype destinations, source-version consistency, evidence/location rules, credential controls, stock lifecycle, closeout, localized labels, 44px mobile targets, and 4.5:1 semantic text contrast.
-- Browser clicks exercised starting/finishing work, direct photo send, record/stop/send voice, material requests, Hindi/Gujarati paths, no-photo completion, manager stage review and final approval. Gallery local-note persistence, a 390px review viewport and a 360px distraction-free employee demo were checked.
+- 242 screen/state designs, 258 total native boards, 9 journeys, 6 reusable native components and shared colors/typographies/tokens.
+- All 242 SVG screens rendered in Chromium; 4851 text nodes measured; 0 overflow/out-of-board findings and 0 page errors.
+- 28 automated design-contract tests passed, covering native editable shapes, real prototype destinations, source-version consistency, evidence/location rules, credential controls, stock lifecycle, closeout, localized labels, 48px mobile targets, and 4.5:1 semantic text contrast.
+- Browser clicks exercised stage-owner selection/handover/bulk assignment, a second employee’s own wiring/photo/voice/material-request flow, starting/finishing work, direct photo send, record/stop/send voice, material requests, Hindi/Gujarati paths, no-photo completion, manager stage review and final approval. Gallery local-note persistence, a 390px review viewport and a 360px distraction-free employee demo were checked.
 - Native Penpot verification: **passed**. See [machine-readable verification](penpot-verification.json) when available.
 - Representative rendered screens were visually inspected, including dashboard, stage register, simple employee site and photo/voice flow, Gujarati home, actual native Penpot workspace, and the short client walkthrough. PDF exports inline SVG screens and assert the Source Sans font is loaded to prevent fallback typography.
 
@@ -24,7 +24,7 @@ English canonical screens and 74 Hindi/Gujarati screen/state variants are includ
 | 1 | Admin provisioning creates exactly one loginable admin; a second invocation does not replace it; no plaintext credential is persisted. | [A01](index.html#A01) | Admin creation, unique-admin constraint and password persistence require backend integration tests. |
 | 2 | Creating/editing an employee records language and multiple eligible types. An employee eligible for Solar and Shed can hold one site of each type and sees the selected English/Hindi/Gujarati interface. Removing an actively assigned type requires resolving its assignments. | [A38](index.html#A38), [A39](index.html#A39), [M45](index.html#M45), [M46](index.html#M46) | Implement and test the documented behavior; design contract checked. |
 | 3 | Site creation copies stage templates. Editing the template later leaves existing sites unchanged. | [A05](index.html#A05), [A06](index.html#A06), [A35](index.html#A35) | Implement and test the documented behavior; design contract checked. |
-| 4 | A published site with no employee is New; assigning an eligible employee makes it Assigned. Admin and the current assignee can read full details and evidence; other employees cannot. | [A13](index.html#A13), [M33](index.html#M33), [M37](index.html#M37) | Server authorization must be exercised with authenticated roles. |
+| 4 | A published site with no employee is New; assigning an eligible employee makes it Assigned. Admin/coordinator can read site details; stage workers receive their own evidence and minimal context, while unrelated employees have no access. | [A13](index.html#A13), [M33](index.html#M33), [M37](index.html#M37) | Server authorization must be exercised with authenticated roles. |
 | 5 | Independent stages run in parallel; unmet explicit dependencies prevent starting/submitting the dependent work. | [A06](index.html#A06), [A31](index.html#A31), [M23](index.html#M23) | Implement and test the documented behavior; design contract checked. |
 | 6 | An evidence-required stage cannot be submitted with only a failed/unfinished upload, an unlocated photo, text, or audio. An evidence-optional stage can be submitted without a photo; any photo attached still requires location. | [A16](index.html#A16), [M17](index.html#M17), [M18](index.html#M18) | Implement and test the documented behavior; design contract checked. |
 | 7 | Rejection preserves the attempt and reason. Resubmission creates another attempt. Final valid approval completes the site exactly once. | [A22](index.html#A22), [A23](index.html#A23), [M19](index.html#M19), [M20](index.html#M20), [A65](index.html#A65), [A75](index.html#A75) | Atomic completion and duplicate approvals require backend transactions. |
@@ -48,10 +48,15 @@ English canonical screens and 74 Hindi/Gujarati screen/state variants are includ
 | 25 | Reminders run only after the configured cutoff on configured working days, are deduplicated, and keep daily notes optional. Admin field updates remain distinguishable from employee reports. | [A48](index.html#A48), [M40](index.html#M40) | Implement and test the documented behavior; design contract checked. |
 | 26 | With SQLite, simultaneous reservations, stage approvals, and offline-sync retries preserve invariants. Foreign keys apply on every connection; an interrupted stock write leaves no partial ledger/balance/outbox posting, and a consistent backup restores with its media references. | [A25](index.html#A25), [A26](index.html#A26), [A27](index.html#A27), [A47](index.html#A47) | Concurrency, rollback and backup recovery require the implemented SQLite backend. |
 | 27 | A Python-generated admin password hash authenticates through Spring Security; schema mismatch or a wrong SQLite file path fails provisioning safely. | [A01](index.html#A01) | Python-to-Spring Security hash interoperability requires the implemented authentication stack. |
+| 28 | Two people own different stages at one site. Each can start/submit only their own eligible work; coordinator visibility does not grant coworker mutation. Cross-stage API/media access is denied; unassigned work has no employee mutation path. | [A08](index.html#A08), [A81](index.html#A81), [A84](index.html#A84), [M07](index.html#M07), [M137](index.html#M137), [M138](index.html#M138), [M140](index.html#M140), [M155](index.html#M155) | Authenticated API, media and sync-projection tests must verify stage-level permissions. |
+| 29 | Changing coordinator leaves stage owners unchanged. Explicit single/bulk assignment validates eligibility and versions, preserves accepted submission authorship and rejects a stale selection atomically. Completed stages require reopening before reassignment. | [A13](index.html#A13), [A82](index.html#A82), [A83](index.html#A83), [A85](index.html#A85), [A86](index.html#A86) | SQLite transactional single/bulk assignment and version-conflict tests require implementation. |
+| 30 | Reassignment while offline quarantines stale stage work, including an old assignment later restored to the same employee. Remaining valid assignments stay accessible. Required photo location and original author survive controlled recovery. | [M37](index.html#M37), [M47](index.html#M47), [A82](index.html#A82) | Device offline reassignment/reassign-back and admin-assisted recovery require integration tests. |
+| 31 | Worker-only material UI offers requests but no consumption/returns; coordinator manages custody and admin confirms receipt. All roles share one site stock balance, including reconciliation after completion. | [M143](index.html#M143), [M144](index.html#M144), [M24](index.html#M24), [M29](index.html#M29), [A27](index.html#A27) | Server material custody authorization and shared ledger tests require implementation. |
+| 32 | On target low-end devices, employee core actions meet the proposed UI performance/resource budgets below. Test text scaling, screen readers, offline reopen and 200 owned stages without losing readable labels or work. | [M04](index.html#M04), [M06](index.html#M06), [M74](index.html#M74), [A08](index.html#A08) | Physical-device Flutter profiling, accessibility and React Core Web Vitals require the production applications. |
 
 ## Corrections made during review
 
-- Added measured native text positionData from the bundled fonts so shared Penpot prototypes render text as well as the editor. Native checks now require visible guest-view text and click the real record → stop → review flow.
+- Added measured native text positionData from the bundled fonts so shared Penpot prototypes render text as well as the editor. Native checks require visible guest-view text and click the record → stop → review flow plus Person → picker → handover.
 - Replaced the dense employee site dashboard with one next job and large photo/voice/material actions.
 - Added recording, stop and review states; photos and voice send directly without forcing a written note.
 - Localized core task chains, results, messages, help and profile in Hindi/Gujarati.
@@ -61,7 +66,7 @@ English canonical screens and 74 Hindi/Gujarati screen/state variants are includ
 - Adopted a purple accent, white sidebar, underline tabs, compact registers and daily reporting panels after reviewing the public [Onsite product UI](https://onsiteteams.com/). No Onsite assets or branding are included.
 - Simplified mobile to My work → Site → direct action. Secondary lists remain available without filling the daily screen with administrative information.
 - Added native-shape and browser regressions for large controls, readable core typography, direct actions, caption-free updates and selected-language continuity.
-- Enlarged mobile filter and menu hit areas to at least 44px.
+- Enlarged mobile filter and menu hit areas to at least 48px.
 - Removed authenticated navigation from login, expired-unlock and reset-session screens; separated login language selection from signed-in profile language selection.
 - Replaced English bottom navigation labels on Hindi/Gujarati examples.
 - Corrected native Google font identifiers, supported font variant IDs, and Penpot corner-radius attributes after inspecting a real import.

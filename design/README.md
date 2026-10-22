@@ -2,12 +2,13 @@
 
 ## Start here
 
+- **UI research and stage assignment:** [ui-research-stage-assignment.md](specs/ui-research-stage-assignment.md)
 - **Full system design PDF:** [system-design.pdf](deliverables/system-design.pdf)
 - **One-page client review guide:** [client-review-guide.pdf](deliverables/client-review-guide.pdf)
 - **Create the ready-to-send PDF package:** run `npm run design:handoff` from the repository root.
 - **Simple employee demo:** http://127.0.0.1:4173/employee.html#M46
 - **English employee demo:** http://127.0.0.1:4173/employee.html#M04
-- **Short client walkthrough:** [client-review.pdf](deliverables/client-review.pdf) (8 pages)
+- **Short client walkthrough:** [client-review.pdf](deliverables/client-review.pdf) (9 pages)
 - **Mobile workspace:** http://127.0.0.1:4173/#M06
 - **Stage register:** http://127.0.0.1:4173/#A08
 - **Browser review:** http://127.0.0.1:4173
@@ -16,7 +17,7 @@
 - **User journeys and complete inventory:** [user-journeys.md](deliverables/user-journeys.md)
 - **Checks and traceability:** [coverage-report.md](deliverables/coverage-report.md)
 
-The delivery contains 216 screen/state designs (80 manager, 136 employee), 9 user journeys, 7 foundation/component boards, seven prototype entry flows, shared semantic colors, typography, DTCG tokens and six reusable native components. All core workflows and recovery states are represented.
+The delivery contains 242 screen/state designs (86 manager, 156 employee), 9 user journeys, 7 foundation/component boards, seven prototype entry flows, shared semantic colors, typography, DTCG tokens and six reusable native components. All core workflows and recovery states are represented.
 
 ## Open in Penpot
 
@@ -58,7 +59,7 @@ The ZIP contains the native Penpot file, PDF, browser gallery, SVGs and fonts. I
 
 ## Verification and limits
 
-25 design-contract tests pass. All 216 rendered screens were measured with no text overflow findings. Read the coverage report for the precise scope. Runtime backend/device checks are intentionally not claimed: this delivery designs the application rather than implementing it. English canonical designs and 74 localized screen/state variants are ready for review; full translation and native-device testing follow during implementation.
+28 design-contract tests pass. All 242 rendered screens were measured with no text overflow findings. Read the coverage report for the precise scope. Runtime backend/device checks are intentionally not claimed: this delivery designs the application rather than implementing it. English canonical designs and 74 localized screen/state variants are ready for review; full translation and native-device testing follow during implementation.
 
 ## Tool provenance
 

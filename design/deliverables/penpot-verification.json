@@ -1,12 +1,12 @@
 {
   "status": "passed",
-  "importedArtifactName": "FIELDWORK · Simple employee UI · a1f11999",
+  "importedArtifactName": "FIELDWORK · Simple employee UI · a0dc0b5a",
   "penpotVersion": "2.18.3",
-  "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
-  "artifactSha256": "a0507a86e763e7ef5bfda1e1e5719823e1158a4aab86f3fb89737df35963b05b",
-  "importedFileId": "606a0e71-0fc2-810e-8008-d3ca3f13b47a",
-  "importedScreens": 216,
-  "importedBoards": 232,
+  "sourceSha256": "dffaaa26361ef9a9cdca738579e9e02538361273dd3892e0d54c1bc5d9b63236",
+  "artifactSha256": "31b5cd35779a0366cda1c51de8171456fbbbb7824dfa012aa1675b67e013214b",
+  "importedFileId": "606a0e71-0fc2-810e-8008-d3d8ef5d8953",
+  "importedScreens": 242,
+  "importedBoards": 258,
   "pages": [
     {
       "name": "00 · Foundations & components",
@@ -15,27 +15,28 @@
     },
     {
       "name": "01 · Manager web · All screens",
-      "shapes": 6918,
+      "shapes": 7566,
       "flows": 2
     },
     {
       "name": "02 · Employee mobile · All screens",
-      "shapes": 3864,
+      "shapes": 4465,
       "flows": 5
     },
     {
       "name": "03 · End-to-end user journeys",
-      "shapes": 487,
+      "shapes": 517,
       "flows": 0
     }
   ],
-  "editableTextShapes": 4708,
-  "prototypeLinks": 6439,
+  "editableTextShapes": 5212,
+  "prototypeLinks": 7195,
   "components": 6,
   "flows": 7,
   "publicViewVerified": true,
   "nativeVoiceFlowVerified": true,
-  "editorURL": "http://localhost:9001/#/workspace?team-id=606a0e71-0fc2-810e-8008-d393751025dc&file-id=606a0e71-0fc2-810e-8008-d3ca3f13b47a&page-id=c93e6eed-9f9a-8036-8008-d3ca18d761df",
-  "viewerURL": "http://localhost:9001/#/view?file-id=606a0e71-0fc2-810e-8008-d3ca3f13b47a&page-id=c93e6eed-9f9a-8036-8008-d3ca18f8bc6d&share-id=72939e96-5a0d-4703-91aa-154a8a0dd55d&index=78",
+  "nativeAssignmentFlowVerified": true,
+  "editorURL": "http://localhost:9001/#/workspace?team-id=606a0e71-0fc2-810e-8008-d393751025dc&file-id=606a0e71-0fc2-810e-8008-d3d8ef5d8953&page-id=16976368-3b76-8017-8008-d3d8cf79f1cb",
+  "viewerURL": "http://localhost:9001/#/view?file-id=606a0e71-0fc2-810e-8008-d3d8ef5d8953&page-id=16976368-3b76-8017-8008-d3d8cf9b9515&share-id=edd72055-0b5f-43f6-aee0-ca10498fb44b&index=84",
   "scope": "Actual import into a loopback-only local Penpot instance. No hosted cloud workspace or external client URL has been published."
 }

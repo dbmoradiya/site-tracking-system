@@ -1,15 +1,15 @@
 {
-  "exportName": "FIELDWORK · Simple employee UI · a1f11999",
-  "uiRevision": 3,
+  "exportName": "FIELDWORK · Simple employee UI · a0dc0b5a",
+  "uiRevision": 4,
   "visualReference": "https://onsiteteams.com/",
   "title": "FIELDWORK design review",
   "source": "docs/system-design.md",
-  "sourceVersion": "0.2",
-  "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
-  "fileId": "c93e6eed-9f9a-8036-8008-d3ca18c6f1e8",
+  "sourceVersion": "0.3",
+  "sourceSha256": "dffaaa26361ef9a9cdca738579e9e02538361273dd3892e0d54c1bc5d9b63236",
+  "fileId": "16976368-3b76-8017-8008-d3d8cf6967a9",
   "pageIds": {
-    "admin": "c93e6eed-9f9a-8036-8008-d3ca18f8bc6d",
-    "mobile": "c93e6eed-9f9a-8036-8008-d3ca1a293bfa"
+    "admin": "16976368-3b76-8017-8008-d3d8cf9b9515",
+    "mobile": "16976368-3b76-8017-8008-d3d8d0f4d692"
   },
   "screens": [
     {
@@ -41,7 +41,7 @@
         }
       ],
       "note": "One provisioned admin account. No registration. For account recovery, contact the system operator.",
-      "boardId": "e5e7133a-57b2-4b99-bedd-c698129a2b8d",
+      "boardId": "f196cfd7-8b2d-4e69-aa27-7a698913db4d",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -177,7 +177,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "3bb3433c-2848-4be7-ab1e-e4417cccf862",
+      "boardId": "d7c7d6d1-85a4-42f1-955f-d4bb3f4cfedb",
       "width": 1440,
       "height": 1259,
       "links": [
@@ -521,7 +521,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "28656fc4-d6ad-4bf4-a996-2b613c1f29e1",
+      "boardId": "84a51df9-9331-4d36-966e-2472518c1a0e",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -843,6 +843,12 @@
           "value": "Any / Overdue only",
           "help": "",
           "type": "select"
+        },
+        {
+          "label": "Stage person",
+          "value": "Any employee / Unassigned stages",
+          "help": "Independent of site coordinator",
+          "type": "select"
         }
       ],
       "actions": [
@@ -857,7 +863,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "2d1931c5-b1fc-4e5b-b305-6b9798dd679e",
+      "boardId": "94087e04-9374-48db-a665-4d205ccc5534",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -945,7 +951,7 @@
           "label": "Apply filters",
           "to": "A03",
           "x": 264,
-          "y": 727,
+          "y": 853.75,
           "width": 154,
           "height": 44
         },
@@ -953,7 +959,7 @@
           "label": "Clear filters",
           "to": "A03",
           "x": 430,
-          "y": 727,
+          "y": 853.75,
           "width": 154,
           "height": 44
         }
@@ -1008,6 +1014,10 @@
         "Overdue",
         "Any / Overdue only",
         "⌄",
+        "Stage person",
+        "Any employee / Unassigned stages",
+        "⌄",
+        "Independent of site coordinator",
         "Apply filters",
         "Clear filters"
       ]
@@ -1045,7 +1055,7 @@
           "type": "date"
         },
         {
-          "label": "Assignee",
+          "label": "Site coordinator",
           "value": "Ravi Patel",
           "help": "Eligible for Solar and Shed; optional",
           "type": "select"
@@ -1092,7 +1102,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "c46839cc-71a7-4d23-9637-2b49150024e8",
+      "boardId": "de54dfba-831a-4a95-9bca-3937b41744fc",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -1234,7 +1244,7 @@
         "Optional",
         "Expected completion *",
         "26 October 2026",
-        "Assignee",
+        "Site coordinator",
         "Ravi Patel",
         "⌄",
         "Eligible for Solar and Shed; optional",
@@ -1266,31 +1276,41 @@
           "title": "01 · Survey & marking",
           "body": "Approved by admin · 20 Oct, 16:10",
           "status": "Completed",
-          "to": "A22"
+          "to": "A22",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "02 · Mounting structure",
           "body": "2 photos + 00:42 audio · submitted today",
           "status": "Awaiting approval",
-          "to": "A22"
+          "to": "A22",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "03 · Panel installation",
           "body": "Can run alongside wiring; 1 photo required",
           "status": "Open",
-          "to": "A16"
+          "to": "A16",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "04 · Wiring & earthing",
           "body": "No photo required · no prerequisite",
-          "status": "In Progress",
-          "to": "A17"
+          "status": "Open",
+          "to": "A17",
+          "owner": "Neha Shah",
+          "ownerTo": "A81"
         },
         {
           "title": "05 · Final inspection",
           "body": "Waiting for panel installation and wiring",
           "status": "Dependency hold",
-          "to": "A31"
+          "to": "A31",
+          "owner": "Unassigned",
+          "ownerTo": "A84"
         }
       ],
       "fields": [
@@ -1327,9 +1347,10 @@
       ],
       "note": "Remove or reorder pristine stages. Stages with work or approval history cannot be silently deleted. No circular dependencies.",
       "stageLayout": "rows",
-      "boardId": "ae000759-4129-423a-8a09-b5c73d5faf42",
+      "stageOwnership": true,
+      "boardId": "b7decf88-9e13-40f7-b112-e9b14eb77bd0",
       "width": 1440,
-      "height": 1067,
+      "height": 1107,
       "links": [
         {
           "label": "Navigation / Dashboard",
@@ -1417,45 +1438,77 @@
           "x": 264,
           "y": 437.15000000000003,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 02 · Mounting structure",
           "to": "A22",
           "x": 264,
-          "y": 529.1500000000001,
+          "y": 537.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 02 · Mounting structure",
+          "to": "A81",
+          "x": 638.88,
+          "y": 559.1500000000001,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Stage row / 03 · Panel installation",
           "to": "A16",
           "x": 264,
-          "y": 621.1500000000001,
+          "y": 637.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 03 · Panel installation",
+          "to": "A81",
+          "x": 638.88,
+          "y": 659.1500000000001,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Stage row / 04 · Wiring & earthing",
           "to": "A17",
           "x": 264,
-          "y": 713.1500000000001,
+          "y": 737.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 04 · Wiring & earthing",
+          "to": "A81",
+          "x": 638.88,
+          "y": 759.1500000000001,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Stage row / 05 · Final inspection",
           "to": "A31",
           "x": 264,
-          "y": 805.1500000000001,
+          "y": 837.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 05 · Final inspection",
+          "to": "A84",
+          "x": 638.88,
+          "y": 859.1500000000001,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Add stage",
           "to": "A06",
           "x": 264,
-          "y": 966.7,
+          "y": 1006.7,
           "width": 154,
           "height": 44
         },
@@ -1463,7 +1516,7 @@
           "label": "Save stages",
           "to": "A05",
           "x": 430,
-          "y": 966.7,
+          "y": 1006.7,
           "width": 154,
           "height": 44
         }
@@ -1497,26 +1550,42 @@
         "None — parallel work allowed",
         "⌄",
         "STAGE / WORK PACKAGE",
+        "PERSON",
         "EVIDENCE & DEPENDENCY",
         "STATUS",
         "✓",
         "Survey & marking",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Approved by admin · 20 Oct, 16:10",
         "Completed",
         "02",
         "Mounting structure",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "2 photos + 00:42 audio · submitted today",
         "Awaiting approval",
         "03",
         "Panel installation",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Can run alongside wiring; 1 photo required",
         "Open",
         "04",
         "Wiring & earthing",
+        "NS",
+        "Neha Shah",
+        "⌄",
         "No photo required · no prerequisite",
-        "In Progress",
+        "Open",
         "05",
         "Final inspection",
+        "?",
+        "Unassigned",
+        "⌄",
         "Waiting for panel installation and wiring",
         "Dependency hold",
         "Remove or reorder pristine stages. Stages with work or approval history cannot be silently deleted. No circular dependencies.",
@@ -1563,7 +1632,7 @@
           "1 / 5 stages · 20%"
         ],
         [
-          "Assignee",
+          "Site coordinator",
           "Ravi Patel"
         ],
         [
@@ -1621,7 +1690,7 @@
           "style": "danger"
         }
       ],
-      "boardId": "14f31aaf-a55d-4ac1-895f-84218e036ad2",
+      "boardId": "4612781e-0685-4fb8-8112-d14f17de9bbb",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -1833,7 +1902,7 @@
         "In Progress",
         "Approved progress",
         "1 / 5 stages · 20%",
-        "Assignee",
+        "Site coordinator",
         "Ravi Patel",
         "Expected completion",
         "26 Oct 2026",
@@ -1860,7 +1929,7 @@
       "kind": "detail",
       "section": "Sites",
       "platform": "admin",
-      "subtitle": "Suryoday solar · approved work and review history",
+      "subtitle": "Suryoday solar · Ravi coordinates · people own individual stages",
       "tabs": [
         [
           "Overview",
@@ -1888,31 +1957,41 @@
           "title": "01 · Survey & marking",
           "body": "Approved by admin · 20 Oct, 16:10",
           "status": "Completed",
-          "to": "A22"
+          "to": "A22",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "02 · Mounting structure",
           "body": "2 photos + 00:42 audio · submitted today",
           "status": "Awaiting approval",
-          "to": "A22"
+          "to": "A22",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "03 · Panel installation",
           "body": "Can run alongside wiring; 1 photo required",
           "status": "Open",
-          "to": "A16"
+          "to": "A16",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "04 · Wiring & earthing",
           "body": "No photo required · no prerequisite",
-          "status": "In Progress",
-          "to": "A17"
+          "status": "Open",
+          "to": "A17",
+          "owner": "Neha Shah",
+          "ownerTo": "A81"
         },
         {
           "title": "05 · Final inspection",
           "body": "Waiting for panel installation and wiring",
           "status": "Dependency hold",
-          "to": "A31"
+          "to": "A31",
+          "owner": "Unassigned",
+          "ownerTo": "A84"
         }
       ],
       "actions": [
@@ -1930,10 +2009,21 @@
           "label": "Add photo",
           "to": "A18",
           "style": "secondary"
+        },
+        {
+          "label": "Select stages to assign",
+          "to": "A83",
+          "style": "secondary"
+        },
+        {
+          "label": "Unassigned stages",
+          "to": "A84",
+          "style": "secondary"
         }
       ],
       "stageLayout": "rows",
-      "boardId": "d7301310-97e9-4c90-ad87-907e1860343e",
+      "stageOwnership": true,
+      "boardId": "2d6bccdf-bda3-44b5-864a-5c4cd8b99e1c",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -2063,45 +2153,77 @@
           "x": 264,
           "y": 297.05,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 02 · Mounting structure",
           "to": "A22",
           "x": 264,
-          "y": 389.05,
+          "y": 397.05,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 02 · Mounting structure",
+          "to": "A81",
+          "x": 638.88,
+          "y": 419.05,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Stage row / 03 · Panel installation",
           "to": "A16",
           "x": 264,
-          "y": 481.05,
+          "y": 497.05,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 03 · Panel installation",
+          "to": "A81",
+          "x": 638.88,
+          "y": 519.05,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Stage row / 04 · Wiring & earthing",
           "to": "A17",
           "x": 264,
-          "y": 573.05,
+          "y": 597.05,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 04 · Wiring & earthing",
+          "to": "A81",
+          "x": 638.88,
+          "y": 619.05,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Stage row / 05 · Final inspection",
           "to": "A31",
           "x": 264,
-          "y": 665.05,
+          "y": 697.05,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / 05 · Final inspection",
+          "to": "A84",
+          "x": 638.88,
+          "y": 719.05,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Start work",
           "to": "A17",
           "x": 264,
-          "y": 781.05,
+          "y": 821.05,
           "width": 154,
           "height": 44
         },
@@ -2109,7 +2231,7 @@
           "label": "Request stage completion",
           "to": "A16",
           "x": 430,
-          "y": 781.05,
+          "y": 821.05,
           "width": 228,
           "height": 44
         },
@@ -2117,8 +2239,24 @@
           "label": "Add photo",
           "to": "A18",
           "x": 670,
-          "y": 781.05,
+          "y": 821.05,
           "width": 154,
+          "height": 44
+        },
+        {
+          "label": "Select stages to assign",
+          "to": "A83",
+          "x": 836,
+          "y": 821.05,
+          "width": 220,
+          "height": 44
+        },
+        {
+          "label": "Unassigned stages",
+          "to": "A84",
+          "x": 1068,
+          "y": 821.05,
+          "width": 172,
           "height": 44
         }
       ],
@@ -2142,38 +2280,56 @@
         "M",
         "Manager",
         "Stages & evidence",
-        "Suryoday solar · approved work and review history",
+        "Suryoday solar · Ravi coordinates · people own individual stages",
         "Overview",
         "Stages & evidence",
         "Materials",
         "Linked sites",
         "Activity",
         "STAGE / WORK PACKAGE",
+        "PERSON",
         "EVIDENCE & DEPENDENCY",
         "STATUS",
         "✓",
         "Survey & marking",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Approved by admin · 20 Oct, 16:10",
         "Completed",
         "02",
         "Mounting structure",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "2 photos + 00:42 audio · submitted today",
         "Awaiting approval",
         "03",
         "Panel installation",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Can run alongside wiring; 1 photo required",
         "Open",
         "04",
         "Wiring & earthing",
+        "NS",
+        "Neha Shah",
+        "⌄",
         "No photo required · no prerequisite",
-        "In Progress",
+        "Open",
         "05",
         "Final inspection",
+        "?",
+        "Unassigned",
+        "⌄",
         "Waiting for panel installation and wiring",
         "Dependency hold",
         "Start work",
         "Request stage completion",
-        "Add photo"
+        "Add photo",
+        "Select stages to assign",
+        "Unassigned stages"
       ]
     },
     {
@@ -2269,7 +2425,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "27e1600d-367e-4a93-a6ad-4f01462fd1e2",
+      "boardId": "fb38d378-acd6-4c3c-b8b9-3aae31914efb",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -2571,7 +2727,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "e91af432-f73f-4004-b216-9462a71851ba",
+      "boardId": "3483ff21-fec8-457a-9852-697936b61e78",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -2832,7 +2988,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "14c63fa3-aa2f-4438-b29b-20159a1f7cdc",
+      "boardId": "4cef9d49-87ec-4ad4-96ec-33375de4b7c1",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -3110,7 +3266,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "74fba7a6-6279-4227-9e1e-1221c46af949",
+      "boardId": "bd20c9ef-f5ff-48ee-abc2-dd57d2b07074",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -3255,11 +3411,11 @@
     },
     {
       "id": "A13",
-      "title": "Assign the right person",
+      "title": "Change site coordinator",
       "kind": "form",
       "section": "Sites",
       "platform": "admin",
-      "subtitle": "Exactly one current employee. Historical assignments stay visible.",
+      "subtitle": "Site materials and overall coordination. Stage people stay unchanged.",
       "fields": [
         {
           "label": "Site type",
@@ -3268,38 +3424,38 @@
           "type": "locked"
         },
         {
-          "label": "Search eligible employees",
+          "label": "Site coordinator",
           "value": "Ravi Patel · Solar, Shed",
-          "help": "",
+          "help": "Active eligible employees",
           "type": "select"
         },
         {
-          "label": "Assignment reason",
-          "value": "Ravi is handling installation",
+          "label": "Reason",
+          "value": "Coordination handover",
           "help": "",
           "type": "text"
         },
         {
-          "label": "Current assignee",
-          "value": "Ravi Patel",
-          "help": "Reassignment revokes previous employee access",
+          "label": "Stage assignments",
+          "value": "Keep current people",
+          "help": "Reassign stages separately; no automatic cascade",
           "type": "locked"
         }
       ],
       "actions": [
         {
-          "label": "Confirm assignment",
+          "label": "Save coordinator",
           "to": "A07",
           "style": "primary"
         },
         {
-          "label": "Leave unassigned",
-          "to": "A07",
+          "label": "Assign stages separately",
+          "to": "A08",
           "style": "secondary"
         }
       ],
-      "note": "An employee must be active and eligible for this site type. A started site remains In Progress after reassignment.",
-      "boardId": "24d0affe-1db2-41b5-ba0b-7d8d34131697",
+      "note": "Coordinator access does not grant permission to mutate another employee’s stage. Existing stage owners retain access to their stages.",
+      "boardId": "bc6158cb-eb0a-49b9-adb1-a3deb9eb6b0f",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -3384,19 +3540,19 @@
           "height": 42
         },
         {
-          "label": "Confirm assignment",
+          "label": "Save coordinator",
           "to": "A07",
           "x": 264,
-          "y": 464.90000000000003,
-          "width": 180,
+          "y": 489.1,
+          "width": 164,
           "height": 44
         },
         {
-          "label": "Leave unassigned",
-          "to": "A07",
-          "x": 456,
-          "y": 464.90000000000003,
-          "width": 164,
+          "label": "Assign stages separately",
+          "to": "A08",
+          "x": 440,
+          "y": 489.1,
+          "width": 228,
           "height": 44
         }
       ],
@@ -3419,21 +3575,22 @@
         "Notifications",
         "M",
         "Manager",
-        "Assign the right person",
-        "Exactly one current employee. Historical assignments stay visible.",
+        "Change site coordinator",
+        "Site materials and overall coordination. Stage people stay unchanged.",
         "Site type",
         "Solar",
-        "Search eligible employees",
+        "Site coordinator",
         "Ravi Patel · Solar, Shed",
         "⌄",
-        "Assignment reason",
-        "Ravi is handling installation",
-        "Current assignee",
-        "Ravi Patel",
-        "Reassignment revokes previous employee access",
-        "An employee must be active and eligible for this site type. A started site remains In Progress after reassignment.",
-        "Confirm assignment",
-        "Leave unassigned"
+        "Active eligible employees",
+        "Reason",
+        "Coordination handover",
+        "Stage assignments",
+        "Keep current people",
+        "Reassign stages separately; no automatic cascade",
+        "Coordinator access does not grant permission to mutate another employee’s stage. Existing stage owners retain access to their stages.",
+        "Save coordinator",
+        "Assign stages separately"
       ]
     },
     {
@@ -3476,7 +3633,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "fc405e1d-0396-41a1-b444-910c7623f766",
+      "boardId": "6bb7e1b2-b975-4701-8605-cbb1c707d406",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -3644,7 +3801,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "e9f28684-95cb-4031-9d96-0651a78df951",
+      "boardId": "c933114d-7d30-4ed0-8bce-da4d7bd372ae",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -3822,7 +3979,7 @@
         }
       ],
       "note": "Checks: active site, satisfied prerequisites, no block, finalized photos with required location. Submission enters Pending review.",
-      "boardId": "28eea9eb-202c-4367-873c-23270ffd7ae0",
+      "boardId": "1a8ae9ff-f254-4fda-a32c-61cbf60fe134",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -4011,7 +4168,7 @@
         }
       ],
       "note": "Text, photos, audio, or any combination. At least one content item; no caption required.",
-      "boardId": "67653b15-39d5-410a-8497-0fb47b79f551",
+      "boardId": "a9227db6-6108-4555-952b-07a28983ef7d",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -4195,7 +4352,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "9f5e44a9-a963-4fe3-80a5-5b1b628d3ede",
+      "boardId": "fb7099a7-9b57-4811-b045-2f594c13f7c0",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -4383,7 +4540,7 @@
         }
       ],
       "note": "Addition location is not a claim about the original shooting location of a gallery image.",
-      "boardId": "0c6a0639-06eb-4ab8-a741-77e558b33c43",
+      "boardId": "964d6ef5-b8e6-471d-b725-72627a748ed3",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -4569,7 +4726,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "08885845-9a86-4ced-bbae-ac499390ff0e",
+      "boardId": "27f9c50e-1579-475e-b2c5-2cf9e2056340",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -4790,7 +4947,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "3e35ae54-e814-44db-b18d-190b580e36c0",
+      "boardId": "5c75e7e8-126e-4b5d-9e88-9a6106f95158",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -5079,7 +5236,7 @@
         }
       ],
       "note": "Approval is explicit, including admin-authored submissions. Approving the final remaining stage completes the site atomically.",
-      "boardId": "7a008751-443d-4bff-b90c-a16689f0ef3a",
+      "boardId": "687fbce5-ff60-4bd8-8a32-083a92d04cc8",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -5269,7 +5426,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "1d52386c-ae36-4718-91b9-bfe241bd3c3a",
+      "boardId": "8af9a9e3-85c6-4d58-b63a-5712a0be7cf2",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -5437,7 +5594,7 @@
         }
       ],
       "note": "A pending request alone does not officially block the site. Independent stages can continue after a stage-level block.",
-      "boardId": "34ebfb96-9b28-42ff-be3f-a2209143e011",
+      "boardId": "333ef9ec-d1eb-41c6-aa3a-c33b9c77b44a",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -5636,7 +5793,7 @@
         }
       ],
       "note": "Concurrent approvals cannot reserve the same stock twice. Repeated material requests remain separate.",
-      "boardId": "f890ce8d-848b-4739-bd8b-ebd3cfbe38ee",
+      "boardId": "dd2de1de-4afc-4d46-8638-e5777246efa9",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -5849,7 +6006,7 @@
         }
       ],
       "note": "Only dispatched quantities leave warehouse on-hand and enter site stock. Planned allocations do not deduct stock.",
-      "boardId": "67d19dcf-647c-4909-89b8-b4e540bd7ea4",
+      "boardId": "a6e039f4-0c39-4fb9-82b7-fb4424b0d96d",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -6035,7 +6192,7 @@
         }
       ],
       "note": "Only confirmed received quantity increases warehouse stock. Pending returns cannot also be consumed.",
-      "boardId": "111eade7-8a32-45ea-a36a-549f27db8f57",
+      "boardId": "44fa48ff-53bf-427a-b99f-32cf81415b6d",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -6212,7 +6369,7 @@
           "style": "primary"
         }
       ],
-      "boardId": "8d12ec28-143c-4d94-ad02-5b64506ffa06",
+      "boardId": "582f144f-60ca-4d8a-9eb5-1c340635880c",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -6404,7 +6561,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "bf1a4d56-1fc1-46da-a319-94a3d0e0e11d",
+      "boardId": "aaebe231-34c0-40b2-aa64-356c97ad0dbd",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -6589,7 +6746,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "5c9c66d7-5ab4-4637-802d-028b6258dc20",
+      "boardId": "d5e4ed8e-5201-4645-8155-a2885f0abfa9",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -6791,7 +6948,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "1303312b-ca24-487b-9ba6-0ea8731058e6",
+      "boardId": "5a97a9e6-27f6-4a50-95ef-4028c2479905",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -6957,7 +7114,7 @@
           "style": "primary"
         }
       ],
-      "boardId": "4eab42f3-1e8a-47f5-9738-70a4159c144e",
+      "boardId": "f5672480-38f8-467b-8256-ee1800176330",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -7125,7 +7282,7 @@
         {
           "title": "04 · Wiring & earthing",
           "body": "No photo required · no prerequisite",
-          "status": "In Progress",
+          "status": "Open",
           "to": "A35"
         },
         {
@@ -7148,7 +7305,7 @@
         }
       ],
       "stageLayout": "rows",
-      "boardId": "d2d7a3d6-5d0b-4b4b-b676-1aefdd9aafe1",
+      "boardId": "0f45996b-c8e5-4fd2-8f97-fafd0f7dd75e",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -7238,45 +7395,45 @@
           "x": 264,
           "y": 232.05,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 02 · Mounting structure",
           "to": "A35",
           "x": 264,
-          "y": 324.05,
+          "y": 332.05,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 03 · Panel installation",
           "to": "A35",
           "x": 264,
-          "y": 416.05,
+          "y": 432.05,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 04 · Wiring & earthing",
           "to": "A35",
           "x": 264,
-          "y": 508.05,
+          "y": 532.05,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 05 · Final inspection",
           "to": "A35",
           "x": 264,
-          "y": 600.05,
+          "y": 632.05,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Edit template",
           "to": "A35",
           "x": 264,
-          "y": 716.05,
+          "y": 756.05,
           "width": 154,
           "height": 44
         },
@@ -7284,7 +7441,7 @@
           "label": "Archive type",
           "to": "A56",
           "x": 430,
-          "y": 716.05,
+          "y": 756.05,
           "width": 154,
           "height": 44
         }
@@ -7328,7 +7485,7 @@
         "04",
         "Wiring & earthing",
         "No photo required · no prerequisite",
-        "In Progress",
+        "Open",
         "05",
         "Final inspection",
         "Waiting for panel installation and wiring",
@@ -7387,7 +7544,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "e1895df3-1581-4cbf-b81b-b129deed0335",
+      "boardId": "e4f7af87-258e-4a23-900b-acf2033b8277",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -7553,7 +7710,7 @@
         {
           "title": "04 · Wiring & earthing",
           "body": "No photo required · no prerequisite",
-          "status": "In Progress",
+          "status": "Open",
           "to": "A17"
         },
         {
@@ -7601,9 +7758,9 @@
         }
       ],
       "stageLayout": "rows",
-      "boardId": "ce0e8645-ba7a-4b91-b888-370e1e844a8c",
+      "boardId": "61a7d1f9-c595-4d05-8eee-294f7da80f18",
       "width": 1440,
-      "height": 1040,
+      "height": 1062,
       "links": [
         {
           "label": "Navigation / Dashboard",
@@ -7691,45 +7848,45 @@
           "x": 264,
           "y": 437.15000000000003,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 02 · Mounting structure",
           "to": "A22",
           "x": 264,
-          "y": 529.1500000000001,
+          "y": 537.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 03 · Panel installation",
           "to": "A16",
           "x": 264,
-          "y": 621.1500000000001,
+          "y": 637.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 04 · Wiring & earthing",
           "to": "A17",
           "x": 264,
-          "y": 713.1500000000001,
+          "y": 737.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Stage row / 05 · Final inspection",
           "to": "A31",
           "x": 264,
-          "y": 805.1500000000001,
+          "y": 837.1500000000001,
           "width": 1136,
-          "height": 92
+          "height": 100
         },
         {
           "label": "Add stage",
           "to": "A35",
           "x": 264,
-          "y": 921.1500000000001,
+          "y": 961.1500000000001,
           "width": 154,
           "height": 44
         },
@@ -7737,7 +7894,7 @@
           "label": "Remove pristine stage",
           "to": "A35",
           "x": 430,
-          "y": 921.1500000000001,
+          "y": 961.1500000000001,
           "width": 204,
           "height": 44
         },
@@ -7745,7 +7902,7 @@
           "label": "Save template v4",
           "to": "A33",
           "x": 646,
-          "y": 921.1500000000001,
+          "y": 961.1500000000001,
           "width": 164,
           "height": 44
         }
@@ -7796,7 +7953,7 @@
         "04",
         "Wiring & earthing",
         "No photo required · no prerequisite",
-        "In Progress",
+        "Open",
         "05",
         "Final inspection",
         "Waiting for panel installation and wiring",
@@ -7854,7 +8011,7 @@
           "style": "primary"
         }
       ],
-      "boardId": "7f369b18-61d8-4a3b-96ff-ad5543c11f58",
+      "boardId": "9c2fa10d-81ed-4e1d-8512-f5d47b279457",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -8081,7 +8238,7 @@
           "style": "danger"
         }
       ],
-      "boardId": "994ad8c8-a36b-4eb1-893a-3f0e37901be8",
+      "boardId": "c00c3709-760d-4ad0-b98e-d067f8b64b89",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -8302,7 +8459,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "f7dbe876-b84f-4287-953e-9d65d59c6b8f",
+      "boardId": "10ed3fef-3a24-47ce-8bdc-e2498b79e5e5",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -8487,7 +8644,7 @@
         }
       ],
       "note": "Resolve active assignments before removing an eligible type used by those sites. Password reset is a separate action.",
-      "boardId": "9616a65f-4669-4ec4-a673-3926ae919946",
+      "boardId": "bec2fe84-145b-43cd-90d6-39f44ba0e7f9",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -8664,7 +8821,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "cf42a246-748a-4a9f-b56f-9f6832cc8af1",
+      "boardId": "2b28f723-39c8-4f9a-8df6-e09703434a85",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -8833,7 +8990,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "24526406-aab1-4509-8ca0-9fdf4803406b",
+      "boardId": "54081d4c-226a-4c00-88d4-3543b23837c6",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -9040,7 +9197,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "f0022473-f64f-4c9d-bc91-5161c9d3f12e",
+      "boardId": "f9572c3c-b398-4a56-95a3-5a538e5c3c73",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -9301,7 +9458,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "890912ab-93f5-4b9c-8e7b-25b3e436cd8d",
+      "boardId": "efa6f61c-7bfa-43a4-aa7d-0e3326320d60",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -9544,7 +9701,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "bf0fc883-00fd-4395-950d-dacd921319dc",
+      "boardId": "b02cd178-5d30-417f-bc06-2826380f621c",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -9726,7 +9883,7 @@
         }
       ],
       "note": "Creates a receipt in the append-only movement ledger. Negative stock is rejected.",
-      "boardId": "07b7a9e1-6f6d-4775-a4e0-f7358fe4dbee",
+      "boardId": "700457b2-ee5c-4232-8e6f-e73041c766e8",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -9901,7 +10058,7 @@
         }
       ],
       "note": "Do not edit or delete accepted ledger entries. Linked reversals retain the original actor and history.",
-      "boardId": "b845296e-cdcd-44de-98d8-163bf5d7eb3a",
+      "boardId": "2f698fb5-e67d-47c1-b632-521fa6fc07f5",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -10084,7 +10241,7 @@
         }
       ],
       "note": "Loss never becomes warehouse stock. Corrections cannot create negative usable balances.",
-      "boardId": "69fd2e06-0ce2-4fbf-aeb7-7ad742b495c2",
+      "boardId": "06c29c4a-f417-4866-a442-ee6d29624344",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -10275,7 +10432,7 @@
         }
       ],
       "note": "No mandatory daily note. Reminders are deduplicated per site/date and apply to In Progress sites without employee activity.",
-      "boardId": "24286bdb-4c23-48eb-8886-3f4d390671f8",
+      "boardId": "f1e69575-fb3d-401a-aea6-c9e437171ce1",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -10479,7 +10636,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "e850c2ce-66a7-4ce9-9171-64e3fd4454f8",
+      "boardId": "610debc1-4f81-4136-8897-4515207d6e27",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -10658,7 +10815,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "f13c5ed5-77b9-4e95-af0f-be8c928a654f",
+      "boardId": "a39a5c24-4cfe-4a84-a484-fbd483652ebe",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -10835,7 +10992,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "f00ea6bd-219c-457e-98ab-8d29909cc88e",
+      "boardId": "3775e10a-4d93-4fb4-98ef-6e0e8a2b2c93",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11004,7 +11161,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "ea706dfd-691c-44d8-b956-e21ee9a82956",
+      "boardId": "a02b15e7-8f94-4328-8522-6df710391c58",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11176,7 +11333,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "f21555e6-3d2b-4302-adc2-e2a05583cec7",
+      "boardId": "fd525809-5c02-469e-867a-2cd1a80a477a",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11325,7 +11482,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "ed2da5ca-b54c-49fa-8570-913fe744b16a",
+      "boardId": "745d360a-2318-4150-8914-e3eff132ceda",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11459,7 +11616,7 @@
       "platform": "admin",
       "subtitle": "Fetching the latest site and approval data.",
       "actions": [],
-      "boardId": "4e9351ea-5775-47da-815a-56679648be27",
+      "boardId": "a6a9d926-7cb5-499d-b994-c22147918173",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11586,7 +11743,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "06a08386-1b71-4b96-9715-e55dd1dc7a66",
+      "boardId": "e20338d9-85c5-4e79-a253-aee334780528",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11751,7 +11908,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "f730c6bf-736e-4525-9323-19b04cb3e90b",
+      "boardId": "e8d09a17-9431-4044-9d30-a05db9967b75",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -11898,7 +12055,7 @@
           "style": "primary"
         }
       ],
-      "boardId": "063595d9-467d-475e-96dd-78c538696999",
+      "boardId": "ee73793b-d590-4388-a9f8-8cf2fafa1a27",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -12055,7 +12212,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "0a0658f0-a54a-420b-8470-6b0011b40806",
+      "boardId": "1bf65f0f-41db-4cde-b6d9-9f14fca86cc3",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -12226,7 +12383,7 @@
         }
       ],
       "note": "History and existing site balances are retained when a referenced material is archived.",
-      "boardId": "0980dcf6-f04f-4321-bd1d-b1e2409a6f2d",
+      "boardId": "6d463e59-da8e-4ace-875e-0dc9b0528391",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -12374,7 +12531,7 @@
           "style": "primary"
         }
       ],
-      "boardId": "87e04f12-c57e-459f-9a97-c22ac77ff8f9",
+      "boardId": "6c7d445c-0b8c-41ec-86cb-b0216c9a82dd",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -12532,7 +12689,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "b1249d63-28bd-4e8d-954c-c5d60e246586",
+      "boardId": "d0437f17-6a01-413f-9a0e-4dc6671543a3",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -12733,7 +12890,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "d9e95282-f3eb-438a-b204-bcd536c21b73",
+      "boardId": "bbb0c770-4540-412c-9703-8222f60aa836",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -12942,7 +13099,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "afb6f07a-d9a0-4bf0-b6b3-67470644e890",
+      "boardId": "69dbfcb0-5772-4dcb-948b-741b44f9aec4",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -13107,7 +13264,7 @@
         }
       ],
       "note": "Final approval completes work automatically. Surplus material and pending returns remain separately reconcilable.",
-      "boardId": "9fe0ff0e-d594-49d3-8a15-903f3b554c96",
+      "boardId": "8f75a43b-4798-43fa-8426-4164b210a098",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -13279,7 +13436,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "9f6d4f9d-8e5d-4302-9b37-65efab0a0472",
+      "boardId": "dd619052-dc0b-4f19-94b2-d0126d952c43",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -13446,7 +13603,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "602e7134-7ba9-42fd-ab90-b3f166a58ffe",
+      "boardId": "5ebefed9-dbfa-4538-aa7d-e4261b1659df",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -13598,7 +13755,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "31cdaffc-dd96-427a-adf4-08357873261f",
+      "boardId": "f33a8f61-ab2a-4492-b732-963c96416064",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -13765,7 +13922,7 @@
         }
       ],
       "note": "Already dispatched stock is not cancelled. Approved quantities and reservation history are preserved.",
-      "boardId": "899e5898-b27c-4ea8-a1ba-8f201659861c",
+      "boardId": "8741cbce-ff37-476b-aeca-1d4595fb63dc",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -13926,7 +14083,7 @@
         }
       ],
       "note": "The request history is retained. No active block is created by a declined request.",
-      "boardId": "28245226-4437-4d97-83a9-6a55a7c95f57",
+      "boardId": "bed37caa-a92b-4be8-86e5-59bb11467824",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -14104,7 +14261,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "c720d85a-b287-4ece-aa4d-0aa5bb7db0de",
+      "boardId": "3aa24f17-9034-4c81-9ca8-6ca99f73ee65",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -14299,7 +14456,7 @@
         }
       ],
       "note": "Admin can inspect this site. Linking does not grant Ravi access to Neha’s full evidence or inventory.",
-      "boardId": "7a3483c4-581f-4ee8-80f9-765f9fa16ac1",
+      "boardId": "65f61b53-e6ab-4c7d-894b-3fcc8ccfe74f",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -14472,7 +14629,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "95f4a845-6da8-4016-9729-bffbf107f67c",
+      "boardId": "4ca24146-f69c-4af3-b851-99258a0f7dad",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -14641,7 +14798,7 @@
         }
       ],
       "note": "Independent stage progress stays unchanged. Recompute status without clearing other blocks or prerequisites.",
-      "boardId": "e2bc2c98-5fb1-4d45-98eb-91f74b8f6370",
+      "boardId": "dca475b0-2c0f-488a-b96e-01239367bb2c",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -14785,19 +14942,25 @@
           "title": "Survey & marking",
           "body": "Previously approved",
           "status": "Completed",
-          "to": ""
+          "to": "",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "Mounting structure",
           "body": "Approved just now",
           "status": "Completed",
-          "to": ""
+          "to": "",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         },
         {
           "title": "Panel installation",
           "body": "Work continues independently",
           "status": "In Progress",
-          "to": "A08"
+          "to": "A08",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
         }
       ],
       "actions": [
@@ -14813,7 +14976,8 @@
         }
       ],
       "stageLayout": "rows",
-      "boardId": "8709c918-9dcf-469a-b5f1-f0f2636f57c7",
+      "stageOwnership": true,
+      "boardId": "5ccafc70-010a-4687-88d5-7ef050c9e8fc",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -14901,15 +15065,23 @@
           "label": "Stage row / Panel installation",
           "to": "A08",
           "x": 264,
-          "y": 488.3,
+          "y": 504.3,
           "width": 1136,
-          "height": 92
+          "height": 100
+        },
+        {
+          "label": "Assign person / Panel installation",
+          "to": "A81",
+          "x": 638.88,
+          "y": 526.3,
+          "width": 213.20000000000002,
+          "height": 48
         },
         {
           "label": "Back to stages",
           "to": "A08",
           "x": 264,
-          "y": 604.3,
+          "y": 628.3,
           "width": 154,
           "height": 44
         },
@@ -14917,7 +15089,7 @@
           "label": "Review remaining approvals",
           "to": "A21",
           "x": 430,
-          "y": 604.3,
+          "y": 628.3,
           "width": 244,
           "height": 44
         }
@@ -14945,18 +15117,28 @@
         "Suryoday solar · 2/5 stages approved",
         "Attempt 2 approved. Earlier rejected attempt and evidence remain in history.",
         "STAGE / WORK PACKAGE",
+        "PERSON",
         "EVIDENCE & DEPENDENCY",
         "STATUS",
         "✓",
         "Survey & marking",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Previously approved",
         "Completed",
         "✓",
         "Mounting structure",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Approved just now",
         "Completed",
         "03",
         "Panel installation",
+        "RP",
+        "Ravi Patel",
+        "⌄",
         "Work continues independently",
         "In Progress",
         "Back to stages",
@@ -15006,7 +15188,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "e2af5757-20e3-443d-947c-dddbe9046d02",
+      "boardId": "917a0e02-fd5d-434d-bc28-7013f8f329fb",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -15193,7 +15375,7 @@
           "style": "secondary"
         }
       ],
-      "boardId": "e6365c3f-44ce-4039-bebb-859157fe1c4c",
+      "boardId": "5e219ea0-a3e6-48c4-83d5-ff7e58ad0b61",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -15371,7 +15553,7 @@
         }
       ],
       "note": "Status is recomputed from retained progress. Other stage blocks or prerequisite holds are not cleared.",
-      "boardId": "cc1a812c-5fb0-42e2-9b1c-e25b30da262b",
+      "boardId": "d344d622-497b-48d2-9c37-c20d5cfc0e3a",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -15542,7 +15724,7 @@
         }
       ],
       "note": "Submission records the admin as requester. It does not silently activate a block; direct Block remains a separate action.",
-      "boardId": "7328fb66-6338-4d62-8a72-fd8a8fd1b753",
+      "boardId": "955da308-8fd3-41d1-b056-a1a49325b409",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -15710,7 +15892,7 @@
         }
       ],
       "note": "One admin may decide their own request, but submitting and approving remain two explicit audited actions.",
-      "boardId": "4ad69927-2aba-4537-a511-e8b619d7c908",
+      "boardId": "d20d9297-0379-41a6-bf25-5648b200d67f",
       "width": 1440,
       "height": 1040,
       "links": [
@@ -15844,6 +16026,1310 @@
       ]
     },
     {
+      "id": "A81",
+      "title": "Choose the person for this stage",
+      "kind": "detail",
+      "section": "Sites",
+      "platform": "admin",
+      "subtitle": "Suryoday solar · Panel installation",
+      "tabs": [
+        [
+          "Overview",
+          "A07"
+        ],
+        [
+          "Stages & evidence",
+          "A08"
+        ],
+        [
+          "Materials",
+          "A09"
+        ],
+        [
+          "Linked sites",
+          "A10"
+        ],
+        [
+          "Activity",
+          "A11"
+        ]
+      ],
+      "cards": [
+        {
+          "title": "01 · Survey & marking",
+          "body": "Approved by admin · 20 Oct, 16:10",
+          "status": "Completed",
+          "to": "A22",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
+        },
+        {
+          "title": "02 · Mounting structure",
+          "body": "2 photos + 00:42 audio · submitted today",
+          "status": "Awaiting approval",
+          "to": "A22",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
+        },
+        {
+          "title": "03 · Panel installation",
+          "body": "Can run alongside wiring; 1 photo required",
+          "status": "Open",
+          "to": "A16",
+          "owner": "Ravi Patel",
+          "ownerTo": "A81"
+        },
+        {
+          "title": "04 · Wiring & earthing",
+          "body": "No photo required · no prerequisite",
+          "status": "Open",
+          "to": "A17",
+          "owner": "Neha Shah",
+          "ownerTo": "A81"
+        },
+        {
+          "title": "05 · Final inspection",
+          "body": "Waiting for panel installation and wiring",
+          "status": "Dependency hold",
+          "to": "A31",
+          "owner": "Unassigned",
+          "ownerTo": "A84"
+        }
+      ],
+      "stageLayout": "rows",
+      "stageOwnership": true,
+      "ownerPicker": true,
+      "actions": [
+        {
+          "label": "Review handover",
+          "to": "A82",
+          "style": "primary"
+        },
+        {
+          "label": "Cancel",
+          "to": "A08",
+          "style": "secondary"
+        }
+      ],
+      "note": "Only active employees eligible for Solar. Open-stage counts are workload context, not capacity predictions. Selection returns focus to the Person cell. Completed stages require reopening.",
+      "boardId": "2d94b2ef-b279-402d-a36b-40b63cdf6db4",
+      "width": 1440,
+      "height": 1040,
+      "links": [
+        {
+          "label": "Navigation / Dashboard",
+          "to": "A02",
+          "x": 12,
+          "y": 119,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Sites",
+          "to": "A03",
+          "x": 12,
+          "y": 170,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Projects",
+          "to": "A28",
+          "x": 12,
+          "y": 221,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Approvals",
+          "to": "A21",
+          "x": 12,
+          "y": 272,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Site Types",
+          "to": "A32",
+          "x": 12,
+          "y": 323,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Employees",
+          "to": "A36",
+          "x": 12,
+          "y": 374,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Materials",
+          "to": "A42",
+          "x": 12,
+          "y": 425,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Settings",
+          "to": "A48",
+          "x": 12,
+          "y": 476,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Sign out",
+          "to": "A51",
+          "x": 20,
+          "y": 972,
+          "width": 180,
+          "height": 40
+        },
+        {
+          "label": "Notifications",
+          "to": "A50",
+          "x": 1110,
+          "y": 15,
+          "width": 150,
+          "height": 42
+        },
+        {
+          "label": "Overview",
+          "to": "A07",
+          "x": 264,
+          "y": 190.05,
+          "width": 115,
+          "height": 44
+        },
+        {
+          "label": "Stages & evidence",
+          "to": "A08",
+          "x": 387,
+          "y": 190.05,
+          "width": 153.8,
+          "height": 44
+        },
+        {
+          "label": "Materials",
+          "to": "A09",
+          "x": 548.8,
+          "y": 190.05,
+          "width": 115,
+          "height": 44
+        },
+        {
+          "label": "Linked sites",
+          "to": "A10",
+          "x": 671.8,
+          "y": 190.05,
+          "width": 116.80000000000001,
+          "height": 44
+        },
+        {
+          "label": "Activity",
+          "to": "A11",
+          "x": 796.5999999999999,
+          "y": 190.05,
+          "width": 115,
+          "height": 44
+        },
+        {
+          "label": "Stage row / 01 · Survey & marking",
+          "to": "A22",
+          "x": 264,
+          "y": 297.05,
+          "width": 1136,
+          "height": 100
+        },
+        {
+          "label": "Stage row / 02 · Mounting structure",
+          "to": "A22",
+          "x": 264,
+          "y": 397.05,
+          "width": 1136,
+          "height": 100
+        },
+        {
+          "label": "Assign person / 02 · Mounting structure",
+          "to": "A81",
+          "x": 638.88,
+          "y": 419.05,
+          "width": 213.20000000000002,
+          "height": 48
+        },
+        {
+          "label": "Stage row / 03 · Panel installation",
+          "to": "A16",
+          "x": 264,
+          "y": 497.05,
+          "width": 1136,
+          "height": 100
+        },
+        {
+          "label": "Assign person / 03 · Panel installation",
+          "to": "A81",
+          "x": 638.88,
+          "y": 519.05,
+          "width": 213.20000000000002,
+          "height": 48
+        },
+        {
+          "label": "Stage row / 04 · Wiring & earthing",
+          "to": "A17",
+          "x": 264,
+          "y": 597.05,
+          "width": 1136,
+          "height": 100
+        },
+        {
+          "label": "Assign person / 04 · Wiring & earthing",
+          "to": "A81",
+          "x": 638.88,
+          "y": 619.05,
+          "width": 213.20000000000002,
+          "height": 48
+        },
+        {
+          "label": "Stage row / 05 · Final inspection",
+          "to": "A31",
+          "x": 264,
+          "y": 697.05,
+          "width": 1136,
+          "height": 100
+        },
+        {
+          "label": "Assign person / 05 · Final inspection",
+          "to": "A84",
+          "x": 638.88,
+          "y": 719.05,
+          "width": 213.20000000000002,
+          "height": 48
+        },
+        {
+          "label": "Review handover",
+          "to": "A82",
+          "x": 264,
+          "y": 884.15,
+          "width": 156,
+          "height": 44
+        },
+        {
+          "label": "Cancel",
+          "to": "A08",
+          "x": 432,
+          "y": 884.15,
+          "width": 154,
+          "height": 44
+        },
+        {
+          "label": "Choose person / Ravi Patel",
+          "to": "A08",
+          "x": 688,
+          "y": 495,
+          "width": 344,
+          "height": 61
+        },
+        {
+          "label": "Choose person / Neha Shah",
+          "to": "A82",
+          "x": 688,
+          "y": 560,
+          "width": 344,
+          "height": 61
+        },
+        {
+          "label": "Choose person / Unassigned",
+          "to": "A86",
+          "x": 688,
+          "y": 625,
+          "width": 344,
+          "height": 61
+        }
+      ],
+      "text": [
+        "F",
+        "Fieldwork",
+        "WORKSPACE",
+        "Dashboard",
+        "Sites",
+        "Projects",
+        "Approvals",
+        "7",
+        "Site Types",
+        "Employees",
+        "Materials",
+        "Settings",
+        "ONE TEAM. EVERY SITE.",
+        "Sign out",
+        "Workspace  /  Sites",
+        "Notifications",
+        "M",
+        "Manager",
+        "Choose the person for this stage",
+        "Suryoday solar · Panel installation",
+        "Overview",
+        "Stages & evidence",
+        "Materials",
+        "Linked sites",
+        "Activity",
+        "STAGE / WORK PACKAGE",
+        "PERSON",
+        "EVIDENCE & DEPENDENCY",
+        "STATUS",
+        "✓",
+        "Survey & marking",
+        "RP",
+        "Ravi Patel",
+        "⌄",
+        "Approved by admin · 20 Oct, 16:10",
+        "Completed",
+        "02",
+        "Mounting structure",
+        "RP",
+        "Ravi Patel",
+        "⌄",
+        "2 photos + 00:42 audio · submitted today",
+        "Awaiting approval",
+        "03",
+        "Panel installation",
+        "RP",
+        "Ravi Patel",
+        "⌄",
+        "Can run alongside wiring; 1 photo required",
+        "Open",
+        "04",
+        "Wiring & earthing",
+        "NS",
+        "Neha Shah",
+        "⌄",
+        "No photo required · no prerequisite",
+        "Open",
+        "05",
+        "Final inspection",
+        "?",
+        "Unassigned",
+        "⌄",
+        "Waiting for panel installation and wiring",
+        "Dependency hold",
+        "Only active employees eligible for Solar. Open-stage counts are workload context, not capacity predictions. Selection returns focus to the Person cell. Completed stages require reopening.",
+        "Review handover",
+        "Cancel",
+        "Assign Panel installation",
+        "Search name or mobile",
+        "RP",
+        "Ravi Patel",
+        "6 open stages · current",
+        "NS",
+        "Neha Shah",
+        "4 open stages · Solar, Shed",
+        "?",
+        "Unassigned",
+        "Leave for later"
+      ]
+    },
+    {
+      "id": "A82",
+      "title": "Hand over Panel installation",
+      "kind": "form",
+      "section": "Sites",
+      "platform": "admin",
+      "subtitle": "Only this stage changes. Ravi remains site coordinator.",
+      "fields": [
+        {
+          "label": "Current person",
+          "value": "Ravi Patel",
+          "help": "",
+          "type": "locked"
+        },
+        {
+          "label": "New person",
+          "value": "Neha Shah · Solar, Shed",
+          "help": "",
+          "type": "select"
+        },
+        {
+          "label": "Reason *",
+          "value": "Neha will handle the panel installation",
+          "help": "",
+          "type": "text"
+        },
+        {
+          "label": "Existing evidence",
+          "value": "Keep original author and location",
+          "help": "",
+          "type": "locked"
+        }
+      ],
+      "banner": "Accepted submissions stay reviewable under their original author. Unsynced work from the former assignment will need checking.",
+      "actions": [
+        {
+          "label": "Confirm handover",
+          "to": "A08",
+          "style": "primary"
+        },
+        {
+          "label": "Cancel",
+          "to": "A81",
+          "style": "secondary"
+        }
+      ],
+      "note": "Validate stage version and assignment version atomically. Preserve accepted pending attempts; no rewriting by the new owner. This branch illustrates handover; prototype mutations are not persisted.",
+      "boardId": "a6ca7167-d277-45bb-adf3-b7c5a7731459",
+      "width": 1440,
+      "height": 1040,
+      "links": [
+        {
+          "label": "Navigation / Dashboard",
+          "to": "A02",
+          "x": 12,
+          "y": 119,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Sites",
+          "to": "A03",
+          "x": 12,
+          "y": 170,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Projects",
+          "to": "A28",
+          "x": 12,
+          "y": 221,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Approvals",
+          "to": "A21",
+          "x": 12,
+          "y": 272,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Site Types",
+          "to": "A32",
+          "x": 12,
+          "y": 323,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Employees",
+          "to": "A36",
+          "x": 12,
+          "y": 374,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Materials",
+          "to": "A42",
+          "x": 12,
+          "y": 425,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Settings",
+          "to": "A48",
+          "x": 12,
+          "y": 476,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Sign out",
+          "to": "A51",
+          "x": 20,
+          "y": 972,
+          "width": 180,
+          "height": 40
+        },
+        {
+          "label": "Notifications",
+          "to": "A50",
+          "x": 1110,
+          "y": 15,
+          "width": 150,
+          "height": 42
+        },
+        {
+          "label": "Confirm handover",
+          "to": "A08",
+          "x": 264,
+          "y": 530.5,
+          "width": 164,
+          "height": 44
+        },
+        {
+          "label": "Cancel",
+          "to": "A81",
+          "x": 440,
+          "y": 530.5,
+          "width": 154,
+          "height": 44
+        }
+      ],
+      "text": [
+        "F",
+        "Fieldwork",
+        "WORKSPACE",
+        "Dashboard",
+        "Sites",
+        "Projects",
+        "Approvals",
+        "7",
+        "Site Types",
+        "Employees",
+        "Materials",
+        "Settings",
+        "ONE TEAM. EVERY SITE.",
+        "Sign out",
+        "Workspace  /  Sites",
+        "Notifications",
+        "M",
+        "Manager",
+        "Hand over Panel installation",
+        "Only this stage changes. Ravi remains site coordinator.",
+        "Accepted submissions stay reviewable under their original author. Unsynced work from the former assignment will need checking.",
+        "Current person",
+        "Ravi Patel",
+        "New person",
+        "Neha Shah · Solar, Shed",
+        "⌄",
+        "Reason *",
+        "Neha will handle the panel installation",
+        "Existing evidence",
+        "Keep original author and location",
+        "Validate stage version and assignment version atomically. Preserve accepted pending attempts; no rewriting by the new owner. This branch illustrates handover; prototype mutations are not persisted.",
+        "Confirm handover",
+        "Cancel"
+      ]
+    },
+    {
+      "id": "A83",
+      "title": "Assign selected stages",
+      "kind": "form",
+      "section": "Sites",
+      "platform": "admin",
+      "subtitle": "2 selected · only these stages will change",
+      "table": {
+        "headers": [
+          "SELECTED STAGE",
+          "CURRENT PERSON",
+          "STATE"
+        ],
+        "rows": [
+          [
+            "Panel installation",
+            "Ravi Patel",
+            "Open"
+          ],
+          [
+            "Final inspection",
+            "Unassigned",
+            "Waiting for prerequisites"
+          ]
+        ],
+        "to": "A08"
+      },
+      "fields": [
+        {
+          "label": "Assign both to",
+          "value": "Neha Shah · Solar, Shed",
+          "help": "",
+          "type": "select"
+        },
+        {
+          "label": "Reason",
+          "value": "Installation and final inspection responsibility",
+          "help": "",
+          "type": "text"
+        }
+      ],
+      "banner": "Ravi stays coordinator. Dependencies, progress and evidence stay unchanged. Completed stages are excluded.",
+      "actions": [
+        {
+          "label": "Assign 2 stages",
+          "to": "A08",
+          "style": "primary"
+        },
+        {
+          "label": "Cancel",
+          "to": "A08",
+          "style": "secondary"
+        }
+      ],
+      "note": "Explicit selected stage IDs; all-or-nothing version validation. Conflict applies no partial changes.",
+      "boardId": "e8d1f5ad-756e-4059-834c-71189d8dd7e7",
+      "width": 1440,
+      "height": 1040,
+      "links": [
+        {
+          "label": "Navigation / Dashboard",
+          "to": "A02",
+          "x": 12,
+          "y": 119,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Sites",
+          "to": "A03",
+          "x": 12,
+          "y": 170,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Projects",
+          "to": "A28",
+          "x": 12,
+          "y": 221,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Approvals",
+          "to": "A21",
+          "x": 12,
+          "y": 272,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Site Types",
+          "to": "A32",
+          "x": 12,
+          "y": 323,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Employees",
+          "to": "A36",
+          "x": 12,
+          "y": 374,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Materials",
+          "to": "A42",
+          "x": 12,
+          "y": 425,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Settings",
+          "to": "A48",
+          "x": 12,
+          "y": 476,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Sign out",
+          "to": "A51",
+          "x": 20,
+          "y": 972,
+          "width": 180,
+          "height": 40
+        },
+        {
+          "label": "Notifications",
+          "to": "A50",
+          "x": 1110,
+          "y": 15,
+          "width": 150,
+          "height": 42
+        },
+        {
+          "label": "Table row / Panel installation",
+          "to": "A08",
+          "x": 264,
+          "y": 412.85,
+          "width": 1136,
+          "height": 66
+        },
+        {
+          "label": "Table row / Final inspection",
+          "to": "A08",
+          "x": 264,
+          "y": 478.85,
+          "width": 1136,
+          "height": 66
+        },
+        {
+          "label": "Assign 2 stages",
+          "to": "A08",
+          "x": 264,
+          "y": 614.4,
+          "width": 156,
+          "height": 44
+        },
+        {
+          "label": "Cancel",
+          "to": "A08",
+          "x": 432,
+          "y": 614.4,
+          "width": 154,
+          "height": 44
+        }
+      ],
+      "text": [
+        "F",
+        "Fieldwork",
+        "WORKSPACE",
+        "Dashboard",
+        "Sites",
+        "Projects",
+        "Approvals",
+        "7",
+        "Site Types",
+        "Employees",
+        "Materials",
+        "Settings",
+        "ONE TEAM. EVERY SITE.",
+        "Sign out",
+        "Workspace  /  Sites",
+        "Notifications",
+        "M",
+        "Manager",
+        "Assign selected stages",
+        "2 selected · only these stages will change",
+        "Ravi stays coordinator. Dependencies, progress and evidence stay unchanged. Completed stages are excluded.",
+        "Assign both to",
+        "Neha Shah · Solar, Shed",
+        "⌄",
+        "Reason",
+        "Installation and final inspection responsibility",
+        "SELECTED STAGE",
+        "CURRENT PERSON",
+        "STATE",
+        "Panel installation",
+        "Ravi Patel",
+        "Open",
+        "Final inspection",
+        "Unassigned",
+        "Waiting for prerequisites",
+        "Explicit selected stage IDs; all-or-nothing version validation. Conflict applies no partial changes.",
+        "Assign 2 stages",
+        "Cancel"
+      ]
+    },
+    {
+      "id": "A84",
+      "title": "One stage needs a person",
+      "kind": "detail",
+      "section": "Sites",
+      "platform": "admin",
+      "subtitle": "Suryoday solar · unassigned work remains visible",
+      "cards": [
+        {
+          "title": "05 · Final inspection",
+          "body": "Waiting for panel installation and wiring",
+          "status": "Dependency hold",
+          "to": "A31",
+          "owner": "Unassigned",
+          "ownerTo": "A81"
+        }
+      ],
+      "stageLayout": "rows",
+      "stageOwnership": true,
+      "banner": "Final inspection must wait for panel installation and wiring. Assigning a person does not remove that prerequisite.",
+      "actions": [
+        {
+          "label": "Choose person",
+          "to": "A81",
+          "style": "primary"
+        },
+        {
+          "label": "Back to stages",
+          "to": "A08",
+          "style": "secondary"
+        }
+      ],
+      "boardId": "44c6b141-fb04-408a-93cf-29419ea1b8b6",
+      "width": 1440,
+      "height": 1040,
+      "links": [
+        {
+          "label": "Navigation / Dashboard",
+          "to": "A02",
+          "x": 12,
+          "y": 119,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Sites",
+          "to": "A03",
+          "x": 12,
+          "y": 170,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Projects",
+          "to": "A28",
+          "x": 12,
+          "y": 221,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Approvals",
+          "to": "A21",
+          "x": 12,
+          "y": 272,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Site Types",
+          "to": "A32",
+          "x": 12,
+          "y": 323,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Employees",
+          "to": "A36",
+          "x": 12,
+          "y": 374,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Materials",
+          "to": "A42",
+          "x": 12,
+          "y": 425,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Settings",
+          "to": "A48",
+          "x": 12,
+          "y": 476,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Sign out",
+          "to": "A51",
+          "x": 20,
+          "y": 972,
+          "width": 180,
+          "height": 40
+        },
+        {
+          "label": "Notifications",
+          "to": "A50",
+          "x": 1110,
+          "y": 15,
+          "width": 150,
+          "height": 42
+        },
+        {
+          "label": "Stage row / 05 · Final inspection",
+          "to": "A31",
+          "x": 264,
+          "y": 304.3,
+          "width": 1136,
+          "height": 100
+        },
+        {
+          "label": "Assign person / 05 · Final inspection",
+          "to": "A81",
+          "x": 638.88,
+          "y": 326.3,
+          "width": 213.20000000000002,
+          "height": 48
+        },
+        {
+          "label": "Choose person",
+          "to": "A81",
+          "x": 264,
+          "y": 428.3,
+          "width": 154,
+          "height": 44
+        },
+        {
+          "label": "Back to stages",
+          "to": "A08",
+          "x": 430,
+          "y": 428.3,
+          "width": 154,
+          "height": 44
+        }
+      ],
+      "text": [
+        "F",
+        "Fieldwork",
+        "WORKSPACE",
+        "Dashboard",
+        "Sites",
+        "Projects",
+        "Approvals",
+        "7",
+        "Site Types",
+        "Employees",
+        "Materials",
+        "Settings",
+        "ONE TEAM. EVERY SITE.",
+        "Sign out",
+        "Workspace  /  Sites",
+        "Notifications",
+        "M",
+        "Manager",
+        "One stage needs a person",
+        "Suryoday solar · unassigned work remains visible",
+        "Final inspection must wait for panel installation and wiring. Assigning a person does not remove that prerequisite.",
+        "STAGE / WORK PACKAGE",
+        "PERSON",
+        "EVIDENCE & DEPENDENCY",
+        "STATUS",
+        "01",
+        "Final inspection",
+        "?",
+        "Unassigned",
+        "⌄",
+        "Waiting for panel installation and wiring",
+        "Dependency hold",
+        "Choose person",
+        "Back to stages"
+      ]
+    },
+    {
+      "id": "A85",
+      "title": "The selection has changed",
+      "kind": "message",
+      "section": "Sites",
+      "platform": "admin",
+      "subtitle": "No stages were reassigned.",
+      "banner": "Panel installation was changed by another operation. Reload the current people, then select the stages again.",
+      "actions": [
+        {
+          "label": "Reload stages",
+          "to": "A08",
+          "style": "primary"
+        },
+        {
+          "label": "Keep my selection for review",
+          "to": "A83",
+          "style": "secondary"
+        }
+      ],
+      "note": "A stale stage or assignment version rejects the entire bulk transaction. Saved selection is review context, not permission to bypass the new version.",
+      "boardId": "0fcf993e-5956-47d3-96ca-1adc6a75c6fd",
+      "width": 1440,
+      "height": 1040,
+      "links": [
+        {
+          "label": "Navigation / Dashboard",
+          "to": "A02",
+          "x": 12,
+          "y": 119,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Sites",
+          "to": "A03",
+          "x": 12,
+          "y": 170,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Projects",
+          "to": "A28",
+          "x": 12,
+          "y": 221,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Approvals",
+          "to": "A21",
+          "x": 12,
+          "y": 272,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Site Types",
+          "to": "A32",
+          "x": 12,
+          "y": 323,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Employees",
+          "to": "A36",
+          "x": 12,
+          "y": 374,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Materials",
+          "to": "A42",
+          "x": 12,
+          "y": 425,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Settings",
+          "to": "A48",
+          "x": 12,
+          "y": 476,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Sign out",
+          "to": "A51",
+          "x": 20,
+          "y": 972,
+          "width": 180,
+          "height": 40
+        },
+        {
+          "label": "Notifications",
+          "to": "A50",
+          "x": 1110,
+          "y": 15,
+          "width": 150,
+          "height": 42
+        },
+        {
+          "label": "Reload stages",
+          "to": "A08",
+          "x": 264,
+          "y": 307.85,
+          "width": 154,
+          "height": 44
+        },
+        {
+          "label": "Keep my selection for review",
+          "to": "A83",
+          "x": 430,
+          "y": 307.85,
+          "width": 260,
+          "height": 44
+        }
+      ],
+      "text": [
+        "F",
+        "Fieldwork",
+        "WORKSPACE",
+        "Dashboard",
+        "Sites",
+        "Projects",
+        "Approvals",
+        "7",
+        "Site Types",
+        "Employees",
+        "Materials",
+        "Settings",
+        "ONE TEAM. EVERY SITE.",
+        "Sign out",
+        "Workspace  /  Sites",
+        "Notifications",
+        "M",
+        "Manager",
+        "The selection has changed",
+        "No stages were reassigned.",
+        "Panel installation was changed by another operation. Reload the current people, then select the stages again.",
+        "A stale stage or assignment version rejects the entire bulk transaction. Saved selection is review context, not permission to bypass the new version.",
+        "Reload stages",
+        "Keep my selection for review"
+      ]
+    },
+    {
+      "id": "A86",
+      "title": "Leave this stage unassigned",
+      "kind": "form",
+      "section": "Sites",
+      "platform": "admin",
+      "subtitle": "Panel installation only · Ravi stays coordinator",
+      "fields": [
+        {
+          "label": "Current person",
+          "value": "Ravi Patel",
+          "help": "",
+          "type": "locked"
+        },
+        {
+          "label": "Reason *",
+          "value": "Waiting for replacement employee",
+          "help": "",
+          "type": "text"
+        }
+      ],
+      "banner": "This stage leaves the employee’s work list. Accepted evidence stays in history; offline changes need review. Admin can still act.",
+      "actions": [
+        {
+          "label": "Unassign stage",
+          "to": "A08",
+          "style": "danger"
+        },
+        {
+          "label": "Cancel",
+          "to": "A81",
+          "style": "secondary"
+        }
+      ],
+      "note": "Stage version and assignment version required. Completed stages must be reopened. No cascading change to other stages.",
+      "boardId": "87381187-62d7-4beb-a8ed-1d1f3b70125f",
+      "width": 1440,
+      "height": 1040,
+      "links": [
+        {
+          "label": "Navigation / Dashboard",
+          "to": "A02",
+          "x": 12,
+          "y": 119,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Sites",
+          "to": "A03",
+          "x": 12,
+          "y": 170,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Projects",
+          "to": "A28",
+          "x": 12,
+          "y": 221,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Approvals",
+          "to": "A21",
+          "x": 12,
+          "y": 272,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Site Types",
+          "to": "A32",
+          "x": 12,
+          "y": 323,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Employees",
+          "to": "A36",
+          "x": 12,
+          "y": 374,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Materials",
+          "to": "A42",
+          "x": 12,
+          "y": 425,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Navigation / Settings",
+          "to": "A48",
+          "x": 12,
+          "y": 476,
+          "width": 200,
+          "height": 44
+        },
+        {
+          "label": "Sign out",
+          "to": "A51",
+          "x": 20,
+          "y": 972,
+          "width": 180,
+          "height": 40
+        },
+        {
+          "label": "Notifications",
+          "to": "A50",
+          "x": 1110,
+          "y": 15,
+          "width": 150,
+          "height": 42
+        },
+        {
+          "label": "Unassign stage",
+          "to": "A08",
+          "x": 264,
+          "y": 410.40000000000003,
+          "width": 154,
+          "height": 44
+        },
+        {
+          "label": "Cancel",
+          "to": "A81",
+          "x": 430,
+          "y": 410.40000000000003,
+          "width": 154,
+          "height": 44
+        }
+      ],
+      "text": [
+        "F",
+        "Fieldwork",
+        "WORKSPACE",
+        "Dashboard",
+        "Sites",
+        "Projects",
+        "Approvals",
+        "7",
+        "Site Types",
+        "Employees",
+        "Materials",
+        "Settings",
+        "ONE TEAM. EVERY SITE.",
+        "Sign out",
+        "Workspace  /  Sites",
+        "Notifications",
+        "M",
+        "Manager",
+        "Leave this stage unassigned",
+        "Panel installation only · Ravi stays coordinator",
+        "This stage leaves the employee’s work list. Accepted evidence stays in history; offline changes need review. Admin can still act.",
+        "Current person",
+        "Ravi Patel",
+        "Reason *",
+        "Waiting for replacement employee",
+        "Stage version and assignment version required. Completed stages must be reopened. No cascading change to other stages.",
+        "Unassign stage",
+        "Cancel"
+      ]
+    },
+    {
       "id": "M01",
       "title": "Good work starts here",
       "kind": "login",
@@ -15890,7 +17376,7 @@
         "Password",
         "••••••••••"
       ],
-      "boardId": "20ef11b4-0c4a-4d3a-a25c-d50769b4ecf0",
+      "boardId": "d7bc42de-7118-4b0f-8166-adcc130a92b2",
       "width": 412,
       "height": 915,
       "links": [
@@ -15979,7 +17465,7 @@
         "ગુજરાતી",
         "ગુજરાતીમાં આગળ વધો"
       ],
-      "boardId": "daa818f4-5664-4950-8b08-02a3797931fe",
+      "boardId": "8a02d680-cf08-43ed-8885-2992d8a38024",
       "width": 412,
       "height": 915,
       "links": [
@@ -16068,7 +17554,7 @@
         "Use your usual contact channel. No self-service reset is available.",
         "Admin managed"
       ],
-      "boardId": "eb0aedf0-2a4b-4f00-bde8-983d2a53fd80",
+      "boardId": "d2a4493c-7a87-4d2a-acc9-9943c4345153",
       "width": 412,
       "height": 915,
       "links": [
@@ -16145,7 +17631,7 @@
         "Anand · overdue 3 days · 2/5 approved",
         "Blocked · Overdue"
       ],
-      "boardId": "d5333063-c920-4789-8b2d-c45a3795c8d5",
+      "boardId": "c3649927-9c45-4617-86d3-ec759eddfc55",
       "width": 412,
       "height": 915,
       "links": [
@@ -16282,7 +17768,7 @@
         "Overdue only",
         "Off"
       ],
-      "boardId": "4cae2519-3140-4032-a35d-f91937b8290e",
+      "boardId": "339f766c-a363-4195-8d13-01bf068e3560",
       "width": 412,
       "height": 915,
       "links": [
@@ -16446,7 +17932,7 @@
         "Waiting for panels and wiring",
         "Dependency hold"
       ],
-      "boardId": "d86c71d9-12a6-43ba-856d-907bcde737e7",
+      "boardId": "358c1d32-82de-45b2-91ae-f0209e2b021c",
       "width": 412,
       "height": 915,
       "links": [
@@ -16499,7 +17985,7 @@
           "height": 68
         },
         {
-          "label": "All work",
+          "label": "My jobs",
           "to": "M07",
           "x": 24,
           "y": 785.8,
@@ -16539,7 +18025,7 @@
         "Need material",
         "?",
         "Need help here",
-        "All work",
+        "My jobs",
         "Materials",
         "Updates"
       ]
@@ -16609,9 +18095,9 @@
         "Waiting for panels and wiring",
         "Dependency hold"
       ],
-      "boardId": "5ab4e149-155c-4f3b-bfc3-ac26cb5f68e6",
+      "boardId": "22666539-482a-41f4-bf72-5f5d8389771f",
       "width": 412,
-      "height": 1008,
+      "height": 915,
       "links": [
         {
           "label": "Back",
@@ -16625,15 +18111,7 @@
           "label": "Start this work",
           "to": "M58",
           "x": 40,
-          "y": 522.5,
-          "width": 332,
-          "height": 64
-        },
-        {
-          "label": "This work is done",
-          "to": "M56",
-          "x": 40,
-          "y": 664.5,
+          "y": 380.5,
           "width": 332,
           "height": 64
         },
@@ -16641,7 +18119,7 @@
           "label": "Other work here",
           "to": "M33",
           "x": 24,
-          "y": 907.5,
+          "y": 481.5,
           "width": 364,
           "height": 64
         }
@@ -16651,17 +18129,11 @@
         "●  ▮▮  100%",
         "‹",
         "Back",
-        "All work at this site",
-        "Measure and mark",
-        "Manager checked",
+        "My jobs here",
         "Fit the frame",
         "Manager is checking",
         "Install the panels",
         "Start this work",
-        "Connect the wires",
-        "This work is done",
-        "Final check",
-        "After panels and wiring",
         "Other work here"
       ]
     },
@@ -16735,7 +18207,7 @@
         "Recorded when added, kept through offline sync",
         "Evidence"
       ],
-      "boardId": "de4a5aa6-c1a2-40c7-a733-ceb7902274ae",
+      "boardId": "4ae6d4cc-4f89-4b0a-90e9-b60dd70df747",
       "width": 412,
       "height": 915,
       "links": [
@@ -16788,7 +18260,7 @@
           "height": 68
         },
         {
-          "label": "All work",
+          "label": "My jobs",
           "to": "M07",
           "x": 24,
           "y": 785.8,
@@ -16828,7 +18300,7 @@
         "Need material",
         "?",
         "Need help here",
-        "All work",
+        "My jobs",
         "Materials",
         "Updates"
       ]
@@ -16858,7 +18330,7 @@
         "Panel installation will move to In Progress.",
         "This does not approve the stage or complete the site."
       ],
-      "boardId": "03510e62-06a2-4a4c-8cc7-7650a88df1bb",
+      "boardId": "2d05ae77-da6f-474c-8df1-be49ad9b04c6",
       "width": 412,
       "height": 915,
       "links": [
@@ -16911,7 +18383,7 @@
           "height": 68
         },
         {
-          "label": "All work",
+          "label": "My jobs",
           "to": "M07",
           "x": 24,
           "y": 785.8,
@@ -16951,7 +18423,7 @@
         "Need material",
         "?",
         "Need help here",
-        "All work",
+        "My jobs",
         "Materials",
         "Updates"
       ]
@@ -17015,7 +18487,7 @@
         "Record audio in your own language",
         "Optional; text is not mandatory"
       ],
-      "boardId": "97885f35-03c4-4821-aa13-abe4a8e50a86",
+      "boardId": "3157af4f-f543-4b63-8f38-08411a49a455",
       "width": 412,
       "height": 915,
       "links": [
@@ -17125,7 +18597,7 @@
       ],
       "locale": "gu",
       "mobileView": "return",
-      "boardId": "b490c291-b1d7-44ab-93e7-7861577aac38",
+      "boardId": "d0054df9-4ab0-4480-a082-3642858d6435",
       "width": 412,
       "height": 915,
       "links": [
@@ -17207,7 +18679,7 @@
       ],
       "locale": "hi",
       "mobileView": "noPhoto",
-      "boardId": "3da7bc8a-3b1b-4d10-b442-2dd501c72b1a",
+      "boardId": "3402684d-3caa-49aa-b0ee-01bbb23ef1f3",
       "width": 412,
       "height": 915,
       "links": [
@@ -17295,7 +18767,7 @@
       ],
       "locale": "gu",
       "mobileView": "noPhoto",
-      "boardId": "82da1462-ae99-474e-83f9-a54fe5d6fd9d",
+      "boardId": "7e701680-39f7-439e-9cde-635d57991f28",
       "width": 412,
       "height": 915,
       "links": [
@@ -17391,7 +18863,7 @@
       ],
       "locale": "hi",
       "mobileView": "block",
-      "boardId": "b1b75919-a9ba-4dca-8ea8-0db7221282f8",
+      "boardId": "b563a5e5-63b2-4bfc-a056-d30a1d15b1cd",
       "width": 412,
       "height": 915,
       "links": [
@@ -17496,7 +18968,7 @@
       ],
       "locale": "gu",
       "mobileView": "block",
-      "boardId": "72b4295b-3134-4697-9e3f-fb9c5da6e3bd",
+      "boardId": "b85723fa-6e12-467a-81e1-81346d2ab42e",
       "width": 412,
       "height": 915,
       "links": [
@@ -17559,7 +19031,7 @@
       "reviewNotes": [
         "Voice recordings are optional. Review before sending; no written caption required."
       ],
-      "boardId": "44356b1a-732c-49d9-98af-426a641b5613",
+      "boardId": "75de8828-1ab9-4ab7-bcd3-59c7f2e26552",
       "width": 412,
       "height": 915,
       "links": [
@@ -17611,7 +19083,7 @@
       "reviewNotes": [
         "Voice recordings are optional. Review before sending; no written caption required."
       ],
-      "boardId": "1fe40013-2b36-4b13-8f68-0d071ce96baf",
+      "boardId": "203f120f-bed7-447f-98f7-85bc2d1d1645",
       "width": 412,
       "height": 915,
       "links": [
@@ -17666,7 +19138,7 @@
       "reviewNotes": [
         "Voice recordings are optional. Review before sending; no written caption required."
       ],
-      "boardId": "0d7a5d8e-32cf-4ff6-9a46-f0837609bab6",
+      "boardId": "e048cb22-bb71-47d8-bd8c-0325fa0a604f",
       "width": 412,
       "height": 915,
       "links": [
@@ -17718,7 +19190,7 @@
       "reviewNotes": [
         "Voice recordings are optional. Review before sending; no written caption required."
       ],
-      "boardId": "53622cf0-f8f9-491b-b97a-b4c224418409",
+      "boardId": "3a26a390-addb-4e4b-9003-ff3c6a8150c6",
       "width": 412,
       "height": 915,
       "links": [
@@ -17773,7 +19245,7 @@
       "reviewNotes": [
         "Voice recordings are optional. Review before sending; no written caption required."
       ],
-      "boardId": "cbb4b714-6af1-4902-bfe0-8b693c7da422",
+      "boardId": "fd066b90-55b2-49f3-a29d-418057d930ba",
       "width": 412,
       "height": 915,
       "links": [
@@ -17861,7 +19333,7 @@
         "Save a location fix now; upload automatically later.",
         "No background tracking"
       ],
-      "boardId": "8d851410-d0a7-4aaf-ad12-1a5945d19b2d",
+      "boardId": "a8682ce8-daa6-444a-bb19-b2175542556c",
       "width": 412,
       "height": 915,
       "links": [
@@ -17915,7 +19387,7 @@
       "reviewNotes": [
         "Voice recordings are optional. Review before sending; no written caption required."
       ],
-      "boardId": "2a13f5fd-98b4-429e-855e-0284dea1e0aa",
+      "boardId": "de8bbe6e-ab88-48a0-baba-06ccf02ad3cf",
       "width": 412,
       "height": 915,
       "links": [
@@ -17992,7 +19464,7 @@
         }
       ],
       "subtitle": "Only your manager can change your password.",
-      "boardId": "cb183129-eb31-40fc-88ca-de6ec74f996c",
+      "boardId": "60fb7490-64d9-47a4-8721-a4a7d9090418",
       "width": 412,
       "height": 915,
       "links": [
@@ -18055,7 +19527,7 @@
       ],
       "locale": "hi",
       "mobileView": "requestResult",
-      "boardId": "6233969f-4d1f-4483-851f-886ee5d9a2ec",
+      "boardId": "4efce75f-334c-41d7-bf83-488902cab463",
       "width": 412,
       "height": 915,
       "links": [
@@ -18114,7 +19586,7 @@
       ],
       "locale": "gu",
       "mobileView": "requestResult",
-      "boardId": "2c426cdf-46f7-401e-983f-8901b6100a04",
+      "boardId": "41356620-fb12-490e-b050-f58d51a1cdee",
       "width": 412,
       "height": 915,
       "links": [
@@ -18179,7 +19651,7 @@
       ],
       "locale": "hi",
       "mobileView": "useResult",
-      "boardId": "081d243d-3e0f-43d5-a59c-9744c3eab443",
+      "boardId": "61bbda8c-1948-4a60-8a51-faf4a1900942",
       "width": 412,
       "height": 915,
       "links": [
@@ -18244,7 +19716,7 @@
       ],
       "locale": "gu",
       "mobileView": "useResult",
-      "boardId": "23f9779e-ffa7-4dd8-b013-4e31ab3f7708",
+      "boardId": "6e981926-3e44-4c0e-8ad2-2d0326fcd4e1",
       "width": 412,
       "height": 915,
       "links": [
@@ -18324,7 +19796,7 @@
       ],
       "locale": "hi",
       "mobileView": "returnResult",
-      "boardId": "06b9cf76-3886-47c1-ab15-4136e5b2c7b3",
+      "boardId": "f0aaf32a-32e9-4de7-b1f1-4cd31060e62f",
       "width": 412,
       "height": 915,
       "links": [
@@ -18404,7 +19876,7 @@
       ],
       "locale": "gu",
       "mobileView": "returnResult",
-      "boardId": "91edb232-2d39-4807-b001-13acce0976e8",
+      "boardId": "a7258a4f-c3fe-4795-acff-896d0af1ecd4",
       "width": 412,
       "height": 915,
       "links": [
@@ -18485,7 +19957,7 @@
       ],
       "locale": "hi",
       "mobileView": "requests",
-      "boardId": "5c33c3de-6e1c-4b49-a6f1-fc31958e4a3f",
+      "boardId": "8e52051b-b1ad-42ff-af7c-cc1078a3ec22",
       "width": 412,
       "height": 915,
       "links": [
@@ -18567,7 +20039,7 @@
       ],
       "locale": "gu",
       "mobileView": "requests",
-      "boardId": "b578bce1-4146-460d-82c3-24780b9e7712",
+      "boardId": "0a0ee374-5d55-440e-ace9-d5032cd13d9c",
       "width": 412,
       "height": 915,
       "links": [
@@ -18630,7 +20102,7 @@
         "The selected photo is still a draft.",
         "A site photo cannot be submitted without location. Enable location permission and retry."
       ],
-      "boardId": "be130ba9-e24a-47d5-a1bf-c9f6230ff750",
+      "boardId": "60b6512b-6471-437c-a6d7-7fad0ad6f642",
       "width": 412,
       "height": 915,
       "links": [
@@ -18739,7 +20211,7 @@
       ],
       "locale": "hi",
       "mobileView": "help",
-      "boardId": "0fec9e89-abbd-4f58-95da-4ddd94c992fa",
+      "boardId": "c400124a-818f-46e7-805e-a21ed12e19ca",
       "width": 412,
       "height": 915,
       "links": [
@@ -18867,7 +20339,7 @@
       ],
       "locale": "gu",
       "mobileView": "help",
-      "boardId": "96baf511-53f0-4386-b643-86a455adcc1b",
+      "boardId": "d10c3ad8-d2e3-432a-bd82-73a9d2f2daf5",
       "width": 412,
       "height": 915,
       "links": [
@@ -18991,7 +20463,7 @@
       ],
       "locale": "hi",
       "mobileView": "messages",
-      "boardId": "17e3212c-1e51-4fc0-a80a-130837fe62e2",
+      "boardId": "8eed9536-e17e-4c1a-962f-fb7f1eec917b",
       "width": 412,
       "height": 915,
       "links": [
@@ -19086,7 +20558,7 @@
       ],
       "locale": "gu",
       "mobileView": "messages",
-      "boardId": "69d7e127-1b9c-4477-b52f-9a872b28d255",
+      "boardId": "bdd3df63-e2dd-42ab-ad6c-034f53a658ff",
       "width": 412,
       "height": 915,
       "links": [
@@ -19161,7 +20633,7 @@
       "subtitle": "Only your manager can change your password.",
       "locale": "hi",
       "mobileView": "profile",
-      "boardId": "3ead2a19-3892-4444-b1fa-a7d8f584ef8e",
+      "boardId": "df36bdd6-6e26-454d-86bb-8629ec350f74",
       "width": 412,
       "height": 915,
       "links": [
@@ -19233,7 +20705,7 @@
       "subtitle": "Only your manager can change your password.",
       "locale": "gu",
       "mobileView": "profile",
-      "boardId": "f42eec2d-45fe-4fa2-8e43-7c73dd61dbb0",
+      "boardId": "9417b895-5f3e-4ac2-92fc-b7642ce0df61",
       "width": 412,
       "height": 915,
       "links": [
@@ -19315,7 +20787,7 @@
       ],
       "locale": "hi",
       "mobileView": "language",
-      "boardId": "cb349d5f-eb51-4b0b-ab91-bf9d1742532c",
+      "boardId": "32465d2d-5b39-4804-af43-adf1c9d123e4",
       "width": 412,
       "height": 915,
       "links": [
@@ -19408,7 +20880,7 @@
       ],
       "locale": "gu",
       "mobileView": "language",
-      "boardId": "a2dd627c-d970-466a-8680-b6f5720d6099",
+      "boardId": "914b2f64-e6e6-43e2-98dc-32ccd14c5341",
       "width": 412,
       "height": 915,
       "links": [
@@ -19509,7 +20981,7 @@
       ],
       "locale": "hi",
       "mobileView": "sync",
-      "boardId": "83eb4267-90a8-4fb4-a445-0c103ae8d74d",
+      "boardId": "aad25a3a-fab1-4914-952f-6430db8cb0f2",
       "width": 412,
       "height": 915,
       "links": [
@@ -19614,7 +21086,7 @@
       ],
       "locale": "gu",
       "mobileView": "sync",
-      "boardId": "95de8db3-1b75-408f-8999-ceb7edb29c88",
+      "boardId": "cee313b6-2bc0-47d4-962f-1452489719e9",
       "width": 412,
       "height": 915,
       "links": [
@@ -19690,7 +21162,7 @@
         "Location services may be off or the device may need a clearer signal.",
         "Your photo is safe as an unfinished draft. We will not use the site address as a substitute."
       ],
-      "boardId": "67e1e256-7658-4250-bb67-45e2cfb980ca",
+      "boardId": "9545faf3-20b1-47a1-964f-d384e278f442",
       "width": 412,
       "height": 915,
       "links": [
@@ -19761,7 +21233,7 @@
       ],
       "locale": "hi",
       "mobileView": "contact",
-      "boardId": "03ed7b31-034d-4d1e-ba04-462e396a6d94",
+      "boardId": "5e2594c9-de95-48d2-a62f-0a0eabf01bc8",
       "width": 412,
       "height": 915,
       "links": [
@@ -19823,7 +21295,7 @@
       ],
       "locale": "gu",
       "mobileView": "contact",
-      "boardId": "1816f73c-7f3c-4c0c-9a4d-39366cea79f1",
+      "boardId": "40d9ccce-a53c-46b8-8764-e14b37ca5447",
       "width": 412,
       "height": 915,
       "links": [
@@ -19865,7 +21337,7 @@
       "reviewNotes": [
         "Employee help context remains signed in. Login password help stays on M03."
       ],
-      "boardId": "46a05de1-bc46-4fd0-ae61-f12212d15946",
+      "boardId": "f59cee53-e834-4ae0-b5ad-d133a7ba5c70",
       "width": 412,
       "height": 915,
       "links": [
@@ -19944,7 +21416,7 @@
       ],
       "locale": "hi",
       "mobileView": "filter",
-      "boardId": "64c689bd-9dad-4e4f-85d6-3205e7d19e0b",
+      "boardId": "5b7d092a-ed19-437b-8b20-a87e48eef150",
       "width": 412,
       "height": 915,
       "links": [
@@ -20035,7 +21507,7 @@
       ],
       "locale": "gu",
       "mobileView": "filter",
-      "boardId": "15bcbad6-3243-417b-a15e-acb05ccb9d81",
+      "boardId": "bfa9bf61-800a-44f3-a3f7-391e478e00b5",
       "width": 412,
       "height": 915,
       "links": [
@@ -20120,7 +21592,7 @@
       ],
       "locale": "hi",
       "mobileView": "linked",
-      "boardId": "995a5fc9-e538-4d83-bfac-8ed8b83c7ca0",
+      "boardId": "b880ada7-bf7d-4239-8b67-1b23d7270204",
       "width": 412,
       "height": 915,
       "links": [
@@ -20195,7 +21667,7 @@
       ],
       "locale": "gu",
       "mobileView": "linked",
-      "boardId": "da222e42-6597-4b1d-9c58-bce5af09f543",
+      "boardId": "3b05115e-a737-4903-9139-ce30fc3e19a4",
       "width": 412,
       "height": 915,
       "links": [
@@ -20227,6 +21699,485 @@
         "શેડનું કામ પૂરું છે",
         "તમે સોલરનું કામ શરૂ કરી શકો છો.",
         "સાઇટ પર પાછા જાઓ"
+      ]
+    },
+    {
+      "id": "M137",
+      "title": "My sites",
+      "kind": "cards",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "Good morning, Ravi · 2 assigned sites",
+      "search": "Find a site",
+      "chips": [
+        "All",
+        "In Progress",
+        "Blocked",
+        "Overdue"
+      ],
+      "cards": [
+        {
+          "title": "Suryoday solar",
+          "body": "Ahmedabad · due 26 Oct · 1/5 approved",
+          "status": "In Progress",
+          "to": "M06"
+        },
+        {
+          "title": "Anand rooftop",
+          "body": "Anand · overdue 3 days · 2/5 approved",
+          "status": "Blocked · Overdue",
+          "to": "M22"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Filter sites",
+          "to": "M05",
+          "style": "secondary"
+        }
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "workerHome",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "d441a9a5-4c3a-4b0e-86b9-519525bef537",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M154",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Open my job",
+          "to": "M138",
+          "x": 40,
+          "y": 460.8,
+          "width": 332,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "My work",
+        "Hello, Neha",
+        "Suryoday solar",
+        "Connect the wires",
+        "Open my job"
+      ]
+    },
+    {
+      "id": "M138",
+      "title": "Suryoday solar",
+      "kind": "detail",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "ST-026 · Solar · Ahmedabad",
+      "details": [
+        [
+          "Status",
+          "In Progress"
+        ],
+        [
+          "Approved stages",
+          "1 / 5"
+        ],
+        [
+          "Expected completion",
+          "26 Oct 2026"
+        ],
+        [
+          "Project",
+          "Suryoday factory expansion"
+        ]
+      ],
+      "cards": [
+        {
+          "title": "Survey & marking",
+          "body": "Approved by admin on 20 Oct",
+          "status": "Completed",
+          "to": "M19"
+        },
+        {
+          "title": "Mounting structure",
+          "body": "Changes requested: anchor close-up",
+          "status": "Changes requested",
+          "to": "M20"
+        },
+        {
+          "title": "Panel installation",
+          "body": "At least one photo required",
+          "status": "Open",
+          "to": "M08"
+        },
+        {
+          "title": "Wiring & earthing",
+          "body": "No photo required · can run in parallel",
+          "status": "In Progress",
+          "to": "M57"
+        },
+        {
+          "title": "Final inspection",
+          "body": "Waiting for panels and wiring",
+          "status": "Dependency hold",
+          "to": "M23"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Start panel installation",
+          "to": "M58",
+          "style": "primary"
+        },
+        {
+          "label": "Add update",
+          "to": "M10",
+          "style": "primary"
+        },
+        {
+          "label": "Request stage completion",
+          "to": "M17",
+          "style": "primary"
+        },
+        {
+          "label": "Request block",
+          "to": "M21",
+          "style": "secondary"
+        }
+      ],
+      "workspace": "work",
+      "tabs": [
+        [
+          "Work",
+          "M06"
+        ],
+        [
+          "Materials",
+          "M24"
+        ],
+        [
+          "Updates",
+          "M34"
+        ]
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "site",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "42286e7f-a253-4f61-b58c-b82bc844478f",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M137",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Start this work",
+          "to": "M139",
+          "x": 24,
+          "y": 385.8,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Add photo",
+          "to": "M146",
+          "x": 24,
+          "y": 479.8,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Voice note",
+          "to": "M148",
+          "x": 214,
+          "y": 479.8,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Need material",
+          "to": "M144",
+          "x": 24,
+          "y": 625.8,
+          "width": 364,
+          "height": 68
+        },
+        {
+          "label": "Need help here",
+          "to": "M152",
+          "x": 24,
+          "y": 705.8,
+          "width": 364,
+          "height": 68
+        },
+        {
+          "label": "My jobs",
+          "to": "M140",
+          "x": 24,
+          "y": 785.8,
+          "width": 112,
+          "height": 72
+        },
+        {
+          "label": "Materials",
+          "to": "M143",
+          "x": 150,
+          "y": 785.8,
+          "width": 112,
+          "height": 72
+        },
+        {
+          "label": "Updates",
+          "to": "M151",
+          "x": 276,
+          "y": 785.8,
+          "width": 112,
+          "height": 72
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Suryoday solar",
+        "Vatva, Ahmedabad",
+        "Finish by 26 October",
+        "Your next job",
+        "Connect the wires",
+        "Start this work",
+        "Add photo",
+        "Voice note",
+        "Need material",
+        "?",
+        "Need help here",
+        "My jobs",
+        "Materials",
+        "Updates"
+      ]
+    },
+    {
+      "id": "M139",
+      "title": "Panel installation · in progress",
+      "kind": "detail",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "Work started just now",
+      "details": [
+        [
+          "Work status",
+          "In Progress"
+        ],
+        [
+          "Photo evidence",
+          "At least one photo required"
+        ]
+      ],
+      "actions": [
+        {
+          "label": "Add update",
+          "to": "M10",
+          "style": "primary"
+        },
+        {
+          "label": "Request completion",
+          "to": "M17",
+          "style": "secondary"
+        }
+      ],
+      "workspace": "work",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "started",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "96109f52-eb94-4b0e-b673-b1aa2a17a336",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M137",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "This work is done",
+          "to": "M141",
+          "x": 24,
+          "y": 385.8,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Add photo",
+          "to": "M146",
+          "x": 24,
+          "y": 479.8,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Voice note",
+          "to": "M148",
+          "x": 214,
+          "y": 479.8,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Need material",
+          "to": "M144",
+          "x": 24,
+          "y": 625.8,
+          "width": 364,
+          "height": 68
+        },
+        {
+          "label": "Need help here",
+          "to": "M152",
+          "x": 24,
+          "y": 705.8,
+          "width": 364,
+          "height": 68
+        },
+        {
+          "label": "My jobs",
+          "to": "M140",
+          "x": 24,
+          "y": 785.8,
+          "width": 112,
+          "height": 72
+        },
+        {
+          "label": "Materials",
+          "to": "M143",
+          "x": 150,
+          "y": 785.8,
+          "width": 112,
+          "height": 72
+        },
+        {
+          "label": "Updates",
+          "to": "M151",
+          "x": 276,
+          "y": 785.8,
+          "width": 112,
+          "height": 72
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Suryoday solar",
+        "Vatva, Ahmedabad",
+        "Finish by 26 October",
+        "You have started this work",
+        "Connect the wires",
+        "✓",
+        "This work is done",
+        "Add photo",
+        "Voice note",
+        "Need material",
+        "?",
+        "Need help here",
+        "My jobs",
+        "Materials",
+        "Updates"
       ]
     },
     {
@@ -20274,7 +22225,7 @@
         "Sync state",
         "Ready to upload"
       ],
-      "boardId": "353c7923-215e-40cf-abc5-36ffba59268a",
+      "boardId": "50616b80-a3c5-437e-bd50-566b56f5686c",
       "width": 412,
       "height": 915,
       "links": [
@@ -20327,6 +22278,1051 @@
       ]
     },
     {
+      "id": "M140",
+      "title": "Stages",
+      "kind": "cards",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "Parallel work is allowed unless a prerequisite holds it.",
+      "cards": [
+        {
+          "title": "Survey & marking",
+          "body": "Approved by admin on 20 Oct",
+          "status": "Completed",
+          "to": "M19"
+        },
+        {
+          "title": "Mounting structure",
+          "body": "Changes requested: anchor close-up",
+          "status": "Changes requested",
+          "to": "M20"
+        },
+        {
+          "title": "Panel installation",
+          "body": "At least one photo required",
+          "status": "Open",
+          "to": "M08"
+        },
+        {
+          "title": "Wiring & earthing",
+          "body": "No photo required · can run in parallel",
+          "status": "In Progress",
+          "to": "M57"
+        },
+        {
+          "title": "Final inspection",
+          "body": "Waiting for panels and wiring",
+          "status": "Dependency hold",
+          "to": "M23"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Add progress update",
+          "to": "M10",
+          "style": "primary"
+        }
+      ],
+      "workspace": "work",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "list",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "2f38b130-42da-4a58-b827-e62ea0bfb26b",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Start this work",
+          "to": "M139",
+          "x": 40,
+          "y": 238.5,
+          "width": 332,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "My jobs here",
+        "Connect the wires",
+        "Start this work"
+      ]
+    },
+    {
+      "id": "M141",
+      "title": "Request completion · no photo required",
+      "kind": "form",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "Wiring & earthing",
+      "fields": [
+        {
+          "label": "Evidence rule",
+          "value": "No photo required",
+          "help": "",
+          "type": "locked"
+        },
+        {
+          "label": "Optional context",
+          "value": "Text or voice note; neither is mandatory",
+          "help": "",
+          "type": "text"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Submit for approval",
+          "to": "M19",
+          "style": "primary"
+        },
+        {
+          "label": "Add optional photo",
+          "to": "M11",
+          "style": "secondary"
+        }
+      ],
+      "note": "The manager must still approve the stage. An optional photo, if added, still needs location.",
+      "presentation": "sheet",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "noPhoto",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "30a55ad5-a1be-4eb7-bb0b-ecdd3de990f1",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Ask manager to check",
+          "to": "M142",
+          "x": 24,
+          "y": 423.80000000000007,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Add photo",
+          "to": "M146",
+          "x": 24,
+          "y": 503.80000000000007,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Finished the wiring?",
+        "Suryoday solar",
+        "Connect the wires",
+        "Your manager will check it.",
+        "A photo is not needed for this job.",
+        "Ask manager to check",
+        "Add photo"
+      ]
+    },
+    {
+      "id": "M142",
+      "title": "Awaiting manager approval",
+      "kind": "message",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "Your completion request has been submitted.",
+      "cards": [
+        {
+          "title": "Your stage submission · attempt 2",
+          "body": "The stage stays In Progress until approved.",
+          "status": "Awaiting approval",
+          "to": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Back to site",
+          "to": "M06",
+          "style": "primary"
+        },
+        {
+          "label": "View activity",
+          "to": "M34",
+          "style": "secondary"
+        }
+      ],
+      "note": "No duplicate pending request can be created for the same stage.",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "success",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "f1564fa3-8150-4993-9e8f-fac04eda2f02",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Back to site",
+          "to": "M138",
+          "x": 24,
+          "y": 463.20000000000005,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Sent to your manager",
+        "✓",
+        "Your manager will check it.",
+        "You can keep working on other jobs.",
+        "Back to site"
+      ]
+    },
+    {
+      "id": "M143",
+      "title": "Site materials",
+      "kind": "cards",
+      "section": "Materials",
+      "platform": "mobile",
+      "subtitle": "Suryoday solar · confirmed balances",
+      "cards": [
+        {
+          "title": "Solar panel · pcs",
+          "body": "12 dispatched · 8 consumed · 4 on hand",
+          "status": "4 available",
+          "to": "M28"
+        },
+        {
+          "title": "Cable · m",
+          "body": "150 dispatched · 85 consumed · 10 returned",
+          "status": "55 available",
+          "to": "M28"
+        },
+        {
+          "title": "Clamps · pcs",
+          "body": "80 dispatched · 64 consumed",
+          "status": "16 available",
+          "to": "M28"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Request material",
+          "to": "M26",
+          "style": "primary"
+        },
+        {
+          "label": "Record consumption",
+          "to": "M29",
+          "style": "secondary"
+        },
+        {
+          "label": "Request return",
+          "to": "M31",
+          "style": "secondary"
+        },
+        {
+          "label": "All requests",
+          "to": "M25",
+          "style": "secondary"
+        }
+      ],
+      "workspace": "materials",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "materials",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "63bf968d-741b-4e99-9b4e-06d9e00f8924",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Ask for material",
+          "to": "M144",
+          "x": 24,
+          "y": 564.45,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "My material requests",
+          "to": "M156",
+          "x": 24,
+          "y": 642.45,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Materials at your site",
+        "Solar panels",
+        "Available at site",
+        "4",
+        "Cable",
+        "Available at site",
+        "45 m",
+        "Clamps",
+        "Available at site",
+        "16",
+        "10 m of cable is set aside for return.",
+        "Ask for material",
+        "My material requests"
+      ]
+    },
+    {
+      "id": "M144",
+      "title": "Request materials",
+      "kind": "form",
+      "section": "Materials",
+      "platform": "mobile",
+      "subtitle": "Suryoday solar",
+      "fields": [
+        {
+          "label": "Material *",
+          "value": "Solar panel",
+          "help": "Search inventory materials",
+          "type": "select"
+        },
+        {
+          "label": "Quantity *",
+          "value": "20 pcs",
+          "help": "",
+          "type": "text"
+        },
+        {
+          "label": "Another material",
+          "value": "Cable · 50 m",
+          "help": "Add or remove request lines",
+          "type": "multi"
+        },
+        {
+          "label": "Note",
+          "value": "Needed for the second roof section",
+          "help": "",
+          "type": "text"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Submit request",
+          "to": "M27",
+          "style": "primary"
+        },
+        {
+          "label": "Add material line",
+          "to": "M26",
+          "style": "secondary"
+        }
+      ],
+      "presentation": "sheet",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "request",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "bb50a2a9-bb76-4412-91e8-39cee1fdf19c",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Send request",
+          "to": "M145",
+          "x": 24,
+          "y": 550.7,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "What do you need?",
+        "Suryoday solar",
+        "Choose material",
+        "Solar panels",
+        "⌄",
+        "How many pieces?",
+        "20",
+        "You can ask again when you need more.",
+        "Send request"
+      ]
+    },
+    {
+      "id": "M145",
+      "title": "Your request is sent",
+      "kind": "message",
+      "section": "Materials",
+      "platform": "mobile",
+      "subtitle": "20 panels requested for Suryoday solar.",
+      "banner": "You have another request waiting. You can still ask for more when you need it.",
+      "actions": [
+        {
+          "label": "Back to site",
+          "to": "M06",
+          "style": "primary"
+        },
+        {
+          "label": "See my requests",
+          "to": "M25",
+          "style": "secondary"
+        }
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "requestResult",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "61ee074e-ea66-49e8-a0a4-601649d0e905",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Back to site",
+          "to": "M138",
+          "x": 24,
+          "y": 451.54999999999995,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Your request is sent",
+        "✓",
+        "20 panels requested",
+        "You can ask again when you need more.",
+        "Back to site"
+      ]
+    },
+    {
+      "id": "M146",
+      "title": "Add location to your photo",
+      "kind": "message",
+      "section": "Photo evidence",
+      "platform": "mobile",
+      "subtitle": "This site photo needs your current device location.",
+      "cards": [
+        {
+          "title": "Why we ask",
+          "body": "Your manager can see where this photo was added.",
+          "status": "While using app",
+          "to": ""
+        },
+        {
+          "title": "Offline photos work too",
+          "body": "Save a location fix now; upload automatically later.",
+          "status": "No background tracking",
+          "to": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Allow location",
+          "to": "M14",
+          "style": "primary"
+        },
+        {
+          "label": "Permission denied",
+          "to": "M12",
+          "style": "secondary"
+        },
+        {
+          "label": "No location fix",
+          "to": "M13",
+          "style": "secondary"
+        }
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "photo",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "d35266d9-5d3a-4cf2-8d44-f9387768d73b",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Allow location",
+          "to": "M147",
+          "x": 24,
+          "y": 495.50000000000006,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Go back",
+          "to": "M138",
+          "x": 24,
+          "y": 653.4,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Add a work photo",
+        "Suryoday solar",
+        "Allow location for this photo",
+        "Your manager needs to know where you add the photo.",
+        "Allow location",
+        "Location is saved only when you add a photo.",
+        "Go back"
+      ]
+    },
+    {
+      "id": "M147",
+      "title": "Photo ready to attach",
+      "kind": "media",
+      "section": "Photo evidence",
+      "platform": "mobile",
+      "subtitle": "Camera or gallery · location saved at addition",
+      "details": [
+        [
+          "Added at",
+          "21 Oct, 10:40"
+        ],
+        [
+          "Position",
+          "23.0225, 72.5714"
+        ],
+        [
+          "Accuracy",
+          "±18 m"
+        ],
+        [
+          "Sync state",
+          "Ready to upload"
+        ]
+      ],
+      "actions": [
+        {
+          "label": "Attach photo",
+          "to": "M10",
+          "style": "primary"
+        }
+      ],
+      "note": "This is where you added the image, not necessarily where a gallery photo was originally taken.",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "photoReady",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "4ec2a713-c470-4b78-9be3-bff8443ce1d0",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Send photo",
+          "to": "M151",
+          "x": 24,
+          "y": 586.0999999999999,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Add another photo",
+          "to": "M146",
+          "x": 24,
+          "y": 666.0999999999999,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Add a note",
+          "to": "M153",
+          "x": 24,
+          "y": 746.0999999999999,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Your photo is ready",
+        "Suryoday solar",
+        "✓",
+        "Location added",
+        "You do not need to write anything.",
+        "Send photo",
+        "Add another photo",
+        "Add a note"
+      ]
+    },
+    {
+      "id": "M148",
+      "title": "Record a voice update",
+      "kind": "audio",
+      "section": "Updates",
+      "platform": "mobile",
+      "subtitle": "Speak in English, Hindi, Gujarati, or your own language.",
+      "fields": [
+        {
+          "label": "Recording",
+          "value": "00:42 / 05:00",
+          "help": "",
+          "type": "audio"
+        }
+      ],
+      "cards": [
+        {
+          "title": "Listen before attaching",
+          "body": "Play, pause, record again, or delete the draft.",
+          "status": "Review",
+          "to": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Attach voice note",
+          "to": "M10",
+          "style": "primary"
+        },
+        {
+          "label": "Record again",
+          "to": "M15",
+          "style": "secondary"
+        },
+        {
+          "label": "Microphone denied",
+          "to": "M50",
+          "style": "secondary"
+        }
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "voice",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "156658d2-2719-4e4a-8add-a2debcca9d0f",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Tap to record",
+          "to": "M149",
+          "x": 98,
+          "y": 281.45000000000005,
+          "width": 216,
+          "height": 216
+        },
+        {
+          "label": "Tap to record",
+          "to": "M149",
+          "x": 24,
+          "y": 517.45,
+          "width": 364,
+          "height": 72
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Tell your manager",
+        "Suryoday solar",
+        "Speak instead of typing.",
+        "Tap to record"
+      ]
+    },
+    {
+      "id": "M149",
+      "title": "Voice note · recording",
+      "kind": "audio",
+      "section": "Updates",
+      "platform": "mobile",
+      "locale": "en",
+      "mobileView": "recording",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "dc8f159e-2fb5-418f-89da-01a8d25193d9",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Stop recording",
+          "to": "M150",
+          "x": 98,
+          "y": 281.45000000000005,
+          "width": 216,
+          "height": 216
+        },
+        {
+          "label": "Stop recording",
+          "to": "M150",
+          "x": 24,
+          "y": 607.45,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Tell your manager",
+        "Suryoday solar",
+        "Recording your voice…",
+        "00:12",
+        "Stop recording"
+      ]
+    },
+    {
       "id": "M15",
       "title": "Record a voice update",
       "kind": "audio",
@@ -20374,7 +23370,7 @@
         "Play, pause, record again, or delete the draft.",
         "Review"
       ],
-      "boardId": "2d7982cb-8acf-4177-97a8-59dabd1cdca9",
+      "boardId": "d42e0e6b-0435-40eb-bc4b-7df47a2b6d0c",
       "width": 412,
       "height": 915,
       "links": [
@@ -20415,6 +23411,713 @@
       ]
     },
     {
+      "id": "M150",
+      "title": "Voice note · voiceReady",
+      "kind": "audio",
+      "section": "Updates",
+      "platform": "mobile",
+      "locale": "en",
+      "mobileView": "voiceReady",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "94a63c2b-1c5a-47a7-960c-2ffe9246ada3",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Send voice note",
+          "to": "M151",
+          "x": 24,
+          "y": 607.45,
+          "width": 364,
+          "height": 64
+        },
+        {
+          "label": "Record again",
+          "to": "M148",
+          "x": 24,
+          "y": 689.45,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Your voice note is ready",
+        "Suryoday solar",
+        "You do not need to write anything.",
+        "▶",
+        "Listen",
+        "00:42",
+        "Send voice note",
+        "Record again"
+      ]
+    },
+    {
+      "id": "M151",
+      "title": "Site activity",
+      "kind": "timeline",
+      "section": "Updates",
+      "platform": "mobile",
+      "cards": [
+        {
+          "title": "You added a progress update",
+          "body": "2 photos + 00:42 audio · received 10:42",
+          "status": "Today",
+          "to": "M51"
+        },
+        {
+          "title": "Manager requested changes",
+          "body": "Add anchor bolt close-up",
+          "status": "Yesterday",
+          "to": "M20"
+        },
+        {
+          "title": "Material dispatch recorded",
+          "body": "8 panels physically sent",
+          "status": "Today",
+          "to": "M28"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Add another update",
+          "to": "M10",
+          "style": "primary"
+        },
+        {
+          "label": "Back to site",
+          "to": "M06",
+          "style": "secondary"
+        }
+      ],
+      "workspace": "activity",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "activity",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "97bf5014-824a-4808-89d1-468c2e042f1a",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Update / Your photos were sent",
+          "to": "M147",
+          "x": 24,
+          "y": 177.5,
+          "width": 364,
+          "height": 118
+        },
+        {
+          "label": "Update / Your voice note was sent",
+          "to": "M150",
+          "x": 24,
+          "y": 311.5,
+          "width": 364,
+          "height": 118
+        },
+        {
+          "label": "Update / Manager is checking your work",
+          "to": "M142",
+          "x": 24,
+          "y": 445.5,
+          "width": 364,
+          "height": 118
+        },
+        {
+          "label": "Back to site",
+          "to": "M138",
+          "x": 24,
+          "y": 579.5,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Your updates",
+        "Your photos were sent",
+        "10:42",
+        "Your voice note was sent",
+        "10:42",
+        "✓",
+        "Manager is checking your work",
+        "10:42",
+        "Back to site"
+      ]
+    },
+    {
+      "id": "M152",
+      "title": "Request a block",
+      "kind": "form",
+      "section": "My Sites",
+      "platform": "mobile",
+      "subtitle": "Keep your manager informed about a blocker.",
+      "fields": [
+        {
+          "label": "Scope",
+          "value": "Panel installation / Whole site",
+          "help": "",
+          "type": "select"
+        },
+        {
+          "label": "Reason *",
+          "value": "Waiting for the safety inspection",
+          "help": "",
+          "type": "text"
+        },
+        {
+          "label": "Optional evidence",
+          "value": "Text, photo, or voice context",
+          "help": "",
+          "type": "attachment"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Send block request",
+          "to": "M34",
+          "style": "primary"
+        },
+        {
+          "label": "Cancel",
+          "to": "M08",
+          "style": "secondary"
+        }
+      ],
+      "note": "The request is pending until the manager decides. A request alone does not officially block work.",
+      "presentation": "sheet",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "block",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "bbc9f323-486e-4835-baf8-6b95c8180e56",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Voice note",
+          "to": "M148",
+          "x": 24,
+          "y": 343.6,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Add photo",
+          "to": "M146",
+          "x": 214,
+          "y": 343.6,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Tell my manager",
+          "to": "M151",
+          "x": 24,
+          "y": 619.9,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "What is stopping your work?",
+        "Suryoday solar",
+        "Tell your manager. They will decide whether to pause the work.",
+        "Voice note",
+        "Add photo",
+        "Tell us what happened",
+        "Waiting for the safety check.",
+        "Tell my manager"
+      ]
+    },
+    {
+      "id": "M153",
+      "title": "Add update",
+      "kind": "composer",
+      "section": "Updates",
+      "platform": "mobile",
+      "subtitle": "Suryoday solar · Panel installation",
+      "fields": [
+        {
+          "label": "Text note",
+          "value": "Panels installed on the first roof section.",
+          "help": "Optional",
+          "type": "text"
+        },
+        {
+          "label": "Photos",
+          "value": "Add camera or gallery photos",
+          "help": "Location required when adding",
+          "type": "attachment"
+        },
+        {
+          "label": "Voice note",
+          "value": "Record audio in your own language",
+          "help": "Optional; text is not mandatory",
+          "type": "audio"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Submit update",
+          "to": "M34",
+          "style": "primary"
+        },
+        {
+          "label": "Add photo",
+          "to": "M11",
+          "style": "secondary"
+        },
+        {
+          "label": "Record audio",
+          "to": "M15",
+          "style": "secondary"
+        }
+      ],
+      "note": "Use text, photos, audio, or any combination. Empty updates cannot be submitted.",
+      "presentation": "sheet",
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "note",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "f84996a3-30be-4af7-b25e-8e4e99057e83",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M138",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Add photo",
+          "to": "M146",
+          "x": 24,
+          "y": 452.1,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Voice note",
+          "to": "M148",
+          "x": 214,
+          "y": 452.1,
+          "width": 174,
+          "height": 126
+        },
+        {
+          "label": "Send update",
+          "to": "M151",
+          "x": 24,
+          "y": 606.1,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Add a note",
+        "Suryoday solar",
+        "Write only if you want to.",
+        "Panels fitted on the first roof section.",
+        "Add photo",
+        "Voice note",
+        "Send update"
+      ]
+    },
+    {
+      "id": "M154",
+      "title": "My profile",
+      "kind": "detail",
+      "section": "Profile",
+      "platform": "mobile",
+      "details": [
+        [
+          "Name",
+          "Ravi Patel"
+        ],
+        [
+          "Mobile",
+          "+91 90000 00101"
+        ],
+        [
+          "Eligible site types",
+          "Solar · Shed"
+        ],
+        [
+          "Language",
+          "Gujarati"
+        ],
+        [
+          "Password",
+          "Set/reset only by manager"
+        ]
+      ],
+      "actions": [
+        {
+          "label": "Choose language",
+          "to": "M72",
+          "style": "primary"
+        },
+        {
+          "label": "Contact manager",
+          "to": "M03",
+          "style": "secondary"
+        },
+        {
+          "label": "Sign out",
+          "to": "M41",
+          "style": "secondary"
+        }
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "workerHelp",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "2e991506-99cf-4731-a26a-193c41a06c27",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M137",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Back to my work",
+          "to": "M137",
+          "x": 24,
+          "y": 270.9,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Need help?",
+        "Ask your manager about this job or material use.",
+        "Back to my work"
+      ]
+    },
+    {
+      "id": "M155",
+      "title": "Site materials to coordinate",
+      "kind": "detail",
+      "section": "My Sites",
+      "platform": "mobile",
+      "mobileView": "coordinatorHome",
+      "reviewNotes": [
+        "Coordinator without owned stages sees material custody, with no fabricated start-work action."
+      ],
+      "boardId": "df3670dd-8776-4f88-acb9-00c91d3a8d59",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M04",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Open materials",
+          "to": "M24",
+          "x": 40,
+          "y": 460.8,
+          "width": 332,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "Site materials",
+        "You coordinate this site",
+        "Suryoday solar",
+        "Check material and requests",
+        "Open materials"
+      ]
+    },
+    {
+      "id": "M156",
+      "title": "My material requests",
+      "kind": "cards",
+      "section": "Materials",
+      "platform": "mobile",
+      "subtitle": "Multiple open requests are allowed.",
+      "cards": [
+        {
+          "title": "MR-041 · Solar panels",
+          "body": "20 requested · 12 approved · 8 pending",
+          "status": "Partially approved",
+          "to": "M28"
+        },
+        {
+          "title": "MR-042 · Solar panels",
+          "body": "5 requested · waiting for decision",
+          "status": "Pending",
+          "to": "M28"
+        },
+        {
+          "title": "MR-039 · Cable",
+          "body": "150 m dispatched",
+          "status": "Fulfilled",
+          "to": "M28"
+        }
+      ],
+      "actions": [
+        {
+          "label": "New material request",
+          "to": "M26",
+          "style": "primary"
+        }
+      ],
+      "reviewNotes": [
+        "Own stage: Wiring & earthing. Ravi coordinates this site. Neha cannot mutate panel installation, record consumption or initiate returns. Stage notes/evidence are attributed to Neha; location at photo addition remains mandatory."
+      ],
+      "locale": "en",
+      "mobileView": "requests",
+      "persona": "stage-worker",
+      "actor": "Neha Shah",
+      "taskTitle": "Connect the wires",
+      "routeOverrides": {
+        "home": "M137",
+        "site": "M138",
+        "started": "M139",
+        "list": "M140",
+        "done": "M141",
+        "noPhoto": "M141",
+        "success": "M142",
+        "materials": "M143",
+        "request": "M144",
+        "requestResult": "M145",
+        "photo": "M146",
+        "photoReady": "M147",
+        "voice": "M148",
+        "recording": "M149",
+        "voiceReady": "M150",
+        "activity": "M151",
+        "block": "M152",
+        "note": "M153",
+        "help": "M154",
+        "requests": "M156"
+      },
+      "boardId": "b8a7836b-bbbb-403a-bb9b-da5e4252cefa",
+      "width": 412,
+      "height": 915,
+      "links": [
+        {
+          "label": "Back",
+          "to": "M143",
+          "x": 12,
+          "y": 49,
+          "width": 98,
+          "height": 56
+        },
+        {
+          "label": "Ask for material",
+          "to": "M144",
+          "x": 24,
+          "y": 469.5,
+          "width": 364,
+          "height": 64
+        }
+      ],
+      "text": [
+        "9:41",
+        "●  ▮▮  100%",
+        "‹",
+        "Back",
+        "My material requests",
+        "Solar panels · 20",
+        "Waiting for your manager",
+        "Cable · 60 m",
+        "Waiting for your manager",
+        "Ask for material"
+      ]
+    },
+    {
       "id": "M16",
       "title": "Audio upload interrupted",
       "kind": "message",
@@ -20438,7 +24141,7 @@
         "Your voice recording remains on this device.",
         "The update stays in draft until attachments are accepted or explicitly removed."
       ],
-      "boardId": "471d174b-c3db-40ee-aacf-2d4d8f2a4d21",
+      "boardId": "23933361-81fc-492f-9d46-48807105260e",
       "width": 412,
       "height": 915,
       "links": [
@@ -20522,7 +24225,7 @@
         "Text / audio context",
         "Optional note or voice clip"
       ],
-      "boardId": "575b9581-fcf5-4b41-ad60-9cefe8ed91f3",
+      "boardId": "93af047f-b144-408b-8092-5d573b3d5e57",
       "width": 412,
       "height": 915,
       "links": [
@@ -20590,7 +24293,7 @@
         "This stage requires at least one accepted photo with location.",
         "Text, audio, unfinished uploads, or photos without location do not meet the evidence rule."
       ],
-      "boardId": "4f5ce03b-b842-4ecf-b162-44ebc3671aa5",
+      "boardId": "987b4893-02d7-4157-b2d8-1778b526a7ee",
       "width": 412,
       "height": 915,
       "links": [
@@ -20666,7 +24369,7 @@
         "The stage stays In Progress until approved.",
         "Awaiting approval"
       ],
-      "boardId": "230e1a4b-7692-4093-a64f-e331094fcc51",
+      "boardId": "0be14ad6-53e2-44b8-bd86-1c73d4736424",
       "width": 412,
       "height": 915,
       "links": [
@@ -20734,7 +24437,7 @@
         "1 photo · submitted 20 Oct",
         "History"
       ],
-      "boardId": "c8856e2b-b116-47df-9153-112c141da2d9",
+      "boardId": "6b8dd552-5f4f-4040-981b-866f84a9d3d9",
       "width": 412,
       "height": 915,
       "links": [
@@ -20836,7 +24539,7 @@
         "Optional evidence",
         "Text, photo, or voice context"
       ],
-      "boardId": "394cc8ba-1ecf-40a9-b568-c4600fccb9f1",
+      "boardId": "13ae6386-f138-4ccd-a3d5-a40322b05cba",
       "width": 412,
       "height": 915,
       "links": [
@@ -20934,7 +24637,7 @@
         "Overdue",
         "3 days"
       ],
-      "boardId": "a7ab9f4b-02b3-42ae-a5aa-177c657d3d5e",
+      "boardId": "b16e029e-09f8-470a-b579-4316f19a81eb",
       "width": 412,
       "height": 915,
       "links": [
@@ -21025,7 +24728,7 @@
         "Must be approved first",
         "In Progress"
       ],
-      "boardId": "f64cbcb5-afce-495e-8c61-d6a008683dbc",
+      "boardId": "49a61706-d32a-46b4-b093-d2667de0ec41",
       "width": 412,
       "height": 915,
       "links": [
@@ -21139,7 +24842,7 @@
         "16 available",
         "45 m available; 10 pending return. Pending return quantity cannot also be consumed."
       ],
-      "boardId": "135e31af-95a5-4cb3-ba9e-bc1ddfec63c7",
+      "boardId": "3c882466-a496-443d-845a-ad2f012c7c6e",
       "width": 412,
       "height": 915,
       "links": [
@@ -21253,7 +24956,7 @@
         "150 m dispatched",
         "Fulfilled"
       ],
-      "boardId": "abd27717-164d-4cc8-9755-1eec71025902",
+      "boardId": "0a09bb83-d4e6-4984-8cc2-be3a9cf3b657",
       "width": 412,
       "height": 915,
       "links": [
@@ -21346,7 +25049,7 @@
         "Note",
         "Needed for the second roof section"
       ],
-      "boardId": "ce11fbb5-0442-4fa2-b0f7-b4dfab80f890",
+      "boardId": "a150fbf7-b6d6-4a46-9283-b4f977743642",
       "width": 412,
       "height": 915,
       "links": [
@@ -21407,7 +25110,7 @@
         "You can still submit this request.",
         "MR-041 already requests 20 solar panels. This new request will remain separate."
       ],
-      "boardId": "1e16d87f-ef90-4df9-b48e-a3381a03791e",
+      "boardId": "a6d9d144-37ca-4a50-9c42-1dec74f3b43b",
       "width": 412,
       "height": 915,
       "links": [
@@ -21498,7 +25201,7 @@
         "12 ready now; remaining stock expected Friday",
         "Decision"
       ],
-      "boardId": "ae9bfa04-88b2-4803-8a2e-7e05d74d1a04",
+      "boardId": "8068cba1-9e73-4a65-8c45-4d9d4ba84e6e",
       "width": 412,
       "height": 915,
       "links": [
@@ -21605,7 +25308,7 @@
         "Note",
         "Installed on roof section B"
       ],
-      "boardId": "d0915d6d-7695-4886-a920-ebce01af54d6",
+      "boardId": "d5b36378-a320-43c6-bf0e-6eb81a4e8359",
       "width": 412,
       "height": 915,
       "links": [
@@ -21672,7 +25375,7 @@
         "2 pcs available",
         "Confirmed"
       ],
-      "boardId": "429ddca0-5544-4d70-aa2d-84abd11f4d85",
+      "boardId": "ada874ef-a840-4ecd-9963-dc482c58b4d0",
       "width": 412,
       "height": 915,
       "links": [
@@ -21762,7 +25465,7 @@
         "Reason",
         "Surplus after installation"
       ],
-      "boardId": "a3ee89c3-85ff-4af3-b577-b0f69577ef75",
+      "boardId": "bec8c858-6417-4e2d-849b-70e029769ea0",
       "width": 412,
       "height": 915,
       "links": [
@@ -21844,7 +25547,7 @@
         "Available to consume",
         "45 m"
       ],
-      "boardId": "76921e36-2882-4077-bd70-07a8e4598467",
+      "boardId": "36e7eed5-0f8c-4135-8368-193812415e86",
       "width": 412,
       "height": 915,
       "links": [
@@ -21916,7 +25619,7 @@
         "Your assigned work · may proceed",
         "In Progress"
       ],
-      "boardId": "d2a27702-8f6e-4481-99d4-172dab2b2fe6",
+      "boardId": "f360da5e-318c-4279-9b85-fe75b5d1f263",
       "width": 412,
       "height": 915,
       "links": [
@@ -22000,7 +25703,7 @@
         "8 panels physically sent",
         "Today"
       ],
-      "boardId": "64d765e8-a111-4ef5-a37b-1dd623040995",
+      "boardId": "c5644290-ff13-44c6-a701-c3e6a46e48cc",
       "width": 412,
       "height": 915,
       "links": [
@@ -22112,7 +25815,7 @@
         "Awaiting stock validation",
         "Provisional"
       ],
-      "boardId": "ba73ff57-8046-4b94-90ab-665bdb3024b4",
+      "boardId": "4d291e58-c612-4e82-966a-29a3ac4f6daa",
       "width": 412,
       "height": 915,
       "links": [
@@ -22191,7 +25894,7 @@
         "Consumption of 4 panels conflicts with the confirmed available balance of 2. Nothing was forced negative."
       ],
       "details": [],
-      "boardId": "4e7123f5-e4f1-48c5-85bd-1da55fa33f46",
+      "boardId": "f0dcb042-031f-4d67-9efc-a6a09c549412",
       "width": 412,
       "height": 915,
       "links": [
@@ -22234,12 +25937,12 @@
     },
     {
       "id": "M37",
-      "title": "This site has a new worker",
+      "title": "This job has a new worker",
       "kind": "message",
       "section": "Sync",
       "platform": "mobile",
-      "subtitle": "Your saved work is safe.",
-      "banner": "Your manager changed who works here. Ask them to check the update you saved.",
+      "subtitle": "Your saved update is safe.",
+      "banner": "Your manager changed who does this job. Ask them to check your saved update. Your other jobs are still available.",
       "actions": [
         {
           "label": "Back to my work",
@@ -22254,9 +25957,10 @@
       ],
       "reviewNotes": [
         "Server access has ended for this site.",
-        "Your unsynced update is quarantined for manager-assisted recovery. It was not silently deleted or applied to someone else’s site."
+        "Your unsynced update is quarantined for manager-assisted recovery. It was not silently deleted or applied to someone else’s site.",
+        "Original stage assignment ID/version is stale; quarantined work keeps original author and photo-add location even when the employee is assigned again. Other valid stages remain accessible."
       ],
-      "boardId": "fee866b3-7e14-466f-bd86-f15738248afb",
+      "boardId": "8e936189-2c62-4232-a61f-872f2d17cb18",
       "width": 412,
       "height": 915,
       "links": [
@@ -22272,7 +25976,7 @@
           "label": "Back to my work",
           "to": "M04",
           "x": 24,
-          "y": 401.20000000000005,
+          "y": 425.5,
           "width": 364,
           "height": 64
         },
@@ -22280,7 +25984,7 @@
           "label": "Get help",
           "to": "M39",
           "x": 24,
-          "y": 481.20000000000005,
+          "y": 505.5,
           "width": 364,
           "height": 64
         }
@@ -22290,9 +25994,9 @@
         "●  ▮▮  100%",
         "‹",
         "Back",
-        "This site has a new worker",
-        "Your saved work is safe.",
-        "Your manager changed who works here. Ask them to check the update you saved.",
+        "This job has a new worker",
+        "Your saved update is safe.",
+        "Your manager changed who does this job. Ask them to check your saved update. Your other jobs are still available.",
         "Back to my work",
         "Get help"
       ]
@@ -22318,7 +26022,7 @@
         "Offline use does not extend the window. No new work is submitted before successful authentication.",
         "Connect to the internet and sign in again. Unsynced drafts remain safely retained."
       ],
-      "boardId": "c8c2d2d9-fc40-40b3-a6a7-84a3d472e336",
+      "boardId": "8dc4d5a0-6b1a-40bf-a205-9b04f88f432a",
       "width": 412,
       "height": 915,
       "links": [
@@ -22407,7 +26111,7 @@
         "Password",
         "Set/reset only by manager"
       ],
-      "boardId": "6f7ba38c-7ed2-4355-beac-1edf5c08f59e",
+      "boardId": "fa7ce883-a5c2-4a7e-841f-29e30b26f14a",
       "width": 412,
       "height": 915,
       "links": [
@@ -22529,7 +26233,7 @@
         "Wiring is held; other stages may proceed",
         "Unread"
       ],
-      "boardId": "64c6c628-5e77-47c9-88c3-bd2ad50ec17a",
+      "boardId": "fe4601bd-c36d-41a9-8b9b-4ba0c94ba056",
       "width": 412,
       "height": 915,
       "links": [
@@ -22598,7 +26302,7 @@
         "Signing out clears local account data.",
         "2 updates and 1 voice clip have not reached your manager. Sync first to preserve them on the server."
       ],
-      "boardId": "9ae6f944-6084-4382-aa5e-5ad3f24c63b8",
+      "boardId": "f1f09f4f-457a-4004-989f-d91d998ea259",
       "width": 412,
       "height": 915,
       "links": [
@@ -22692,7 +26396,7 @@
         "Anand · overdue 3 days · 2/5 approved",
         "Blocked · Overdue"
       ],
-      "boardId": "f28c34a0-140e-42b8-b8eb-a0e7b03c294d",
+      "boardId": "01ad4317-fe28-43d0-b80b-acb27ee49af4",
       "width": 412,
       "height": 915,
       "links": [
@@ -22839,7 +26543,7 @@
         "Return surplus without reopening work",
         "Closeout"
       ],
-      "boardId": "ba18bef8-c201-495e-93fa-c6597baeb1a1",
+      "boardId": "757006f6-0678-4008-b6eb-f709a8f0dd2b",
       "width": 412,
       "height": 915,
       "links": [
@@ -22949,7 +26653,7 @@
         "Reason",
         "Unused after final inspection"
       ],
-      "boardId": "e99d24b3-52cf-4007-b273-92314235aa26",
+      "boardId": "a9f9ab18-29a5-41a5-99b3-ce695e6d37ef",
       "width": 412,
       "height": 920,
       "links": [
@@ -23043,7 +26747,7 @@
         "आनंद · 3 दिन की देरी",
         "अवरुद्ध"
       ],
-      "boardId": "c95d133b-fb03-423b-aa28-aecd9d9ad4aa",
+      "boardId": "ebb9ac4b-1757-4d23-9cb3-b3ec35e7bbc4",
       "width": 412,
       "height": 915,
       "links": [
@@ -23182,7 +26886,7 @@
         "આણંદ · 3 દિવસ મોડું",
         "અવરોધિત"
       ],
-      "boardId": "a10541f0-785d-49a9-bd22-f7b40d054c6f",
+      "boardId": "0cd216b3-0438-45de-a96a-55bef34ef423",
       "width": 412,
       "height": 915,
       "links": [
@@ -23312,7 +27016,7 @@
         "Server received",
         "Not yet · queued"
       ],
-      "boardId": "a6c4e5fa-62c8-4c25-bb6e-c900863b5275",
+      "boardId": "eceda097-2089-4b17-998d-5ce180d17ed1",
       "width": 412,
       "height": 915,
       "links": [
@@ -23387,7 +27091,7 @@
         "Valid for 5 more days"
       ],
       "subtitle": "Your saved photos and voice notes are safe.",
-      "boardId": "1417974f-e5e5-4e9f-b7e2-c495ee61cfb3",
+      "boardId": "a3f333db-4fc6-47e6-b9d8-ba9b8150932b",
       "width": 412,
       "height": 915,
       "links": [
@@ -23452,7 +27156,7 @@
         "Sign in using the new password your manager shared.",
         "This server session is no longer valid. Your unsynced drafts remain recoverable after authentication."
       ],
-      "boardId": "b004fd89-e156-4c55-bf2c-a0be3064ab8c",
+      "boardId": "27d4c4b2-3c0d-46e3-a3c5-5a7dfc64ab3c",
       "width": 412,
       "height": 915,
       "links": [
@@ -23517,7 +27221,7 @@
         "Voice recording is unavailable until permission is enabled.",
         "Microphone denial does not block other progress update types."
       ],
-      "boardId": "d8232d55-1bef-48be-a58f-4325d401b21c",
+      "boardId": "40b8dacf-44e5-42b3-812e-aba7642d7b50",
       "width": 412,
       "height": 915,
       "links": [
@@ -23602,7 +27306,7 @@
         "Server received",
         "21 Oct, 10:42"
       ],
-      "boardId": "6e34a1e0-155e-4147-bafd-18a2d46dd0c8",
+      "boardId": "d7f5ba8b-10d6-480d-bef6-b9b2a7e49c03",
       "width": 412,
       "height": 924,
       "links": [
@@ -23663,7 +27367,7 @@
       "reviewNotes": [
         "Your manager will assign work here."
       ],
-      "boardId": "235c307a-466b-4cb4-9739-1381d1b89869",
+      "boardId": "65a968e2-1b3d-4a7e-bcad-6e52f6d1568c",
       "width": 412,
       "height": 915,
       "links": [
@@ -23717,7 +27421,7 @@
       "reviewNotes": [
         "Your saved sites and local drafts are still available."
       ],
-      "boardId": "50e0a2e2-a33c-4656-9853-598aa2a5916c",
+      "boardId": "58d36c8f-c828-49fa-a0df-7c7063d23aa9",
       "width": 412,
       "height": 915,
       "links": [
@@ -23768,7 +27472,7 @@
       "reviewNotes": [
         "Getting your latest assignments."
       ],
-      "boardId": "0a8261c5-2ced-49a8-9b6e-febaa57897fa",
+      "boardId": "92ded01b-36af-482d-8fc1-69f8f7db75cc",
       "width": 412,
       "height": 915,
       "links": [
@@ -23814,7 +27518,7 @@
         "Wiring & earthing · Suryoday solar",
         "Safety inspection required. Independent stages remain available."
       ],
-      "boardId": "f6d125cf-090d-44c7-949c-58503101e861",
+      "boardId": "da931098-f2eb-42f0-b529-9a2c5553ea77",
       "width": 412,
       "height": 915,
       "links": [
@@ -23898,7 +27602,7 @@
         "Optional context",
         "Text or voice note; neither is mandatory"
       ],
-      "boardId": "a96c8879-1783-4ded-aa60-bb4368f6896b",
+      "boardId": "bd912eef-d73a-47b4-80c5-734ddd041745",
       "width": 412,
       "height": 915,
       "links": [
@@ -23984,9 +27688,9 @@
         "Prerequisites",
         "None"
       ],
-      "boardId": "1062fabd-4266-4ee3-a1ea-fbb896dabfc3",
+      "boardId": "6d37aacb-5805-43cc-a32b-c3af58e2a7d8",
       "width": 412,
-      "height": 1008,
+      "height": 915,
       "links": [
         {
           "label": "Back",
@@ -24000,15 +27704,7 @@
           "label": "Start this work",
           "to": "M58",
           "x": 40,
-          "y": 522.5,
-          "width": 332,
-          "height": 64
-        },
-        {
-          "label": "This work is done",
-          "to": "M56",
-          "x": 40,
-          "y": 664.5,
+          "y": 380.5,
           "width": 332,
           "height": 64
         },
@@ -24016,7 +27712,7 @@
           "label": "Other work here",
           "to": "M33",
           "x": 24,
-          "y": 907.5,
+          "y": 481.5,
           "width": 364,
           "height": 64
         }
@@ -24026,17 +27722,11 @@
         "●  ▮▮  100%",
         "‹",
         "Back",
-        "All work at this site",
-        "Measure and mark",
-        "Manager checked",
+        "My jobs here",
         "Fit the frame",
         "Manager is checking",
         "Install the panels",
         "Start this work",
-        "Connect the wires",
-        "This work is done",
-        "Final check",
-        "After panels and wiring",
         "Other work here"
       ]
     },
@@ -24077,7 +27767,7 @@
         "Photo evidence",
         "At least one photo required"
       ],
-      "boardId": "fd0e67f0-d885-49f0-80a9-4a98250ec717",
+      "boardId": "dbf61824-bfcb-4b44-b030-c76bd3703193",
       "width": 412,
       "height": 915,
       "links": [
@@ -24130,7 +27820,7 @@
           "height": 68
         },
         {
-          "label": "All work",
+          "label": "My jobs",
           "to": "M07",
           "x": 24,
           "y": 785.8,
@@ -24171,7 +27861,7 @@
         "Need material",
         "?",
         "Need help here",
-        "All work",
+        "My jobs",
         "Materials",
         "Updates"
       ]
@@ -24220,7 +27910,7 @@
       ],
       "mobileView": "done",
       "taskTitle": "Fit the frame",
-      "boardId": "c3ee3856-5b33-4469-90c8-7b25649e6739",
+      "boardId": "7b8c72fb-73cf-4dc1-a47d-4d88fca1c393",
       "width": 412,
       "height": 915,
       "links": [
@@ -24289,7 +27979,7 @@
         "चुनी गई फ़ोटो अभी ड्राफ़्ट में सुरक्षित है।",
         "स्थान के बिना साइट की फ़ोटो जमा नहीं की जा सकती। अनुमति चालू करें और फिर कोशिश करें।"
       ],
-      "boardId": "5557d06c-e816-473d-aab6-3d289a9cf9a2",
+      "boardId": "80f7228a-5f7d-403d-82e7-6657cc01eede",
       "width": 412,
       "height": 915,
       "links": [
@@ -24355,7 +28045,7 @@
         "પસંદ કરેલો ફોટો હજી ડ્રાફ્ટ તરીકે સુરક્ષિત છે.",
         "સ્થાન વિના સાઇટનો ફોટો મોકલી શકાશે નહીં. પરવાનગી ચાલુ કરીને ફરી પ્રયાસ કરો."
       ],
-      "boardId": "834f0c90-7151-4476-8d35-48ab9be0aeab",
+      "boardId": "febd0f40-b458-4daa-90b1-21187b9fef40",
       "width": 412,
       "height": 915,
       "links": [
@@ -24419,7 +28109,7 @@
       "reviewNotes": [
         "તમારા મેનેજર અહીં તમને કામ સોંપશે."
       ],
-      "boardId": "e8d5836a-3eea-4447-b1f6-f0f5a20423f6",
+      "boardId": "e506082f-2e1e-4194-b71c-a4ac8642c10a",
       "width": 412,
       "height": 915,
       "links": [
@@ -24482,7 +28172,7 @@
       "reviewNotes": [
         "आपके मैनेजर यहाँ आपको काम सौंपेंगे।"
       ],
-      "boardId": "669e6645-4215-452b-97ac-61a2433f919d",
+      "boardId": "4cd1db7c-8196-4a27-8b65-c0ca3d241d7a",
       "width": 412,
       "height": 915,
       "links": [
@@ -24547,7 +28237,7 @@
         "आपकी जानकारी सुरक्षित रखी गई है।",
         "आपने 4 पैनल उपयोग किए दर्ज किए हैं, लेकिन उपलब्ध स्टॉक 2 है। स्टॉक को ऋणात्मक नहीं किया गया।"
       ],
-      "boardId": "8e13df76-dd33-4862-8165-b27e8c92c602",
+      "boardId": "ab1b9036-c844-4d49-9c75-f29745a877dd",
       "width": 412,
       "height": 915,
       "links": [
@@ -24613,7 +28303,7 @@
         "તમે દાખલ કરેલી માહિતી સુરક્ષિત છે.",
         "તમે 4 પેનલનો વપરાશ નોંધ્યો છે, પરંતુ ઉપલબ્ધ સ્ટોક 2 છે. સ્ટોકને ઋણ બનાવવામાં આવ્યો નથી."
       ],
-      "boardId": "52f3c63a-d90d-47df-8212-f7bf0943cee4",
+      "boardId": "d237d9da-b9a5-4461-96a8-7d73191ab5d4",
       "width": 412,
       "height": 915,
       "links": [
@@ -24679,7 +28369,7 @@
         "इस चरण में स्थान सहित कम से कम एक स्वीकृत फ़ोटो ज़रूरी है।",
         "केवल टेक्स्ट या ऑडियो से फ़ोटो की आवश्यकता पूरी नहीं होती।"
       ],
-      "boardId": "cd4300f8-05ee-4dc2-b7f5-97a34c384b84",
+      "boardId": "b50a1403-4476-4582-911b-722ce2cc3aaa",
       "width": 412,
       "height": 915,
       "links": [
@@ -24745,7 +28435,7 @@
         "આ તબક્કા માટે સ્થાન સાથેનો ઓછામાં ઓછો એક સ્વીકારેલો ફોટો જરૂરી છે.",
         "ફક્ત લખાણ અથવા ઑડિયોથી ફોટાની જરૂરિયાત પૂરી થતી નથી."
       ],
-      "boardId": "f76bc572-4246-4adc-95c6-727f25c945aa",
+      "boardId": "20ac6c20-b531-4420-9a2a-3b2189d6ffef",
       "width": 412,
       "height": 915,
       "links": [
@@ -24829,7 +28519,7 @@
         "પાસવર્ડ",
         "••••••••••"
       ],
-      "boardId": "953b1a21-94bb-4c38-9aa3-b3cc9c44618e",
+      "boardId": "adddc9bb-e899-4496-b922-bd9876422a69",
       "width": 412,
       "height": 915,
       "links": [
@@ -24917,7 +28607,7 @@
         "पासवर्ड",
         "••••••••••"
       ],
-      "boardId": "a14e605d-8dbe-470e-9666-c8170107049c",
+      "boardId": "65bc9ca0-bcbe-4e44-b2b1-10634c9cb553",
       "width": 412,
       "height": 915,
       "links": [
@@ -25021,7 +28711,7 @@
         "अपनी भाषा में रिकॉर्ड करें",
         "वैकल्पिक"
       ],
-      "boardId": "6385ed29-c08e-440b-ad57-41c0094992d8",
+      "boardId": "acfd3541-0159-49d5-9bd2-925b44d3c50b",
       "width": 412,
       "height": 915,
       "links": [
@@ -25131,7 +28821,7 @@
         "તમારી ભાષામાં રેકોર્ડ કરો",
         "વૈકલ્પિક"
       ],
-      "boardId": "06e49f45-dfda-4757-b1f1-bd3d456bd4be",
+      "boardId": "73c49386-b14b-4359-a6fe-90d226f4c4a1",
       "width": 412,
       "height": 915,
       "links": [
@@ -25225,7 +28915,7 @@
         "ગુજરાતી",
         "ગુજરાતીમાં ઇન્ટરફેસ જુઓ"
       ],
-      "boardId": "bc8a8871-f364-460d-a59d-af163755c0e2",
+      "boardId": "0c9ae1df-01d3-4bce-9515-e5daab99c72e",
       "width": 412,
       "height": 915,
       "links": [
@@ -25395,7 +29085,7 @@
       ],
       "locale": "hi",
       "mobileView": "site",
-      "boardId": "5170b1c5-084c-4b6e-aa1b-ae02e93cba9d",
+      "boardId": "741dc0e8-4832-4498-a8cd-ef57aa192da3",
       "width": 412,
       "height": 915,
       "links": [
@@ -25448,7 +29138,7 @@
           "height": 68
         },
         {
-          "label": "सभी काम",
+          "label": "मेरे काम",
           "to": "M93",
           "x": 24,
           "y": 785.8,
@@ -25488,7 +29178,7 @@
         "सामान चाहिए",
         "?",
         "मदद चाहिए",
-        "सभी काम",
+        "मेरे काम",
         "सामान",
         "अपडेट"
       ]
@@ -25615,7 +29305,7 @@
       ],
       "locale": "gu",
       "mobileView": "site",
-      "boardId": "9e1e50b4-d4b4-4e01-bc63-25b19f7dd469",
+      "boardId": "e26aba6c-1982-47f2-bd4d-72a0a4ca875a",
       "width": 412,
       "height": 915,
       "links": [
@@ -25668,7 +29358,7 @@
           "height": 68
         },
         {
-          "label": "બધાં કામ",
+          "label": "મારાં કામ",
           "to": "M94",
           "x": 24,
           "y": 785.8,
@@ -25708,7 +29398,7 @@
         "સામાન જોઈએ",
         "?",
         "મદદ જોઈએ",
-        "બધાં કામ",
+        "મારાં કામ",
         "સામાન",
         "અપડેટ"
       ]
@@ -25752,7 +29442,7 @@
       ],
       "locale": "hi",
       "mobileView": "started",
-      "boardId": "f2de9993-0474-4ea0-80f6-00ad017f655a",
+      "boardId": "3c0db1b4-7730-47ee-a03f-ec7a8518acc6",
       "width": 412,
       "height": 915,
       "links": [
@@ -25805,7 +29495,7 @@
           "height": 68
         },
         {
-          "label": "सभी काम",
+          "label": "मेरे काम",
           "to": "M93",
           "x": 24,
           "y": 785.8,
@@ -25846,7 +29536,7 @@
         "सामान चाहिए",
         "?",
         "मदद चाहिए",
-        "सभी काम",
+        "मेरे काम",
         "सामान",
         "अपडेट"
       ]
@@ -25890,7 +29580,7 @@
       ],
       "locale": "gu",
       "mobileView": "started",
-      "boardId": "2ab8bd3b-e80c-48ee-8ea8-ab95158aa307",
+      "boardId": "79e1b31d-15c1-48ea-9b33-62e505eff020",
       "width": 412,
       "height": 915,
       "links": [
@@ -25943,7 +29633,7 @@
           "height": 68
         },
         {
-          "label": "બધાં કામ",
+          "label": "મારાં કામ",
           "to": "M94",
           "x": 24,
           "y": 785.8,
@@ -25984,7 +29674,7 @@
         "સામાન જોઈએ",
         "?",
         "મદદ જોઈએ",
-        "બધાં કામ",
+        "મારાં કામ",
         "સામાન",
         "અપડેટ"
       ]
@@ -26038,7 +29728,7 @@
       ],
       "locale": "hi",
       "mobileView": "photo",
-      "boardId": "78f8cf4e-faa0-4be4-bd0e-b49c7359e83a",
+      "boardId": "352125fc-acd0-4a67-9a5f-42c5ef0c27ed",
       "width": 412,
       "height": 915,
       "links": [
@@ -26130,7 +29820,7 @@
       ],
       "locale": "gu",
       "mobileView": "photo",
-      "boardId": "ef972f0d-2393-47c4-b14c-cd85ceae88ca",
+      "boardId": "2ee8b833-9e75-42be-9efb-9f1107711857",
       "width": 412,
       "height": 915,
       "links": [
@@ -26220,7 +29910,7 @@
       ],
       "locale": "hi",
       "mobileView": "photoReady",
-      "boardId": "b08566c0-11b3-4381-99e2-77d65fe49dc8",
+      "boardId": "dd9f93a4-dcf9-466c-9f5c-1e2def913a5d",
       "width": 412,
       "height": 915,
       "links": [
@@ -26319,7 +30009,7 @@
       ],
       "locale": "gu",
       "mobileView": "photoReady",
-      "boardId": "2c3ef55d-804c-42ac-8209-7d5f1b996580",
+      "boardId": "0a174ffb-3ce2-4a65-af1e-6fd02fbbef16",
       "width": 412,
       "height": 915,
       "links": [
@@ -26421,7 +30111,7 @@
       ],
       "locale": "hi",
       "mobileView": "voice",
-      "boardId": "f52d6cb1-fbe4-4972-a0c8-1b58d365bd76",
+      "boardId": "07e0e68a-b45d-4c59-958d-cd83e56c4337",
       "width": 412,
       "height": 915,
       "links": [
@@ -26511,7 +30201,7 @@
       ],
       "locale": "gu",
       "mobileView": "voice",
-      "boardId": "460773f1-f5d8-40f5-b849-941f8483cac2",
+      "boardId": "35d9dd4b-4522-4733-ba22-56f3ef2b426f",
       "width": 412,
       "height": 915,
       "links": [
@@ -26596,7 +30286,7 @@
       ],
       "locale": "hi",
       "mobileView": "done",
-      "boardId": "a7e3617a-ae95-4fe0-9524-9877977adf2f",
+      "boardId": "cd5bffec-763d-42d3-afaa-939904eac78a",
       "width": 412,
       "height": 915,
       "links": [
@@ -26685,7 +30375,7 @@
       ],
       "locale": "gu",
       "mobileView": "done",
-      "boardId": "97d74d44-c59a-4ac1-90e7-88894cf7342f",
+      "boardId": "76bb2ed3-ad4b-4f63-b4af-9d529b4c5480",
       "width": 412,
       "height": 915,
       "links": [
@@ -26766,7 +30456,7 @@
       ],
       "locale": "hi",
       "mobileView": "success",
-      "boardId": "6fa90fd3-9c2a-4c81-882b-ccc07b2c73ce",
+      "boardId": "c4b0de92-866e-4a12-bc07-01fae6f3e85c",
       "width": 412,
       "height": 915,
       "links": [
@@ -26836,7 +30526,7 @@
       ],
       "locale": "gu",
       "mobileView": "success",
-      "boardId": "7ccb08c7-557a-49ed-8dd5-77ef9151780a",
+      "boardId": "699a2bc8-3c09-48a9-a7fe-f471f2bb969a",
       "width": 412,
       "height": 915,
       "links": [
@@ -26934,7 +30624,7 @@
       ],
       "locale": "hi",
       "mobileView": "materials",
-      "boardId": "a2bc9d12-c16c-45db-9e67-e47957a73efa",
+      "boardId": "3b430571-4c71-4611-a6ec-a7244329de48",
       "width": 412,
       "height": 915,
       "links": [
@@ -27067,7 +30757,7 @@
       ],
       "locale": "gu",
       "mobileView": "materials",
-      "boardId": "66d7928d-8e1d-4293-a98a-b52e6426794b",
+      "boardId": "e77ad611-567f-4a50-a92a-60436cb41a64",
       "width": 412,
       "height": 915,
       "links": [
@@ -27196,7 +30886,7 @@
       ],
       "locale": "hi",
       "mobileView": "request",
-      "boardId": "5c65440f-5ca1-4431-8be6-202c234629ab",
+      "boardId": "70023cc1-ffdd-4e43-a2c2-19fc66eac24c",
       "width": 412,
       "height": 915,
       "links": [
@@ -27294,7 +30984,7 @@
       ],
       "locale": "gu",
       "mobileView": "request",
-      "boardId": "64d5494e-d957-42ab-917a-49803ddd90b6",
+      "boardId": "57d07a3a-b029-43de-a1fd-2a3eb36a913f",
       "width": 412,
       "height": 915,
       "links": [
@@ -27383,7 +31073,7 @@
       ],
       "locale": "hi",
       "mobileView": "activity",
-      "boardId": "426c4691-df65-40a7-abb6-df3c63a74d24",
+      "boardId": "102c8fce-b756-4ae9-889e-6267d84bf54b",
       "width": 412,
       "height": 915,
       "links": [
@@ -27496,7 +31186,7 @@
       ],
       "locale": "gu",
       "mobileView": "activity",
-      "boardId": "0e4e5f14-ae2a-40a4-91e0-86020a64f651",
+      "boardId": "81d02b22-fb23-43d4-aee9-11d077b9c1c2",
       "width": 412,
       "height": 915,
       "links": [
@@ -27624,9 +31314,9 @@
       ],
       "locale": "hi",
       "mobileView": "list",
-      "boardId": "55570803-d8c5-4967-9544-f8d437d4068c",
+      "boardId": "dcf74f44-26bb-42ff-be8d-5b1290819ef7",
       "width": 412,
-      "height": 1008,
+      "height": 915,
       "links": [
         {
           "label": "वापस",
@@ -27640,15 +31330,7 @@
           "label": "काम शुरू करें",
           "to": "M75",
           "x": 40,
-          "y": 522.5,
-          "width": 332,
-          "height": 64
-        },
-        {
-          "label": "यह काम पूरा हो गया",
-          "to": "M101",
-          "x": 40,
-          "y": 664.5,
+          "y": 380.5,
           "width": 332,
           "height": 64
         },
@@ -27656,7 +31338,7 @@
           "label": "यहाँ का दूसरा काम",
           "to": "M135",
           "x": 24,
-          "y": 907.5,
+          "y": 481.5,
           "width": 364,
           "height": 64
         }
@@ -27666,17 +31348,11 @@
         "●  ▮▮  100%",
         "‹",
         "वापस",
-        "इस साइट के सभी काम",
-        "नाप और निशान लगाएँ",
-        "मैनेजर ने जाँच लिया",
+        "यहाँ मेरे काम",
         "फ्रेम लगाएँ",
         "मैनेजर जाँच रहे हैं",
         "पैनल लगाएँ",
         "काम शुरू करें",
-        "तार जोड़ें",
-        "यह काम पूरा हो गया",
-        "अंतिम जाँच",
-        "पैनल और तारों के काम के बाद",
         "यहाँ का दूसरा काम"
       ]
     },
@@ -27747,9 +31423,9 @@
       ],
       "locale": "gu",
       "mobileView": "list",
-      "boardId": "c63cd76e-f259-4a8e-a1b9-cb9856bae7e4",
+      "boardId": "a24997c6-0aca-4abe-b07f-58a817ca2dc6",
       "width": 412,
-      "height": 1008,
+      "height": 915,
       "links": [
         {
           "label": "પાછા",
@@ -27763,15 +31439,7 @@
           "label": "કામ શરૂ કરો",
           "to": "M76",
           "x": 40,
-          "y": 522.5,
-          "width": 332,
-          "height": 64
-        },
-        {
-          "label": "આ કામ પૂરું થયું",
-          "to": "M102",
-          "x": 40,
-          "y": 664.5,
+          "y": 380.5,
           "width": 332,
           "height": 64
         },
@@ -27779,7 +31447,7 @@
           "label": "અહીંનું બીજું કામ",
           "to": "M136",
           "x": 24,
-          "y": 907.5,
+          "y": 481.5,
           "width": 364,
           "height": 64
         }
@@ -27789,17 +31457,11 @@
         "●  ▮▮  100%",
         "‹",
         "પાછા",
-        "આ સાઇટનાં બધાં કામ",
-        "માપ અને નિશાન કરો",
-        "મેનેજરે તપાસી લીધું",
+        "અહીં મારાં કામ",
         "ફ્રેમ લગાવો",
         "મેનેજર તપાસે છે",
         "પેનલ લગાવો",
         "કામ શરૂ કરો",
-        "વાયર જોડો",
-        "આ કામ પૂરું થયું",
-        "છેલ્લી તપાસ",
-        "પેનલ અને વાયરનાં કામ પછી",
         "અહીંનું બીજું કામ"
       ]
     },
@@ -27851,7 +31513,7 @@
       ],
       "locale": "hi",
       "mobileView": "blocked",
-      "boardId": "802e7d3f-13b2-4f22-adbe-b4492a12429b",
+      "boardId": "d8680028-f107-4431-9126-b7a5d5dae6db",
       "width": 412,
       "height": 915,
       "links": [
@@ -27950,7 +31612,7 @@
       ],
       "locale": "gu",
       "mobileView": "blocked",
-      "boardId": "83f393eb-27cc-4bb9-9e96-c1834c52eb56",
+      "boardId": "b176466a-da18-42dd-8fb7-3c2e0408625a",
       "width": 412,
       "height": 915,
       "links": [
@@ -28069,7 +31731,7 @@
       ],
       "locale": "hi",
       "mobileView": "use",
-      "boardId": "ef9b1dba-bd4d-470b-a994-246a7f9e5a26",
+      "boardId": "bd2d3d0f-ff33-4253-9b24-e357f97872cc",
       "width": 412,
       "height": 915,
       "links": [
@@ -28174,7 +31836,7 @@
       ],
       "locale": "gu",
       "mobileView": "use",
-      "boardId": "8ab1d96c-37ad-421c-b9ca-c427bc557405",
+      "boardId": "1ac77178-1e12-4fdc-acb1-f2ea8f36aec9",
       "width": 412,
       "height": 915,
       "links": [
@@ -28270,7 +31932,7 @@
       ],
       "locale": "hi",
       "mobileView": "return",
-      "boardId": "619a7442-aa1c-4c78-ac69-6e720a6871ad",
+      "boardId": "3916934d-1e4b-4ed6-8149-147823086840",
       "width": 412,
       "height": 915,
       "links": [
@@ -28341,13 +32003,21 @@
         "A06",
         "A13",
         "A31",
-        "A07"
+        "A07",
+        "A08",
+        "A81",
+        "A82",
+        "A13",
+        "A83",
+        "A85"
       ],
       "requirements": [
         3,
         4,
         5,
-        9
+        9,
+        28,
+        29
       ]
     },
     {
@@ -28725,6 +32395,41 @@
     ],
     "27": [
       "A01"
+    ],
+    "28": [
+      "A08",
+      "A81",
+      "A84",
+      "M07",
+      "M137",
+      "M138",
+      "M140",
+      "M155"
+    ],
+    "29": [
+      "A13",
+      "A82",
+      "A83",
+      "A85",
+      "A86"
+    ],
+    "30": [
+      "M37",
+      "M47",
+      "A82"
+    ],
+    "31": [
+      "M143",
+      "M144",
+      "M24",
+      "M29",
+      "A27"
+    ],
+    "32": [
+      "M04",
+      "M06",
+      "M74",
+      "A08"
     ]
   },
   "implementationOnly": {
@@ -28738,9 +32443,14 @@
     "23": "Credential hashing, reset enforcement and token revocation require backend tests.",
     "24": "Real offline unlock and protected local storage require device tests.",
     "26": "Concurrency, rollback and backup recovery require the implemented SQLite backend.",
-    "27": "Python-to-Spring Security hash interoperability requires the implemented authentication stack."
+    "27": "Python-to-Spring Security hash interoperability requires the implemented authentication stack.",
+    "28": "Authenticated API, media and sync-projection tests must verify stage-level permissions.",
+    "29": "SQLite transactional single/bulk assignment and version-conflict tests require implementation.",
+    "30": "Device offline reassignment/reassign-back and admin-assisted recovery require integration tests.",
+    "31": "Server material custody authorization and shared ledger tests require implementation.",
+    "32": "Physical-device Flutter profiling, accessibility and React Core Web Vitals require the production applications."
   },
   "foundations": 7,
   "journeyBoards": 9,
-  "totalBoards": 232
+  "totalBoards": 258
 }

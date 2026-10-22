@@ -1,10 +1,12 @@
 # FIELDWORK — User journeys and screen inventory
 
-Based on system design v0.2. Source SHA-256: `6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62`.
+Based on system design v0.3. Source SHA-256: `dffaaa26361ef9a9cdca738579e9e02538361273dd3892e0d54c1bc5d9b63236`.
 
-80 manager screens/states and 136 employee screens/states, including 74 Hindi/Gujarati screen/state variants. Nine journey boards and seven foundation/component boards are included in the native Penpot file. Canonical screen content is English; localized examples cover home, login, composing updates, permission errors, empty states, conflicts and evidence validation. Full native-app translation and linguistic review remain implementation/release work.
+86 manager screens/states and 156 employee screens/states, including 74 Hindi/Gujarati screen/state variants. Nine journey boards and seven foundation/component boards are included in the native Penpot file. Canonical screen content is English; localized examples cover home, login, composing updates, permission errors, empty states, conflicts and evidence validation. Full native-app translation and linguistic review remain implementation/release work.
 
 ## Mobile navigation revision
+
+Stage ownership revision: one site coordinator plus one current person per stage (proposed default). Manager assignment: A08 → A81 → A82; independent coordinator: A13; bulk assignment: A83; conflict: A85. Neha worker demo starts M137; coordinator-only example M155.
 
 Primary structure: **My work → Site → one large action**. The site shows one clear next job, Add photo, Voice note and Need material. All work, Materials and Updates are smaller secondary actions. Home navigation is My work / Messages / Help. Sending is automatic.
 
@@ -41,16 +43,22 @@ Admin signs in, configures site types and their default stages, adds employees w
 
 Admin groups shed and solar sites under one project, customizes stage snapshots, assigns one eligible employee to each site, and defines an acyclic prerequisite. Draft preparation does not move stock.
 
-[Journey map](J02.svg) · Acceptance scenarios: 3, 4, 5, 9
+[Journey map](J02.svg) · Acceptance scenarios: 3, 4, 5, 9, 28, 29
 
 1. [A28 — Projects](index.html#A28)
 2. [A29 — Add project](index.html#A29)
 3. [A30 — Suryoday factory expansion](index.html#A30)
 4. [A05 — Add a site](index.html#A05)
 5. [A06 — Make the stages fit the work](index.html#A06)
-6. [A13 — Assign the right person](index.html#A13)
+6. [A13 — Change site coordinator](index.html#A13)
 7. [A31 — Link sites and prerequisites](index.html#A31)
 8. [A07 — Suryoday solar](index.html#A07)
+9. [A08 — Stages & evidence](index.html#A08)
+10. [A81 — Choose the person for this stage](index.html#A81)
+11. [A82 — Hand over Panel installation](index.html#A82)
+12. [A13 — Change site coordinator](index.html#A13)
+13. [A83 — Assign selected stages](index.html#A83)
+14. [A85 — The selection has changed](index.html#A85)
 
 ## J03 — Employee progresses with located evidence
 
@@ -119,7 +127,7 @@ Cached work is available offline within seven days. A photo saves its location w
 5. [M15 — Record a voice update](index.html#M15)
 6. [M35 — Your saved updates](index.html#M35)
 7. [M36 — Please check the quantity](index.html#M36)
-8. [M37 — This site has a new worker](index.html#M37)
+8. [M37 — This job has a new worker](index.html#M37)
 9. [M38 — Please sign in again](index.html#M38)
 
 ## J07 — Admin records field work without changing assignee
@@ -192,7 +200,7 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [A10](index.html#A10) | Linked work, independent progress | admin | Sites |
 | [A11](index.html#A11) | Activity you can trace | admin | Sites |
 | [A12](index.html#A12) | Edit site details | admin | Sites |
-| [A13](index.html#A13) | Assign the right person | admin | Sites |
+| [A13](index.html#A13) | Change site coordinator | admin | Sites |
 | [A14](index.html#A14) | Block site | admin | Sites |
 | [A15](index.html#A15) | Reopen completed work | admin | Sites |
 | [A16](index.html#A16) | Request stage completion | admin | Sites |
@@ -260,6 +268,12 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [A78](index.html#A78) | Resolve whole-site block | admin | Sites |
 | [A79](index.html#A79) | Submit a block request | admin | Sites |
 | [A80](index.html#A80) | Review admin-created block request | admin | Approvals |
+| [A81](index.html#A81) | Choose the person for this stage | admin | Sites |
+| [A82](index.html#A82) | Hand over Panel installation | admin | Sites |
+| [A83](index.html#A83) | Assign selected stages | admin | Sites |
+| [A84](index.html#A84) | One stage needs a person | admin | Sites |
+| [A85](index.html#A85) | The selection has changed | admin | Sites |
+| [A86](index.html#A86) | Leave this stage unassigned | admin | Sites |
 | [M01](index.html#M01) | Good work starts here | mobile | Access |
 | [M02](index.html#M02) | Choose your language | mobile | Access |
 | [M03](index.html#M03) | Contact your manager | mobile | Access |
@@ -310,8 +324,28 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [M134](index.html#M134) | Filter my sites | mobile | My Sites |
 | [M135](index.html#M135) | Work at this location | mobile | My Sites |
 | [M136](index.html#M136) | Work at this location | mobile | My Sites |
+| [M137](index.html#M137) | My sites | mobile | My Sites |
+| [M138](index.html#M138) | Suryoday solar | mobile | My Sites |
+| [M139](index.html#M139) | Panel installation · in progress | mobile | My Sites |
 | [M14](index.html#M14) | Photo ready to attach | mobile | Photo evidence |
+| [M140](index.html#M140) | Stages | mobile | My Sites |
+| [M141](index.html#M141) | Request completion · no photo required | mobile | My Sites |
+| [M142](index.html#M142) | Awaiting manager approval | mobile | My Sites |
+| [M143](index.html#M143) | Site materials | mobile | Materials |
+| [M144](index.html#M144) | Request materials | mobile | Materials |
+| [M145](index.html#M145) | Your request is sent | mobile | Materials |
+| [M146](index.html#M146) | Add location to your photo | mobile | Photo evidence |
+| [M147](index.html#M147) | Photo ready to attach | mobile | Photo evidence |
+| [M148](index.html#M148) | Record a voice update | mobile | Updates |
+| [M149](index.html#M149) | Voice note · recording | mobile | Updates |
 | [M15](index.html#M15) | Record a voice update | mobile | Updates |
+| [M150](index.html#M150) | Voice note · voiceReady | mobile | Updates |
+| [M151](index.html#M151) | Site activity | mobile | Updates |
+| [M152](index.html#M152) | Request a block | mobile | My Sites |
+| [M153](index.html#M153) | Add update | mobile | Updates |
+| [M154](index.html#M154) | My profile | mobile | Profile |
+| [M155](index.html#M155) | Site materials to coordinate | mobile | My Sites |
+| [M156](index.html#M156) | My material requests | mobile | Materials |
 | [M16](index.html#M16) | Audio upload interrupted | mobile | Updates |
 | [M17](index.html#M17) | Request stage completion | mobile | My Sites |
 | [M18](index.html#M18) | Add a photo first | mobile | Photo evidence |
@@ -333,7 +367,7 @@ Each entry is an editable native board and an SVG. IDs are stable review referen
 | [M34](index.html#M34) | Site activity | mobile | Updates |
 | [M35](index.html#M35) | Your saved updates | mobile | Sync |
 | [M36](index.html#M36) | Please check the quantity | mobile | Sync |
-| [M37](index.html#M37) | This site has a new worker | mobile | Sync |
+| [M37](index.html#M37) | This job has a new worker | mobile | Sync |
 | [M38](index.html#M38) | Please sign in again | mobile | Access |
 | [M39](index.html#M39) | My profile | mobile | Profile |
 | [M40](index.html#M40) | Notifications | mobile | Updates |

@@ -1,6 +1,6 @@
 # Work Site Tracking System — Product and System Design
 
-Version: 0.2 · Date: 21 October 2026 · Status: Updated design draft with confirmed decisions
+Version: 0.3 · Date: 22 October 2026 · Status: Design draft; stage ownership model proposed
 
 This document describes the proposed first release. Decisions explicitly confirmed in discussion are listed below. Other business rules are proposals, so they can be changed before implementation. No application or database has been implemented yet.
 
@@ -15,7 +15,7 @@ Give one manager a reliable view of work across sites, and give employees a simp
 | Backend and database | Java Spring Boot backend with SQLite |
 | Employee application | Flutter application for Android and iOS, with offline work and synchronization |
 | Employee languages | English, Hindi, Gujarati; admin selects language when creating/editing an employee |
-| Assignment | At most one current employee per site; unassigned sites are allowed |
+| Assignment | Stage assignment requested; proposed model: one site coordinator plus one responsible employee per stage, with unassigned work allowed |
 | Employee eligibility | Multiple eligible site types per employee, selected by admin |
 | Initial scale | Approximately 50 active sites and 20 employees |
 | Site types | Configurable types, icons, and default stages with evidence requirements |
@@ -47,6 +47,12 @@ Give one manager a reliable view of work across sites, and give employees a simp
 
 This revision confirms the Java Spring Boot / SQLite / React / Flutter stack, multiple employee site types, text/photo/audio progress updates, mandatory site-photo location, additional admin work/submission permissions, and admin-only employee password management. Previously proposed closeout, daily reporting, 7-day offline unlock, and single-warehouse rules are now confirmed rather than open questions.
 
+### Revision 0.3: stage ownership and simpler interaction
+
+The requested feature assigns each stage to a person. The design proposes keeping one site coordinator and one responsible employee per stage. Different people may own parallel stages at the same site. This revises the earlier one-employee-per-site assumption; the exact ownership and material-custody defaults remain proposed pending the optional clarification, not confirmed decisions.
+
+The manager uses a compact stage register with a Person column and an inline picker. The employee sees their own work, one clear next job, and large photo/voice actions. Research, interaction rationale, resource budgets and validation plans are documented in [UI research and stage assignment](../design/specs/ui-research-stage-assignment.md).
+
 ## 2. Vocabulary and product model
 
 | Concept | Meaning | Example |
@@ -54,7 +60,9 @@ This revision confirms the Java Spring Boot / SQLite / React / Flutter stack, mu
 | Site type | Reusable work category and stage template | Solar, Shed |
 | Project | Optional parent grouping related work sites | ABC Factory Upgrade |
 | Site | An independently assigned and tracked work package | ABC Factory — Shed |
-| Stage | A unit of work inside a site | Foundation, Structure, Inspection |
+| Stage | A unit of work inside a site, with one current responsible employee | Foundation, Structure, Inspection |
+| Site coordinator | Employee responsible for site context and material custody; not automatically owner of every stage | Ravi coordinates Solar |
+| Stage owner | Employee responsible for one specific stage; assignment is independent of other stages | Neha owns Wiring |
 | Dependency | A prerequisite that must be approved/completed before other work can start | Shed completed before Solar starts |
 | Completion submission | An employee's or admin's request to approve a stage, with required photo evidence and optional text/audio context | Foundation photos submitted for approval |
 | Progress update | Text, photos, audio, or a combination, attributed to the actual author | A Gujarati voice note with two site photos |
@@ -68,7 +76,9 @@ Use **Site Types** for the configuration screen and **Sites** for actual work. T
 flowchart TD
     T[Site type and default stages] -->|Copy when creating| S[Site and its own stages]
     P[Project: optional grouping] --> S
-    E[One current employee] -->|Assigned to| S
+    E[One site coordinator] -->|Coordinates| S
+    S --> G[Independently assigned stages]
+    O[One responsible employee per stage] --> G
     S --> U[Text, photo and audio updates]
     U --> A[Admin approval]
     S --> R[Material requests]
@@ -82,24 +92,24 @@ flowchart TD
 | --- | --- | --- |
 | Manage types, templates, employees, materials | Yes | No |
 | Create/edit/publish sites and projects | Yes | No |
-| Assign/reassign sites | Yes | No |
-| View full site details | Every site | Currently assigned sites |
+| Assign/reassign coordinator or stage owner | Yes, including explicit bulk stage assignment | No |
+| View site details | Every site | Coordinator: site context and stage history; worker: own stages plus minimal site/dependency context |
 | View linked sites | Full details | Limited project context; full details only when assigned |
-| Start work, add text/photo/audio progress updates | Every published incomplete site, subject to dependencies | Assigned sites, subject to dependencies |
-| Submit stage completion/block requests | Every published incomplete site | Assigned sites |
+| Start work, add text/photo/audio progress updates | Every published incomplete site, subject to dependencies | Own stages only; coordinator may also add site-level notes |
+| Submit stage completion/block requests | Every published incomplete site | Own stages; coordinator can request a whole-site block |
 | Approve/reject completion or blocking | Yes | No |
 | Set/reset employee passwords | Yes | No, including first login |
-| Request material | Can create allocations | Assigned sites |
+| Request material | Can create allocations | Coordinator or current stage worker; optional stage reference |
 | Approve, reserve, dispatch material | Yes | No |
-| Record consumption | Can correct through audited entries | Assigned sites |
-| Request returns | Yes | Assigned sites |
+| Record consumption | Can correct through audited entries | Site coordinator (proposed custody default) |
+| Request returns | Yes | Site coordinator (proposed custody default) |
 | Confirm physical return received | Yes | No |
 | Reopen a completed stage/site | Yes, with reason | No |
-| View organization dashboard/audit history | Yes | Own site activity only |
+| View organization dashboard/audit history | Yes | Authorized site/stage activity only |
 
 Every API call and evidence download must enforce role and current assignment on the server. Hiding a button does not enforce access. This follows [OWASP authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html).
 
-Reassignment preserves the old employee's activity and historical attribution. The old employee loses access on the server immediately. Any queued offline changes from that employee are held as conflicts rather than silently applied.
+Reassignment preserves authorship and history. Stage authorization changes immediately on the server; access to other currently assigned stages remains. Revoke full site access only when no coordinator/stage relationship remains. Stale queued operations are quarantined, not silently applied. Coordinator visibility never grants permission to start, submit or edit another person's stage; admin retains its explicit field permissions.
 
 Admin work actions do not require assigning the admin as an employee and do not replace the current assignee. Attribute work, media, and requests to the admin who performed them. Work and evidence prerequisites apply to admin submissions as well. With one admin, an admin may approve their own submission, but submission and approval are separate explicit actions and audit events; submitting never silently approves it.
 
@@ -131,15 +141,15 @@ Saving a type changes the template for future sites. Existing sites keep a snaps
 
 ### 4.3 Employees
 
-List: name, mobile, eligible site types shown as chips, preferred language, assigned site count, active/inactive. One search field matches name or normalized mobile number.
+List: name, mobile, eligible site types shown as chips, preferred language, coordinated site count, owned stage count, active/inactive. One search field matches name or normalized mobile number.
 
 Add/Edit: name, mobile number with country code, **site types as a searchable multiple-select**, preferred language (English/Hindi/Gujarati), and password on creation or explicit admin reset. Require at least one active eligible site type. Phone numbers are unique login identifiers. Do not assume an India-only phone format unless confirmed.
 
 The admin may view the newly entered password to share it with the employee, as requested. After saving, it is never returned by the server or shown on the detail page. The admin alone sets/resets employee passwords. Employees cannot change passwords at first login or later; there is no employee change-password screen or authorized API action. A reset invalidates server sessions and requires the new password at the next online login; an offline device learns of the reset only when it reconnects or its 7-day unlock window expires.
 
-Assignment is allowed when a site's type is among the employee's eligible types. An employee may therefore hold Solar and Shed sites simultaneously, while every site still has at most one current assignee. Removing a type that is used by an active assignment requires resolving those assignments first; do not silently invalidate or unassign them.
+Assignment is allowed when a site's type is among the employee's eligible types. An employee may therefore hold Solar and Shed sites simultaneously, while each site has at most one current coordinator and each stage at most one current responsible employee. Removing a type that is used by an active assignment requires resolving both coordinator and stage assignments first; do not silently invalidate or unassign them.
 
-Employee detail opens in read mode, showing assigned sites with name, type, status, overdue flag, due date, and project. Every site links to its detail page. Edit changes profile fields. Deactivation requires reassignment/unassignment of active sites and invalidates sessions; historical records remain.
+Employee detail opens in read mode, showing coordinated sites and owned stages with clickable site name, type, status, overdue flag, due date, and project. Every site links to its detail page. Edit changes profile fields. Deactivation requires reassignment/unassignment of active coordinator and stage responsibilities and invalidates sessions; historical records remain.
 
 ### 4.4 Materials
 
@@ -153,13 +163,13 @@ Material detail shows receipt history, reservations, dispatches, consumption, re
 
 ### 4.5 Sites
 
-List columns: site name/code, type, project, assignee, district, workflow status, overdue, approved stage count, due date, last employee update, pending approvals, and open material requests.
+List columns: site name/code, type, project, coordinator, district, workflow status, overdue, approved stage count, due date, last employee update, pending approvals, and open material requests.
 
 Filters combine with AND; multiple values within one filter combine with OR:
 
 - Name/code search; site type/category; project.
 - Expected completion within the next N calendar days, inclusive of today; overdue is a separate filter.
-- Workflow status; assignee, including unassigned; district.
+- Workflow status; coordinator; stage owner, including unassigned stages; district. Coordinator and stage-owner filters have distinct labels.
 - Open material request, optionally matching a material.
 - Updated today / no employee update today.
 
@@ -172,8 +182,8 @@ Add/Edit site fields:
 | Project | Optional existing project or create project |
 | Location | Address, district, state; coordinates optional |
 | Expected completion date | Required to publish; date interpreted in business timezone |
-| Assignee | Optional searchable dropdown filtered to active employees whose selected types include this site's type |
-| Stages | Copy type defaults; add/remove/reorder and configure evidence/dependencies |
+| Site coordinator | Optional searchable dropdown filtered to active employees eligible for the site type |
+| Stages | Copy type defaults; add/remove/reorder, evidence/dependencies and an explicit person per stage; optionally copy coordinator to selected stages |
 | Initial materials | Searchable material and quantity lines; planned until explicitly dispatched |
 | Notes | Optional instructions |
 
@@ -181,7 +191,7 @@ Actions: Save Draft, Publish, Assign/Reassign, Edit, Start work, Add progress up
 
 Initial material lines are allocations, not automatic stock deductions. At publishing, the admin can dispatch selected quantities or fulfill them later. The UI states exactly which action moves stock.
 
-Site detail tabs: **Overview · Stages & Evidence · Materials · Linked Sites · Activity**. Place pending actions near the top; material requests can be approved or declined directly here. A sticky header shows assignee, due date, progress, workflow status, and overdue/dependency indicators. Default is read mode with an explicit Edit action.
+Site detail tabs: **Overview · Stages & Evidence · Materials · Linked Sites · Activity**. Place pending actions near the top; material requests can be approved or declined directly here. A sticky header shows coordinator, due date, progress, workflow status, and overdue/dependency indicators. Default is read mode with an explicit Edit action.
 
 Media viewers include photo location details and audio playback. Work actions remain available in read mode when permitted; changing site configuration still requires Edit. An admin can start an unassigned published site without creating an employee assignment; it then derives In Progress from recorded work.
 
@@ -200,7 +210,7 @@ flowchart LR
     S -.Must complete before Solar starts.-> R
 ```
 
-Each site retains its own assignee, stages, due date, evidence, stock, and requests. Grouping does not merge inventory or transfer material automatically. A project may supply location defaults, but each site stores its actual location.
+Each site retains its own coordinator, stage owners, stages, due date, evidence, stock, and requests. Grouping does not merge inventory or transfer material automatically. A project may supply location defaults, but each site stores its actual location.
 
 An optional site dependency means “predecessor site must be Completed before dependent site work starts.” Material planning/requests can happen while waiting. Stages have analogous dependencies on approved predecessor stages. Prevent self-dependencies and cycles; initially restrict site dependencies to sites in the same project.
 
@@ -221,13 +231,26 @@ Keep work status and review status separate:
 | Stage work status | Open, In Progress, Blocked, Completed |
 | Latest submission review | None, Pending, Approved, Changes Requested |
 
-An employee on an assigned site, or the admin on any published incomplete site, starts a stage when prerequisites are satisfied, adds text/photos/audio, and selects **Request completion**. Submission from an untouched stage also records work as started. Submission is allowed without photos when evidence is not required. Audio and text never substitute for a required photo; each photo must satisfy the location and upload rules in section 7.4.
+The current owner of a stage, or the admin on any published incomplete site, starts a stage when prerequisites are satisfied, adds text/photos/audio, and selects **Request completion**. Submission from an untouched stage also records work as started. Submission is allowed without photos when evidence is not required. Audio and text never substitute for a required photo; each photo must satisfy the location and upload rules in section 7.4.
 
 A request creates a numbered, immutable submission with its own evidence references. While review is Pending, stage work stays In Progress and the UI shows Awaiting approval. Allow only one pending completion submission per stage. New general photos do not change an already submitted evidence set.
 
 Admin approval changes the stage to Completed. Rejection requires a reason, changes review to Changes Requested, and leaves work In Progress. Resubmission creates a new attempt; earlier decisions and evidence remain visible. Employees cannot edit an approved stage. Admin reopening requires a reason and invalidates its current completion without deleting its history.
 
 At final approval, the server verifies the submission version, dependencies, required evidence, and any active block. Approving while blocked requires an explicit unblock action first. Admin batch approval may be supported, but validates every stage individually.
+
+### 5.1a Assignment and handover contract (proposed defaults)
+
+- One active coordinator per site and one active employee owner per stage. Admin is not an employee assignee. An employee must be active and eligible for the site's type for either role. Site-type templates contain no employee IDs.
+- Creation offers an explicit “Use coordinator for these stages” action. It writes independent stage assignments; there is no dynamic fallback. New stages remain Unassigned unless admin chooses an owner. A coordinator change never moves existing stages silently.
+- Manager stage rows show stage name, Person, evidence/dependency and status. Click Person to search eligible employees; show each person's open-stage count as context, not an automatic capacity prediction. Keyboard search, Escape, focus return and visible selection are required. Bulk assignment uses explicit selected stage IDs and a preview count; it changes neither dependencies nor progress.
+- Reassignment of started work requires a reason and warns about accepted pending submissions and offline changes. Preserve authorship, photos, location, decisions and timestamps. Previously accepted pending submissions remain reviewable; their author is immutable. A new owner cannot rewrite that attempt. Changes Requested permits a new attempt from the current owner. Completed stages retain historical ownership and cannot be reassigned without reopening.
+- Assign/reassign validates expected stage and assignment versions atomically. Bulk changes are all-or-nothing; a conflict reports affected stages without partially applying the selection. Reject inactive/ineligible employees and stale versions. Stage ownership never bypasses blocks or dependencies.
+- Unassigned work is visible in the manager's “Unassigned stages” filter. Publishing with unassigned stages is allowed and warned; an employee cannot start them. Admin may perform permitted work on them. The manager can resolve assignment without changing the coordinator.
+- Notify new and former owners once after commit. Update My work using assignment deltas; exclude drafts and revoked work. Never hide assigned work merely because it has no due date or is waiting for a prerequisite. Reminder recipients follow currently assigned unfinished stages; one deduplicated daily reminder per employee, with coordinator escalation optional.
+- Site-level materials remain a single balance. Proposed default: all current stage workers may request material; only coordinator/admin records consumption or initiates returns. A worker without a coordinator sees “Ask manager about material use”, rather than gaining implicit custody. Coordinator permissions for material reconciliation continue after work completion until explicit release. No double counting when one employee holds both roles.
+- Every offline stage operation carries stage ID, stage version and stage-assignment ID/version; site-level custody operations also carry coordinator-assignment version. Download assignment deltas before replay. An operation from a revoked assignment is quarantined even if the same employee is assigned again later. Recovery is admin-assisted, preserves the original payload/author/location and never silently impersonates the new owner.
+- A coordinator sees site-wide stage evidence for coordination; a stage worker gets their own stage evidence, necessary instructions, due date, site stock and a minimal prerequisite summary. Coworker media, phone numbers and private notes are excluded. A worker's general note/photo must target an owned stage. Every list, sync payload, media URL and mutation enforces this projection server-side.
 
 ### 5.2 Blocking
 
@@ -251,10 +274,10 @@ Apply these rules in order:
 | All active stages completed, with at least one active stage | Completed |
 | Whole-site admin block or at least one blocked stage | Blocked |
 | Any work has started, including a pending completion submission | In Progress |
-| Published, no work started, current assignee exists | Assigned |
-| Published, no work started, no assignee | New |
+| Published, no work started, coordinator or at least one stage owner exists | Assigned |
+| Published, no work started, no coordinator and no stage owners | New |
 
-Normal path: Draft → New → Assigned → In Progress → Completed. Publishing with an assignee goes directly to Assigned. Blocking overlays incomplete work; unblocking returns to the derived status. Reassigning/unassigning an already started site never resets it to New. Reopening Completed returns to the derived incomplete status.
+Normal path: Draft → New → Assigned → In Progress → Completed. Publishing with a coordinator or stage owner goes directly to Assigned. Coordinator/owner changes do not change progress. Blocking overlays incomplete work; unblocking returns to the derived status. Reassigning/unassigning an already started site never resets it to New. Reopening Completed returns to the derived incomplete status.
 
 **Overdue** is `published AND incomplete AND expected_completion_date < business_today`. It is derived at read time rather than maintained by a midnight job. A site due today becomes overdue tomorrow. Show, for example, **Blocked · Overdue 3 days**. The requested Overdue filter remains available across all incomplete statuses. Record whether a completed site finished late separately.
 
@@ -304,27 +327,21 @@ Work completion and material reconciliation are separate, as confirmed. Complete
 
 ## 7. Employee Flutter application
 
-Navigation: **My Sites · Requests · Updates & Sync · Profile**. Site cards are the main entry point.
+Navigation: **My work · Messages · Help**. Help contains language, profile and sending status. Daily actions stay within the site workspace; detailed lists are secondary.
 
 ### 7.1 Login and language
 
-Login with mobile number and admin-provided password. First login requires connectivity and goes directly to My Sites after successful authentication; no password-change step is shown. Password recovery directs the employee to contact admin. Profile has no password change/reset control. Language defaults to the employee profile field; the login page also offers English/Hindi/Gujarati so a first-time employee can understand it. Proposed default: employees may change their language later in Profile.
-
-Translate interface labels, validation messages, status labels, notifications, and common action confirmations. Admin-entered site names, stage names, reasons, and notes remain as entered; automatic translation is outside this release. Locale changes do not change stored status codes, dates, or units. Use fonts and layouts tested for Hindi and Gujarati text expansion.
+Login with mobile number and admin-provided password. First login requires connectivity and goes directly to My work; no password-change step. Recovery directs employees to admin. Language defaults to the employee profile; login also offers English/Hindi/Gujarati. Employees may change their interface language from Help. Translate labels, errors and notifications; business-entered names and notes remain as entered. Full linguistic and screen-reader testing is required before release.
 
 ### 7.2 Home and site detail
 
-Home has name search and status chips, with overdue, approval, and sync indicators. Each card shows site/type, district, project, expected completion, approved stage count, last sync time, and dependency/block warning.
+My work groups owned unfinished stages by site, including waiting work and work without dates. Each entry uses a recognizable site illustration/thumbnail, name, short location, next owned job and one Open action. Coordinated sites without owned stages remain available as “Site materials”, without inventing a Start action. Search and a simple status filter remain available.
 
-Site detail presents:
+Site opens to the next actionable **owned** stage, with Start work or This work is done, plus Add photo and Voice note. The next job prioritizes Changes Requested, then In Progress, then ready Open work, using stage order as tie-breaker. If every owned stage is waiting, show why and offer notes/material request, without another worker's task action. If several are ready, the labelled My jobs action opens the short own-work list. It takes two taps from home to starting a ready task or opening photo/voice/material request.
 
-- Overview, instructions, location, dates, project, and linked-site dependency summary.
-- Stage cards with work/review status, evidence requirement, prerequisites, photos, text notes, audio playback, and available actions.
-- Start work, Add update, Add photo, Record audio, Request completion, and Request block, when allowed.
-- Material balances and request history; Request material, Record consumption, and Request return.
-- Activity timeline and clear feedback on approvals/rejections.
+Use structured rows for the employee's own stages under “My jobs here”; no stage-card dashboard or assignment controls. Show read-only prerequisite context when needed. Photos/voice can send without a caption. Explicit confirmation says Saved on phone, Sent for checking, or Approved as appropriate. Materials remain a site-level secondary view; worker-only view offers Request material and request history, while coordinator view adds Record use and Return material.
 
-Avoid a general status dropdown. Show valid actions with a plain-language explanation when an action is held by a dependency or block.
+Use everyday words, icons with labels, 18sp primary body copy, 64dp main controls and at least 48dp other mobile targets. The 64dp target is our field-use design choice. Preserve layout with text scaling and Android/iOS safe areas; flat fills and separators replace decorative effects. Real device testing must verify this prototype's intended semantics and accessibility.
 
 ### 7.3 Offline and synchronization contract
 
@@ -416,7 +433,8 @@ Workflow counts form one breakdown; overdue and blocker overlays may overlap it 
 | TemplateStageDependency | Predecessor/successor template stage IDs; acyclic within type |
 | Project | ID, code, name, optional location defaults, description |
 | Site | ID/code, name, type ID, source template version, optional project ID, address/district/state, due date, published time, first-started time, completed time, version |
-| SiteAssignment | Site ID, employee ID, assigned/unassigned times, actor; unique active assignment per site |
+| SiteAssignment | Coordinator relationship: site ID, employee ID, assignment version, assigned/unassigned times, actor/reason; unique active coordinator per site |
+| StageAssignment | Stage ID, employee ID, immutable assignment ID/version, assigned/unassigned times, actor/reason; unique active owner per stage, historical rows retained |
 | SiteStage | Site ID, copied name/evidence requirement/order, work status, active, started/approved times, version |
 | StageDependency | Predecessor/successor site stage IDs; acyclic within site |
 | SiteDependency | Predecessor/successor site IDs, created by/time; acyclic within project |
@@ -424,7 +442,7 @@ Workflow counts form one breakdown; overdue and blocker overlays may overlap it 
 | MediaFile | Site/optional stage ID, uploader, media kind PHOTO/AUDIO, object key, content type/size/checksum, optional audio duration, original capture/added/received times, validation state |
 | ProgressUpdateMedia | Update ID, media ID, display order; photo/audio attachments belonging to one update |
 | PhotoLocation | Photo media ID, latitude/longitude, accuracy, observed time, added time, reported source, device/client ID; required per site photo and immutable across retries |
-| StageSubmission | Stage ID, attempt number, submitter, review status, stage version, decision actor/time/reason |
+| StageSubmission | Stage ID, attempt number, submitter, review status, stage version, accepted assignment ID/version, decision actor/time/reason |
 | SubmissionEvidence | Submission ID and immutable photo media references; validated photo location required |
 | SubmissionContextMedia | Submission ID and optional audio context references; audio is not photo evidence |
 | BlockRequest / BlockRecord | Site/optional stage, reason, requester/approver, request decision or active/resolved block timestamps |
@@ -440,10 +458,10 @@ Workflow counts form one breakdown; overdue and blocker overlays may overlap it 
 | StockBalance | Transactionally maintained/rebuildable quantity by material/location |
 | AuditEvent | Actor, action, target, before/after metadata, reason, server time, correlation ID |
 | Notification / OutboxEvent | Recipient/event, localized message parameters, delivery/read state |
-| DeviceSession / SyncOperation | Device/session, token state; operation ID, payload fingerprint, outcome, timestamps |
+| DeviceSession / SyncOperation | Device/session, token state; operation ID, stage/coordinator assignment IDs and versions, payload fingerprint, outcome, timestamps |
 | ReportingSettings | Timezone, working days, cutoff, reminder enabled/recipients, operational media/location/cache limits |
 
-Core invariants belong in database constraints and transactions as well as application validation: one admin, one current assignee per site, unique phone, unique employee/type membership, one pending completion submission per stage, positive scaled-integer movement quantities, valid quantity precision, nonnegative usable stock, and unique operation IDs. Validate assignment type membership, nonempty progress content, required finalized photo/location relationships, dependency cycles, and state transitions in the transactional service layer. Keep photo-location metadata and media finalization in one transaction so an accepted site photo cannot exist without its required observation.
+Core invariants belong in database constraints and transactions as well as application validation: one admin, one current coordinator per site, one current owner per stage (partial unique indexes on active assignment rows), unique phone, unique employee/type membership, one pending completion submission per stage, positive scaled-integer movement quantities, valid quantity precision, nonnegative usable stock, and unique operation IDs. Validate assignment type membership, nonempty progress content, required finalized photo/location relationships, dependency cycles, and state transitions in the transactional service layer. Keep photo-location metadata and media finalization in one transaction so an accepted site photo cannot exist without its required observation.
 
 Archive referenced types, employees, and materials. Preserve workflow, evidence, and inventory history; decide retention before production. Store all event timestamps in UTC and convert at the interface; expected completion is a business-local date.
 
@@ -496,6 +514,8 @@ Representative API surface, not a finalized OpenAPI specification:
 | Configuration | `/v1/site-types`, `/employees`, `/materials` |
 | Credentials | `POST /v1/employees/{id}/password-reset`, admin-only; employee requests are rejected |
 | Sites/projects | `/v1/sites`, `/projects`, `/sites/{id}/publish`, `/assign`, `/dependencies` |
+| Ownership | `PUT /v1/sites/{id}/coordinator`, `PUT /v1/stages/{id}/assignment`, `POST /v1/sites/{id}/stage-assignments/bulk`; admin-only, expected versions and reason |
+| My work | `GET /v1/me/work`; server-filtered owned stages and coordinated sites, minimal context; no coworker media |
 | Work | `/v1/stages/{id}/start`, `/submissions`, `/sites/{id}/updates`, `/block-requests` |
 | Reviews | `/v1/submissions/{id}/approve`, `/reject`, `/stages/{id}/reopen` |
 | Stock | `/v1/stock-receipts`, `/material-requests`, `/reservations`, `/dispatches`, `/consumption`, `/return-requests`, `/return-receipts` |
@@ -518,14 +538,18 @@ Notifications cover assignments, reassignment, review decisions, material decisi
 - Keep SQLite and private-media backups aligned, protect database files and secrets, monitor failed jobs/sync errors, and verify restoration before launch.
 - Proposed measurable targets, to validate during implementation: normal list/detail API p95 below 1 second at expected load, excluding media; local cached screens usable without network; durable recovery of queued work after app restart; nightly backups with a documented recovery procedure. Recovery point/time targets and production availability commitments remain to be agreed.
 
+### 11.1 Proposed UI resource budgets
+
+Treat these as implementation acceptance targets, not measurements of the static prototype: Flutter profile/release builds on a named entry-level Android device, warm cached screen usable within 300ms, p95 build and raster frame times each below 16ms at 60Hz during core scrolling, no full-resolution image decoded for a list thumbnail, no continuous location tracking, and no network requirement for cached work. Measure cold start, memory and battery on the agreed device before fixing hard limits. React targets: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1 at the 75th percentile, with representative hardware/network and real-user measurement after launch. Load media lazily; paginate manager registers; use lazy Flutter lists and small rebuild scopes. Avoid backdrop blur, animated gradients, continuous shimmer and unnecessary offscreen layers. See the research document for sources and the reproducible profiling plan.
+
 ## 12. Essential acceptance scenarios
 
-These are implementation acceptance criteria; no tests have been executed because this deliverable is a design document.
+These are implementation acceptance criteria. Design-contract and prototype tests provide design evidence only; backend/device behavior is not yet implemented.
 
 1. Admin provisioning creates exactly one loginable admin; a second invocation does not replace it; no plaintext credential is persisted.
 2. Creating/editing an employee records language and multiple eligible types. An employee eligible for Solar and Shed can hold one site of each type and sees the selected English/Hindi/Gujarati interface. Removing an actively assigned type requires resolving its assignments.
 3. Site creation copies stage templates. Editing the template later leaves existing sites unchanged.
-4. A published site with no employee is New; assigning an eligible employee makes it Assigned. Admin and the current assignee can read full details and evidence; other employees cannot.
+4. A published site with no employee is New; assigning an eligible employee makes it Assigned. Admin/coordinator can read site details; stage workers receive their own evidence and minimal context, while unrelated employees have no access.
 5. Independent stages run in parallel; unmet explicit dependencies prevent starting/submitting the dependent work.
 6. An evidence-required stage cannot be submitted with only a failed/unfinished upload, an unlocated photo, text, or audio. An evidence-optional stage can be submitted without a photo; any photo attached still requires location.
 7. Rejection preserves the attempt and reason. Resubmission creates another attempt. Final valid approval completes the site exactly once.
@@ -550,11 +574,17 @@ These are implementation acceptance criteria; no tests have been executed becaus
 26. With SQLite, simultaneous reservations, stage approvals, and offline-sync retries preserve invariants. Foreign keys apply on every connection; an interrupted stock write leaves no partial ledger/balance/outbox posting, and a consistent backup restores with its media references.
 27. A Python-generated admin password hash authenticates through Spring Security; schema mismatch or a wrong SQLite file path fails provisioning safely.
 
+28. Two people own different stages at one site. Each can start/submit only their own eligible work; coordinator visibility does not grant coworker mutation. Cross-stage API/media access is denied; unassigned work has no employee mutation path.
+29. Changing coordinator leaves stage owners unchanged. Explicit single/bulk assignment validates eligibility and versions, preserves accepted submission authorship and rejects a stale selection atomically. Completed stages require reopening before reassignment.
+30. Reassignment while offline quarantines stale stage work, including an old assignment later restored to the same employee. Remaining valid assignments stay accessible. Required photo location and original author survive controlled recovery.
+31. Worker-only material UI offers requests but no consumption/returns; coordinator manages custody and admin confirms receipt. All roles share one site stock balance, including reconciliation after completion.
+32. On target low-end devices, employee core actions meet the proposed UI performance/resource budgets below. Test text scaling, screen readers, offline reopen and 200 owned stages without losing readable labels or work.
+
 ## 13. Delivery sequence
 
 1. **Confirm product rules and screen wireframes.** Review the proposed defaults, navigation, site detail, approval inbox, inventory movement views, and Flutter field flows.
 2. **Foundation.** Set up Java Spring Boot, SQLite migrations/JDBC, React, and Flutter; select hosting and supported versions; define schema and API contracts; implement interoperable Python admin provisioning, authentication, admin-only employee password resets, localization, multiple employee type selection, materials, and audit records.
-3. **Work management.** Implement projects, sites, one-person assignment, stage/dependency rules, mandatory photo-add location, text/photo/audio updates, employee/admin work actions and submissions, approvals, blocking, reporting settings/reminders, and dashboard queries.
+3. **Work management.** Implement projects, sites, site coordination, independent stage ownership, stage/dependency rules, mandatory photo-add location, text/photo/audio updates, employee/admin work actions and submissions, approvals, blocking, reporting settings/reminders, and dashboard queries.
 4. **Inventory.** Implement receipts, allocations, requests, reservations, partial dispatches, consumption, returns, corrections, and reconciliation.
 5. **Flutter delivery.** Implement Android/iOS screens, location/microphone permissions, local media persistence and durable operation queue alongside each workflow. Exercise offline conflicts, location preservation during automatic sync, 7-day unlock expiry, and media/cache limits throughout development.
 6. **Pilot and release.** Run a realistic Shed + Solar project end to end, including bad connectivity, rejected evidence, audio playback, partial deliveries, employee reassignment, and returns. Validate SQLite write contention, cross-language admin login, backup restoration, and mobile distribution.
@@ -567,6 +597,9 @@ No answers are required to read or discuss this draft. Resolve these before thei
 
 | Decision | Proposed starting point |
 | --- | --- |
+| Stage ownership | Proposed: one coordinator plus one person per stage; different people per site. Confirm single owner versus multiple owners and coordinator role |
+| Material custody with stage workers | Proposed: workers request; coordinator records consumption/returns; admin confirms receipt |
+| Performance/device baseline | Proposed budgets in the UI research document; choose representative low-end Android and oldest supported iPhone before profiling |
 | Hosting and versions | Stack confirmed as Spring Boot / SQLite / React / Flutter; select supported runtime/package versions and one backend host with persistent local storage |
 | Location quality | Location at photo addition and preservation during automatic sync confirmed; approve freshness/accuracy thresholds and low-accuracy behavior |
 | Reporting calendar | Optional notes and configurable reminders confirmed; admin supplies working days, cutoff, and reminder recipients |
@@ -575,4 +608,4 @@ No answers are required to read or discuss this draft. Resolve these before thei
 | Distribution and notifications | Choose Android/iOS distribution method and push delivery configuration |
 | Operational data | Confirm address/district source, backup recovery targets, retention, and expected photo volume |
 
-Next design artifact: screen-by-screen wireframes backed by this workflow, followed by the SQLite schema and Spring Boot API contract. The Python admin creation script will be delivered with the implemented schema and verified Spring Security hash format so its account constraints and credentials match the Java application.
+Editable Penpot screens, interactive review and PDF walkthrough accompany this document. Next implementation artifacts are the SQLite schema and Spring Boot API contract, including ownership and authorization projections. The Python admin creation script will be delivered with the implemented schema and verified Spring Security hash format so its account constraints and credentials match the Java application.

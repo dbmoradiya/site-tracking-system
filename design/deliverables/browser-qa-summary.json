@@ -1,7 +1,7 @@
 {
-  "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
-  "screensRendered": 216,
-  "textNodesMeasured": 4365,
+  "sourceSha256": "dffaaa26361ef9a9cdca738579e9e02538361273dd3892e0d54c1bc5d9b63236",
+  "screensRendered": 242,
+  "textNodesMeasured": 4851,
   "failures": [],
   "consoleErrors": [],
   "flowsTested": [
@@ -11,7 +11,9 @@
     "Gujarati home → photo → voice → material request with language preserved",
     "Hindi home → start → completion with language preserved",
     "materials → record use / request → site",
-    "all work → no-photo completion → manager check",
+    "Neha owned wiring → start → no-photo completion → manager check",
+    "stage Person → picker → handover → bulk assignment",
+    "stage-only employee → own located photo / voice / material request",
     "manager stage row → approval review",
     "photo composer → location permission → photo review → composer",
     "final stage approval → completed site with material reconciliation",
