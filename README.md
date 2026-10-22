@@ -7,6 +7,8 @@ Product and system design for a manager web app and a simple employee mobile app
 - [Eight-page client walkthrough](design/deliverables/client-review.pdf)
 - [Editable Penpot file](design/deliverables/fieldwork-designs.penpot)
 - [System design v0.2](docs/system-design.md)
+- [System design PDF](design/deliverables/system-design.pdf)
+- [Client review guide](design/deliverables/client-review-guide.pdf)
 - [Employee usability rationale and proposed field check](design/specs/employee-usability.md)
 - [Complete design delivery guide](design/README.md)
 - [Requirements and verification](design/deliverables/coverage-report.md)
@@ -39,6 +41,8 @@ npm run design:employee-preview
 npm run design:client-review
 npm run design:report
 npm run design:package
+# Generate a small client ZIP with the guide, design walkthrough and system PDF:
+npm run design:handoff
 ```
 
 Build and browser checks require installed Google Chrome. Native import verification additionally requires the local Penpot instance and its ignored authenticated browser state. Credentials, Docker volumes and local runtime files are excluded from Git.

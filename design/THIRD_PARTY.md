@@ -12,3 +12,5 @@ All site evidence illustrations are locally drawn vectors. Sample names, quantit
 UI revision 2 was informed by the purple accents, tabbed project workspaces and compact task/register layouts shown on [Onsite's public product site](https://onsiteteams.com/). No Onsite screenshots, logos, photos, code or other assets are included in the delivery.
 
 Native text position records follow the [Penpot 2.18.3 text shape schema](https://github.com/penpot/penpot/blob/2.18.3/common/src/app/common/types/shape/text.cljc) and [viewer renderer](https://github.com/penpot/penpot/blob/2.18.3/frontend/src/app/main/ui/shapes/text/svg_text.cljs). Glyph widths and baselines are measured locally from the bundled fonts; no external font service is used for those measurements.
+
+System-document PDF rendering uses markdown-it 14.3.3 (MIT license, [source](https://github.com/markdown-it/markdown-it)). The three exported diagrams are original SVG layouts of the source document’s Mermaid relationships.

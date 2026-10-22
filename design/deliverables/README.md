@@ -2,6 +2,9 @@
 
 ## Start here
 
+- **Full system design PDF:** [system-design.pdf](system-design.pdf)
+- **One-page client review guide:** [client-review-guide.pdf](client-review-guide.pdf)
+- **Create the ready-to-send PDF package:** run `npm run design:handoff` from the repository root.
 - **Simple employee demo:** http://127.0.0.1:4173/employee.html#M46
 - **English employee demo:** http://127.0.0.1:4173/employee.html#M04
 - **Short client walkthrough:** [client-review.pdf](client-review.pdf) (8 pages)

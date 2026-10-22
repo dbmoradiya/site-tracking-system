@@ -1,0 +1,13 @@
+{
+  "source": "docs/system-design.md",
+  "sourceVersion": "0.2",
+  "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
+  "uiRevision": 3,
+  "sections": 14,
+  "diagrams": 3,
+  "tables": 11,
+  "systemDesignPages": 28,
+  "guidePages": 1,
+  "walkthroughPages": 8,
+  "clientArchive": "design/releases/client-review-pack.zip"
+}
