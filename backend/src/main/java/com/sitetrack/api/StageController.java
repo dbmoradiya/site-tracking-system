@@ -94,12 +94,12 @@ public class StageController {
                     return row;
                 }).list();
         List<Map<String,Object>> assignmentHistory=new ArrayList<>(jdbc.sql("""
-                select h.role_code,h.created_at,coalesce(oe.name,ot.name) old_employee,coalesce(ne.name,nt.name) new_employee,u.name changed_by,hs.name stage_name
+                select h.stage_id,h.role_code,h.created_at,coalesce(oe.name,ot.name) old_employee,coalesce(ne.name,nt.name) new_employee,u.name changed_by,hs.name stage_name
                 from site_role_assignment_history h left join site_stages hs on hs.id=h.stage_id left join employees oe on oe.id=h.old_employee_id
                 left join employees ne on ne.id=h.new_employee_id left join teams ot on ot.id=h.old_team_id left join teams nt on nt.id=h.new_team_id join app_users u on u.id=h.changed_by
                 where h.site_id=:site order by h.created_at desc
                 """).param("site",siteId).query((rs,n)->{
-                    Map<String,Object> row=new LinkedHashMap<>();row.put("type","ROLE");row.put("role",rs.getString("role_code"));row.put("stage",value(rs.getString("stage_name")));
+                    Map<String,Object> row=new LinkedHashMap<>();row.put("type","ROLE");row.put("role",rs.getString("role_code"));row.put("stage",value(rs.getString("stage_name")));row.put("stageId",rs.getObject("stage_id"));
                     row.put("oldValue",value(rs.getString("old_employee")));row.put("newValue",value(rs.getString("new_employee")));
                     row.put("changedBy",rs.getString("changed_by"));row.put("changedAt",rs.getTimestamp("created_at").toInstant());return row;
                 }).list());
@@ -109,6 +109,11 @@ public class StageController {
                 join app_users u on u.id=h.changed_by where h.site_id=:site order by h.created_at desc
                 """).param("site",siteId).query((rs,n)->Map.<String,Object>of("type","TEAM","role","TEAM",
                         "oldValue",value(rs.getString("old_team")),"newValue",value(rs.getString("new_team")),
+                        "changedBy",rs.getString("changed_by"),"changedAt",rs.getTimestamp("created_at").toInstant())).list());
+        site.put("moveHistory",jdbc.sql("""
+                select h.old_project_name,h.new_project_name,h.created_at,u.name changed_by from site_move_history h
+                join app_users u on u.id=h.changed_by where h.site_id=:site order by h.created_at desc
+                """).param("site",siteId).query((rs,n)->Map.<String,Object>of("from",rs.getString("old_project_name"),"to",rs.getString("new_project_name"),
                         "changedBy",rs.getString("changed_by"),"changedAt",rs.getTimestamp("created_at").toInstant())).list());
         site.put("canManage",canManage); site.put("assignmentHistory",assignmentHistory);
         site.put("stages",stages); return site;
@@ -172,7 +177,7 @@ public class StageController {
         long missingAssignments=jdbc.sql("""
                 select count(*) from site_stage_required_roles rr join site_stages ss on ss.id=rr.stage_id
                 left join site_stage_role_assignments sra on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
-                where rr.stage_id=:id and sra.employee_id is null
+                where rr.stage_id=:id and sra.employee_id is null and sra.team_id is null
                 """).param("id",stageId).query(Long.class).single();
         if(missingAssignments>0) throw new ApiException(400,"Assign an employee for every required role before submitting");
         String status=jdbc.sql("select status from site_stages where id=:id").param("id",stageId).query(String.class).single();
@@ -298,12 +303,16 @@ public class StageController {
     @PutMapping("/sites/{siteId}/project")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void moveSite(@PathVariable long siteId,@Valid @RequestBody MoveSiteRequest request) {
+    public void moveSite(@PathVariable long siteId,@Valid @RequestBody MoveSiteRequest request,@AuthenticationPrincipal AppPrincipal user) {
         Long current=jdbc.sql("select project_id from sites where id=:id for update").param("id",siteId).query(Long.class).optional()
                 .orElseThrow(()->new ApiException(404,"Site not found"));
         if(current.equals(request.projectId())) return;
         boolean exists=jdbc.sql("select count(*) from projects where id=:id").param("id",request.projectId()).query(Long.class).single()>0;
         if(!exists) throw new ApiException(404,"Target Project not found");
+        jdbc.sql("""
+                insert into site_move_history(site_id,old_project_id,new_project_id,old_project_name,new_project_name,changed_by)
+                select :site,:old,:new,(select name from projects where id=:old),(select name from projects where id=:new),:actor
+                """).param("site",siteId).param("old",current).param("new",request.projectId()).param("actor",user.id()).update();
         jdbc.sql("update sites set project_id=:project,updated_at=now() where id=:id").param("project",request.projectId()).param("id",siteId).update();
         jdbc.sql("update projects set updated_at=now() where id in (:a,:b)").param("a",current).param("b",request.projectId()).update();
         workflow.recalculate(siteId);

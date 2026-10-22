@@ -582,3 +582,11 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
   .timeline-item__card { padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; }
   .assignment-history summary { min-height: 32px; }
 }
+
+@media (max-width: 820px) {
+  .mantine-ActionIcon-root, .mantine-Burger-root, .mantine-Button-root, .mantine-Anchor-root { min-width: 44px; min-height: 44px; }
+  .mantine-ActionIcon-root { width: 44px; height: 44px; }
+  details > summary { min-height: 44px; display: flex; align-items: center; }
+  .back-link, a[href^="/projects/"] { min-height: 44px; display: inline-flex; align-items: center; }
+}
+@media (max-width: 820px) { main button, main summary { min-height: 44px; } }

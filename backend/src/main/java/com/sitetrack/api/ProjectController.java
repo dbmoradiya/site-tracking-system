@@ -219,7 +219,7 @@ public class ProjectController {
                   or (ssa.status not in ('APPROVED','COMPLETED') and exists(
                     select 1 from site_stage_required_roles rr left join site_stage_role_assignments sra
                       on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
-                    where rr.stage_id=ssa.id and sra.employee_id is null))
+                    where rr.stage_id=ssa.id and sra.employee_id is null and sra.team_id is null))
                   or (ssa.status in ('NOT_STARTED','READY','IN_PROGRESS') and not exists(
                     select 1 from site_stage_required_roles rr where rr.stage_id=ssa.id))))
                 """;
@@ -229,7 +229,7 @@ public class ProjectController {
                     or (ssa.status not in ('APPROVED','COMPLETED') and exists(
                       select 1 from site_stage_required_roles missing_rr left join site_stage_role_assignments missing_sra
                         on missing_sra.stage_id=missing_rr.stage_id and missing_sra.role_code=missing_rr.role_code
-                      where missing_rr.stage_id=ssa.id and missing_sra.employee_id is null))
+                      where missing_rr.stage_id=ssa.id and missing_sra.employee_id is null and missing_sra.team_id is null))
                     or (ssa.status in ('NOT_STARTED','READY','IN_PROGRESS') and not exists(
                       select 1 from site_stage_required_roles no_role_rr where no_role_rr.stage_id=ssa.id))))
                   or (ssa.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED') and exists(
