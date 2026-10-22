@@ -1,0 +1,14 @@
+{
+  "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
+  "screensRendered": 152,
+  "textNodesMeasured": 3755,
+  "failures": [],
+  "consoleErrors": [],
+  "flowsTested": [
+    "photo composer → location permission → photo review → composer",
+    "final stage approval → completed site with material reconciliation"
+  ],
+  "galleryResponsive": true,
+  "localNotesPersist": true,
+  "pdfGenerated": true
+}

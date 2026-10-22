@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+design/.runtime/
+design/test-results/
+design/releases/
+**/.env
+**/.env.*

@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "penpotVersion": "2.18.3",
+  "sourceSha256": "6092666676dd5e9817e2e829b0010a0ad80361d7d6fe25103e0a343875a54e62",
+  "artifactSha256": "6a46fd97ac7b7dc5ad16ee4577002df66457789570bb6ab6e9181058e967cdd7",
+  "importedFileId": "606a0e71-0fc2-810e-8008-d3add5ba8819",
+  "importedScreens": 152,
+  "importedBoards": 168,
+  "pages": [
+    {
+      "name": "00 · Foundations & components",
+      "shapes": 92,
+      "flows": 0
+    },
+    {
+      "name": "01 · Manager web · All screens",
+      "shapes": 4970,
+      "flows": 2
+    },
+    {
+      "name": "02 · Employee mobile · All screens",
+      "shapes": 2633,
+      "flows": 3
+    },
+    {
+      "name": "03 · End-to-end user journeys",
+      "shapes": 497,
+      "flows": 0
+    }
+  ],
+  "editableTextShapes": 4103,
+  "prototypeLinks": 1604,
+  "components": 6,
+  "flows": 5,
+  "publicViewVerified": true,
+  "editorURL": "http://localhost:9001/#/workspace?team-id=606a0e71-0fc2-810e-8008-d393751025dc&file-id=606a0e71-0fc2-810e-8008-d3add5ba8819&page-id=1d59c087-a989-8015-8008-d3adbd11e401",
+  "viewerURL": "http://localhost:9001/#/view?file-id=606a0e71-0fc2-810e-8008-d3add5ba8819&page-id=1d59c087-a989-8015-8008-d3adbd4603ba&share-id=8d5b8cce-53b6-488d-abcd-4332380d1c80&index=0",
+  "scope": "Actual import into a loopback-only local Penpot instance. No hosted cloud workspace or external client URL has been published."
+}

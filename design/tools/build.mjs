@@ -1,0 +1,88 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {randomUUID,createHash} from 'node:crypto';
+import * as penpot from '@penpot/library';
+import {unzipSync,zipSync,strToU8,strFromU8} from 'fflate';
+import {screens,journeys,acceptanceCoverage,implementationOnly} from '../specs/screens.mjs';
+import {Canvas,colors,renderScreen,esc,fontCss} from './draw.mjs';
+
+const root=path.resolve('design/deliverables');
+await fs.mkdir(root,{recursive:true});await fs.mkdir(path.join(root,'screens'),{recursive:true});
+await fs.cp('design/assets/fonts',path.join(root,'fonts'),{recursive:true});
+const source=await fs.readFile('docs/system-design.md','utf8');
+const sourceHash=createHash('sha256').update(source).digest('hex');
+const registry=new Map([...screens].sort((a,b)=>a.platform.localeCompare(b.platform)||a.id.localeCompare(b.id)).map(s=>[s.id,{...s,boardId:randomUUID()}]));
+for(const s of registry.values())for(const action of s.actions||[])if(!registry.has(action.to))throw Error('Missing screen '+action.to);
+const ctx=penpot.createBuildContext({referer:'site-tracking-system/design'});
+ctx.addFile({name:'FIELDWORK · Site tracking · Client review v0.2'});
+for(const [name,color]of Object.entries(colors))ctx.addLibraryColor({name:'Semantic / '+name,color,opacity:1});
+for(const [name,fontSize,fontWeight]of [['Heading / Large','32','600'],['Heading / Medium','22','600'],['Body / Default','16','400'],['Label / Small','13','600']])ctx.addLibraryTypography({name,fontId:'sourcesanspro',fontFamily:'sourcesanspro',fontSize,fontWeight,fontStyle:'normal',fontVariantId:fontWeight==='600'?'600':'regular',lineHeight:'1.35',letterSpacing:'0',textTransform:'none'});
+const tokens={Foundations:{color:Object.fromEntries(Object.entries(colors).map(([key,value])=>[key,{$type:'color',$value:value}])),space:{sm:{$type:'dimension',$value:'8px'},md:{$type:'dimension',$value:'16px'},lg:{$type:'dimension',$value:'24px'},xl:{$type:'dimension',$value:'32px'}}}};
+ctx.addTokensLib(tokens);
+await fs.writeFile(path.join(root,'design-tokens.json'),JSON.stringify(tokens,null,2));
+
+function native(c,boardId,ox,oy,component=false){
+ ctx.addBoard({id:boardId,name:c.screen.id+' · '+c.screen.title,x:ox,y:oy,width:c.width,height:c.height,fills:[{fillColor:colors.bg,fillOpacity:1}],showContent:false});
+ for(const n of c.nodes){const props={id:n.id,name:n.name,x:n.x+ox,y:n.y+oy,width:n.w,height:n.h};const interaction=n.to&&registry.has(n.to)?[{eventType:'click',actionType:'navigate',destination:registry.get(n.to).boardId,preserveScroll:false}]:undefined;
+  if(n.type==='rect')ctx.addRect({...props,r1:n.r,r2:n.r,r3:n.r,r4:n.r,fills:[{fillColor:n.fill,fillOpacity:1}],strokes:n.stroke?[{strokeColor:n.stroke,strokeOpacity:1,strokeWidth:1,strokeStyle:'solid',strokeAlignment:'inner'}]:[],...(interaction?{interactions:interaction}:{})});
+  else{const style={fontId:n.font==='sourcesanspro'?'sourcesanspro':'gfont-'+n.font.toLowerCase().replaceAll(' ','-'),fontFamily:n.font,fontSize:String(n.size),fontWeight:String(n.weight),fontStyle:'normal',fontVariantId:n.weight===400?'regular':n.weight===700&&n.font==='sourcesanspro'?'bold':String(n.weight),lineHeight:'1.35',letterSpacing:'0',textTransform:'none',textAlign:'left',fills:[{fillColor:n.color,fillOpacity:1}]};ctx.addText({...props,growType:'fixed',content:{type:'root',children:[{type:'paragraph-set',children:n.lines.map(line=>({type:'paragraph',...style,children:[{...style,text:line||' '}]}))}]}});}
+ }
+ if(component)ctx.addComponent({componentId:randomUUID(),name:c.screen.title,path:'Fieldwork / Components'});
+ ctx.closeBoard();
+}
+
+const allCanvases=[];const pageIds={};
+ctx.addPage({name:'00 · Foundations & components',background:'#E5EAE3'});
+const foundation=new Canvas({id:'D01',title:'Design foundations',platform:'admin'},1440,1080);
+foundation.rect(0,0,1440,1080,colors.bg,'',0);foundation.text('FIELDWORK',48,40,800,34,700);foundation.text('A calm, practical workspace for people doing real work.',48,100,1200,24,400,colors.muted);
+Object.entries(colors).forEach(([key,color],i)=>{const x=48+(i%7)*194,y=184+Math.floor(i/7)*150;foundation.rect(x,y,160,78,color,colors.border,12,'Color / '+key);foundation.text(key,x,y+88,160,15,600);foundation.text(color,x,y+110,160,13,400,colors.muted);});
+foundation.text('Clear hierarchy. Comfortable spacing. Explicit states.',48,520,1300,32,600);foundation.text('32 / Heading     22 / Section     16 / Body     13 / Label',48,581,1300,20,400);foundation.text('Touch targets ≥ 44 px. Status is always written, never communicated by color alone.',48,635,1300,18,400);
+foundation.text('English  ·  हिन्दी  ·  ગુજરાતી',48,704,1300,25,600);foundation.text('Photo location belongs to addition time. Offline sync preserves it. Admin alone manages employee passwords.',48,774,1260,19,400);foundation.text('Review artifacts use synthetic names, addresses, counts and illustrated evidence. They are not production records.',48,865,1260,17,400,colors.muted);
+native(foundation,randomUUID(),0,0);allCanvases.push(foundation);
+for(const [i,title]of ['Primary button','Secondary button','Danger action','Input field','Status chips','Progress card'].entries()){
+ const c=new Canvas({id:'C0'+(i+1),title,platform:'component'},470,240);c.rect(0,0,470,240,colors.surface,colors.border,12);c.text(title,24,20,420,19,600);
+ if(i<3)c.button(i===0?'Save changes':i===1?'Cancel':'Confirm block','',24,90,270,i===0?'primary':i===1?'secondary':'danger');
+ if(i===3){c.text('Site name *',24,72,420,13,600,colors.muted);c.rect(24,105,420,52,colors.surface,colors.border,9);c.text('Suryoday solar',40,121,380,16);}
+ if(i===4){c.pill('Completed',24,90);c.pill('Awaiting approval',170,90);c.pill('Overdue',24,140);c.pill('In Progress',170,140);}
+ if(i===5){c.text('Panel installation',24,75,420,19,600);c.text('Photo evidence required · parallel stage',24,109,420,15,400,colors.muted);c.pill('In Progress',24,156);}
+ native(c,randomUUID(),(i%3)*510,1200+Math.floor(i/3)*280,true);allCanvases.push(c);
+}
+for(const platform of ['admin','mobile']){
+ pageIds[platform]=ctx.addPage({name:platform==='admin'?'01 · Manager web · All screens':'02 · Employee mobile · All screens',background:'#E5EAE3'});
+ const list=[...registry.values()].filter(s=>s.platform===platform);const cols=platform==='admin'?3:5;let yy=0,rowHeight=0;
+ for(let i=0;i<list.length;i++){const s=list[i],c=renderScreen(s);if(i%cols===0&&i){yy+=rowHeight+140;rowHeight=0;}const xx=(i%cols)*(c.width+120);native(c,s.boardId,xx,yy);rowHeight=Math.max(rowHeight,c.height);await fs.writeFile(path.join(root,'screens',s.id+'.svg'),c.svg());allCanvases.push(c);s.width=c.width;s.height=c.height;s.links=c.links.map(l=>({label:l.name.replace('Action / ',''),to:l.to,x:l.x,y:l.y,width:l.w,height:l.h}));s.text=c.labels;}
+ ctx.closePage();
+}
+ctx.addPage({name:'03 · End-to-end user journeys',background:'#E5EAE3'});
+for(let ji=0;ji<journeys.length;ji++){
+ const j=journeys[ji],rows=Math.ceil(j.steps.length/3),c=new Canvas({id:j.id,title:j.title,platform:'journey'},1440,210+rows*180);
+ c.rect(0,0,c.width,c.height,colors.bg,'',0);c.text(j.id+' / '+j.title,40,34,1360,32,600);c.text('System design v0.2 · acceptance '+j.requirements.join(', '),40,95,1360,16,400,colors.muted);
+ j.steps.forEach((id,i)=>{const s=registry.get(id),x=40+(i%3)*460,y=165+Math.floor(i/3)*180;c.rect(x,y,425,140,colors.surface,colors.border,12,'Journey step');c.pill(id+' · '+s.platform,x+18,y+15,365);c.text((i+1)+'. '+s.title,x+18,y+55,385,20,600);c.text(s.section,x+18,y+107,385,14,400,colors.muted);});native(c,randomUUID(),(ji%2)*1580,Math.floor(ji/2)*1300);allCanvases.push(c);await fs.writeFile(path.join(root,j.id+'.svg'),c.svg());}
+ctx.closeFile();
+const data=await penpot.exportAsBytes(ctx);const entries=unzipSync(data);
+// Public builder currently omits page flows; add standard v3 page metadata.
+const fileId=JSON.parse(strFromU8(entries['manifest.json'])).files[0].id;
+for(const [platform,pageId]of Object.entries(pageIds)){
+ const key=`files/${fileId}/pages/${pageId}.json`;const page=JSON.parse(strFromU8(entries[key]));page.flows={};
+ for(const [label,id]of platform==='admin'?[['Manager sign-in','A01'],['Daily operations','A02']]:[['Employee sign-in','M01'],['Assigned work','M04'],['Offline recovery','M42']]){const fid=randomUUID();page.flows[fid]={id:fid,name:label,startingFrame:registry.get(id).boardId};}
+ entries[key]=strToU8(JSON.stringify(page));
+}
+await fs.writeFile(path.join(root,'fieldwork-designs.penpot'),zipSync(entries,{level:6}));
+const manifest={title:'FIELDWORK design review',source:'docs/system-design.md',sourceVersion:'0.2',sourceSha256:sourceHash,fileId,pageIds,screens:[...registry.values()],journeys,acceptanceCoverage,implementationOnly,foundations:7,journeyBoards:journeys.length,totalBoards:registry.size+7+journeys.length};
+await fs.writeFile(path.join(root,'review-manifest.json'),JSON.stringify(manifest,null,2));
+await fs.writeFile(path.join(root,'index.html'),gallery());
+await fs.writeFile(path.join(root,'print.html'),`<!doctype html><html><head><meta charset="utf-8"><style>${fontCss.replaceAll('../fonts/','fonts/')}@page{size:landscape;margin:12mm}body{margin:0;font-family:sourcesanspro}.page{break-after:page;height:180mm;display:flex;align-items:center;justify-content:center;flex-direction:column}.page img{max-width:100%;max-height:164mm}.meta{font-size:12px;color:#667C71;margin-top:8px}</style></head><body>${[...registry.values()].map(s=>`<section class="page"><img src="screens/${s.id}.svg"><div class="meta">${esc(s.id+' · '+s.title)} · ${s.platform==='admin'?'Manager web':'Employee mobile'} · Source design v0.2</div></section>`).join('')}</body></html>`);
+console.log(`Built ${registry.size} screens, ${journeys.length} journeys, 7 foundation/component boards.`);
+console.log(`Native file: ${root}/fieldwork-designs.penpot; ${Object.keys(entries).length} archive entries.`);
+
+function gallery(){return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FIELDWORK · Client design review</title><style>
+${fontCss.replaceAll('../fonts/','fonts/')}
+*{box-sizing:border-box}body{margin:0;background:#E8EDE7;color:#173B32;font:16px sourcesanspro,Arial,sans-serif}header{height:80px;padding:14px 28px;background:#142F28;color:white;display:flex;justify-content:space-between;align-items:center;gap:18px;position:sticky;top:0;z-index:5}h1{font-size:22px;margin:0}header p{font-size:12px;margin:3px 0;color:#BAD1BF}header a{color:#E7F2E9}button,select,input{font:inherit;border:1px solid #CBD8CC;border-radius:8px;padding:9px 12px;background:white;color:#173B32;cursor:pointer}main{display:grid;grid-template-columns:270px 1fr;min-height:calc(100vh - 80px)}aside{background:#F9FAF6;border-right:1px solid #D0DBD0;padding:20px;position:sticky;top:80px;height:calc(100vh - 80px);overflow:auto}aside input{width:100%;margin:10px 0}aside a{display:block;text-decoration:none;padding:9px 10px;border-radius:7px;color:inherit;font-size:14px}aside a.active{background:#D8EBDD;font-weight:600}aside h3{font-size:12px;text-transform:uppercase;color:#667C71;margin:22px 0 7px}.content{padding:24px;min-width:0}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.toolbar p{margin:0;color:#667C71}#stage{margin:auto;box-shadow:0 12px 45px #173B3218;background:white;border-radius:12px;overflow:hidden}#stage svg{display:block;width:100%;height:auto}#stage a:hover rect{filter:brightness(.95);stroke:#56A36E;stroke-width:2}#stage a:focus-visible rect{stroke:#305D8C;stroke-width:3}.details{max-width:1000px;margin:20px auto;background:#F9FAF6;border:1px solid #CBD8CC;border-radius:12px;padding:20px;line-height:1.6}.details h2{font-size:18px;margin:0 0 8px}.details a{color:#206E52}#journeys button{display:block;width:100%;text-align:left;margin:8px 0;font-size:13px}.status{font-size:12px;background:#FFF3D7;color:#855D0E;border-radius:6px;padding:6px 10px}.controls{display:flex;gap:10px;align-items:center}.badge{font-size:12px;color:#667C71}a:focus-visible,button:focus-visible{outline:3px solid #305D8C}@media(max-width:850px){main{grid-template-columns:1fr}aside{position:relative;top:0;height:auto;max-height:260px}.content{padding:12px}header{height:auto;flex-wrap:wrap}.toolbar{flex-wrap:wrap}.controls{flex-wrap:wrap}}@media print{header,aside,.toolbar,.details{display:none}main{display:block}.content{padding:0}#stage{box-shadow:none}}
+</style></head><body><header><div><h1>FIELDWORK / Design review</h1><p>Editable Penpot delivery · Manager web + employee mobile · System design v0.2</p></div><div><a id="open-penpot" hidden>Open Penpot prototype</a> &nbsp; <a href="fieldwork-designs.penpot" download>Download Penpot</a> &nbsp; <a href="design-review.pdf">PDF</a></div></header><main><aside><strong>Explore the designs</strong><input id="search" aria-label="Search screens" placeholder="Search screens or states"><div class="controls"><button id="admin">Manager</button><button id="mobile">Employee</button></div><div id="journeys"><h3>Guided journeys</h3></div><nav id="screen-list" aria-label="Screen inventory"></nav></aside><section class="content"><div class="toolbar"><div><strong id="current-title"></strong><p id="count"></p></div><div class="controls"><button id="previous" aria-label="Previous screen">← Previous</button><button id="next" aria-label="Next screen">Next →</button><select id="zoom" aria-label="Preview width"><option value="fit">Fit width</option><option value="actual">Actual size</option></select></div></div><div id="stage" role="region" aria-label="Design preview"></div><div class="details"><span class="status">Design prototype · illustrative data</span><h2 id="review-heading">Review this screen</h2><div id="screen-notes"></div><p>Click buttons and cards to follow the designed journeys. Forms, permissions, audio, location and stock values are illustrated states, not live production services.</p><label>Review note <textarea id="note" aria-label="Review note" rows="3" style="width:100%;font:inherit;border:1px solid #CBD8CC;border-radius:8px;padding:10px" placeholder="What should change on this screen?"></textarea></label><button id="save-note">Save note on this device</button> <button id="export-notes">Export review notes</button><p class="badge">Local notes stay in this browser. Import the .penpot file into your Penpot workspace for shared comments and client access controls.</p><p><a href="coverage-report.md">Requirements and verification report</a> · <a href="user-journeys.md">User journeys</a> · <a href="README.md">Delivery guide</a></p></div></section></main><script type="module">
+const manifest=await(await fetch('review-manifest.json')).json();try{const v=await(await fetch('penpot-verification.json')).json();if(v.viewerURL){document.querySelector('#open-penpot').href=v.viewerURL;document.querySelector('#open-penpot').hidden=false;}}catch{}const screens=manifest.screens;let platform='admin',current=null;const $=s=>document.querySelector(s);const readNotes=()=>{try{return JSON.parse(localStorage.getItem('fieldwork-review-notes')||'{}')}catch{return {}}};
+function list(){const q=$('#search').value.toLowerCase();let section='';$('#screen-list').innerHTML='';for(const s of screens.filter(s=>s.platform===platform&&JSON.stringify([s.id,s.title,s.section]).toLowerCase().includes(q))){if(s.section!==section){section=s.section;const h=document.createElement('h3');h.textContent=section;$('#screen-list').append(h);}const a=document.createElement('a');a.href='#'+s.id;a.textContent=s.id+' · '+s.title;if(current?.id===s.id)a.className='active';$('#screen-list').append(a);}}
+async function show(){const id=location.hash.slice(1)||'A02';const s=screens.find(s=>s.id===id)||screens[1];current=s;platform=s.platform;const svg=await(await fetch('screens/'+s.id+'.svg')).text();$('#stage').innerHTML=svg;$('#stage').style.maxWidth=s.platform==='mobile'?'412px':$('#zoom').value==='actual'?'1440px':'100%';$('#stage').style.width=$('#zoom').value==='actual'?s.width+'px':'100%';$('#current-title').textContent=s.id+' / '+s.title;$('#count').textContent=s.platform+' · '+s.width+' × '+s.height+' · '+s.section;$('#review-heading').textContent='Review '+s.title;$('#screen-notes').textContent=s.note||s.subtitle||'Review the available actions, field labels and next steps.';$('#note').value=readNotes()[s.id]?.text||'';list();}
+$('#search').addEventListener('input',list);$('#admin').onclick=()=>location.hash='A02';$('#mobile').onclick=()=>location.hash='M04';$('#zoom').onchange=show;$('#previous').onclick=()=>{const a=screens.filter(s=>s.platform===platform),i=a.findIndex(s=>s.id===current.id);location.hash=a[(i-1+a.length)%a.length].id;};$('#next').onclick=()=>{const a=screens.filter(s=>s.platform===platform),i=a.findIndex(s=>s.id===current.id);location.hash=a[(i+1)%a.length].id;};
+for(const j of manifest.journeys){const b=document.createElement('button');b.textContent=j.id+' · '+j.title;b.onclick=()=>{location.hash=j.steps[0];$('#screen-notes').textContent=j.steps.join(' → ');};$('#journeys').append(b);}
+$('#save-note').onclick=()=>{const n=readNotes();n[current.id]={screen:current.title,text:$('#note').value,updatedAt:new Date().toISOString()};localStorage.setItem('fieldwork-review-notes',JSON.stringify(n));$('#save-note').textContent='Saved locally';};$('#export-notes').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(readNotes(),null,2)],{type:'application/json'}));a.download='fieldwork-review-notes.json';a.click();URL.revokeObjectURL(a.href);};window.addEventListener('hashchange',show);await show();
+</script></body></html>`;}

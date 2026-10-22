@@ -1,0 +1,11 @@
+import fs from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import {randomBytes} from 'node:crypto';
+import {spawn} from 'node:child_process';
+import path from 'node:path';
+const runtime=path.resolve('design/.runtime');await fs.mkdir(runtime,{recursive:true});
+if(!existsSync(runtime+'/compose.yaml'))await fs.copyFile('design/tools/penpot.compose.yaml',runtime+'/compose.yaml');
+if(!existsSync(runtime+'/.env'))await fs.writeFile(runtime+'/.env','PENPOT_VERSION=2.18.3\nPENPOT_SECRET_KEY='+randomBytes(64).toString('base64url')+'\n',{mode:0o600});
+const docker=process.env.DESIGN_DOCKER_BIN||'/Applications/Docker.app/Contents/Resources/bin/docker';
+const child=spawn(docker,['compose','--progress','quiet','-p','site-tracking-design','-f',runtime+'/compose.yaml','up','-d'],{stdio:'inherit'});
+child.on('error',e=>{console.error(e.message);process.exitCode=1;});child.on('exit',code=>{if(code)process.exitCode=code;else console.log('Local Penpot: http://localhost:9001. Persistent editor data is stored in its Docker volumes.');});

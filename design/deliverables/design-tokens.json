@@ -1,0 +1,80 @@
+{
+  "Foundations": {
+    "color": {
+      "ink": {
+        "$type": "color",
+        "$value": "#173B32"
+      },
+      "brand": {
+        "$type": "color",
+        "$value": "#206E52"
+      },
+      "dark": {
+        "$type": "color",
+        "$value": "#142F28"
+      },
+      "mint": {
+        "$type": "color",
+        "$value": "#E7F2E9"
+      },
+      "bg": {
+        "$type": "color",
+        "$value": "#F5F6F2"
+      },
+      "surface": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "border": {
+        "$type": "color",
+        "$value": "#DCE5DD"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "#596F63"
+      },
+      "amber": {
+        "$type": "color",
+        "$value": "#855D0E"
+      },
+      "amberBg": {
+        "$type": "color",
+        "$value": "#FFF3D7"
+      },
+      "danger": {
+        "$type": "color",
+        "$value": "#A9362C"
+      },
+      "dangerBg": {
+        "$type": "color",
+        "$value": "#FCEDE9"
+      },
+      "blue": {
+        "$type": "color",
+        "$value": "#305D8C"
+      },
+      "blueBg": {
+        "$type": "color",
+        "$value": "#EAF1FA"
+      }
+    },
+    "space": {
+      "sm": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "md": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "lg": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "xl": {
+        "$type": "dimension",
+        "$value": "32px"
+      }
+    }
+  }
+}
