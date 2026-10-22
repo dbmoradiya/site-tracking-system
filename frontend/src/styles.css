@@ -569,3 +569,16 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
   .setup-card__icon { width: 32px; height: 32px; }
   .modal-card { padding: 16px; }
 }
+
+/* Compact desktop for Site Detail (Mantine pass); mobile rules above keep 44px targets */
+@media (min-width: 821px) {
+  .detail-hero--site { min-height: 0; padding: 14px 20px; border-radius: 10px; }
+  .detail-hero--site h1 { margin-top: 6px; font-size: 1.35rem; }
+  .detail-hero--site .completion-ring { width: 76px; height: 76px; }
+  .detail-hero--site .completion-ring strong { font-size: 1.05rem; }
+  .site-assignments, .section-card { padding: 14px 16px; border-radius: 10px; box-shadow: none; }
+  .section-heading { margin-bottom: 10px; }
+  .section-heading h2 { font-size: 1.1rem; }
+  .timeline-item__card { padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; }
+  .assignment-history summary { min-height: 32px; }
+}

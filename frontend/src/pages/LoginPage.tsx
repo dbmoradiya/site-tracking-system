@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2, HardHat, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { Alert, Button, PasswordInput, TextInput } from '@mantine/core'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
@@ -42,10 +43,10 @@ export function LoginPage() {
         <p className="eyebrow">Secure workspace</p>
         <h2>Welcome back</h2>
         <p className="muted">Sign in to continue to your Sites.</p>
-        {error && <div className="alert alert--error" role="alert">{error}</div>}
-        <label>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required /></label>
-        <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required /></label>
-        <button className="button button--primary button--wide" disabled={loading}>{loading ? 'Signing in…' : <>Sign in <ArrowRight /></>}</button>
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+        <TextInput label="Email address" type="email" value={email} onChange={e => setEmail(e.currentTarget.value)} autoComplete="email" required />
+        <PasswordInput label="Password" value={password} onChange={e => setPassword(e.currentTarget.value)} autoComplete="current-password" required />
+        <Button type="submit" fullWidth loading={loading} rightSection={<ArrowRight size={16} />}>Sign in</Button>
         <div className="demo-accounts">
           <strong>Demo accounts</strong>
           {demoAccounts.map(account => <button type="button" key={account.key} onClick={() => setEmail(`${account.key}@sitetrack.local`)}>{account.label}<small>{account.key}@sitetrack.local</small></button>)}

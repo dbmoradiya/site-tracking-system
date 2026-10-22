@@ -1,5 +1,5 @@
-import { Alert, Anchor, Button, Group, Modal, NativeSelect, Paper, Progress, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core'
-import { ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
+import { ActionIcon, Alert, Anchor, Button, Group, Modal, NativeSelect, Paper, Progress, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core'
+import { History, ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Loading } from '../components/Loading'
@@ -13,7 +13,7 @@ type Project={id:number;name:string;customerName:string;customerMobile:string;ad
 type Employee={id:number;name:string;roles:string[];active:boolean}
 
 export function ProjectDetailPage(){
-  const {projectId}=useParams();const {user}=useAuth();const navigate=useNavigate();const [project,setProject]=useState<Project|null>(null);const [coordinators,setCoordinators]=useState<Employee[]>([]);const [changeOpen,setChangeOpen]=useState(false);const [deleteOpen,setDeleteOpen]=useState(false);const [error,setError]=useState('')
+  const {projectId}=useParams();const {user}=useAuth();const navigate=useNavigate();const [project,setProject]=useState<Project|null>(null);const [coordinators,setCoordinators]=useState<Employee[]>([]);const [changeOpen,setChangeOpen]=useState(false);const [historyOpen,setHistoryOpen]=useState(false);const [deleteOpen,setDeleteOpen]=useState(false);const [error,setError]=useState('')
   const isAdmin=hasRole(user,'ADMIN')
   const load=useCallback(async()=>{try{setError('');const current=await api<Project>(`/projects/${projectId}`);setProject(current);if(isAdmin){const setup=await api<{employees:Employee[]}>('/setup');setCoordinators(setup.employees.filter(employee=>employee.active&&employee.roles.includes('COORDINATOR')))}}catch(err){setError(err instanceof Error?err.message:'Could not load Project')}},[projectId,isAdmin]);useEffect(()=>{load()},[load])
   if(!project)return error?<Stack><Alert color="red" role="alert">{error}</Alert><Button component={Link} to="/projects" variant="default" w="fit-content">Back to Projects</Button></Stack>:<Loading label="Loading project"/>
@@ -25,10 +25,9 @@ export function ProjectDetailPage(){
       {isAdmin&&<Group gap="xs"><Button size="xs" color="red" variant="light" leftSection={<Trash2 size={14}/>} onClick={()=>setDeleteOpen(true)}>Delete Project</Button><Button size="xs" component={Link} to={`/projects/${project.id}/sites/new`} leftSection={<Plus size={14}/>}>Add Site</Button></Group>}
     </Group>
     <SimpleGrid cols={{base:2,sm:4}} mt="sm" spacing="sm">{stat('Customer',project.customerName)}{stat('Mobile',project.customerMobile)}{stat('Target date',project.targetDate||'Not set')}
-      <div><Text size="xs" c="dimmed">Project Coordinator</Text><Group gap={6}><Text size="sm" fw={600}>{project.coordinator}</Text>{isAdmin&&<Anchor component="button" size="xs" onClick={()=>setChangeOpen(true)}>Change</Anchor>}</Group></div></SimpleGrid></Paper>
+      <div><Text size="xs" c="dimmed">Project Coordinator</Text><Group gap={6}><Text size="sm" fw={600}>{project.coordinator}</Text>{isAdmin&&<Anchor component="button" size="xs" onClick={()=>setChangeOpen(true)}>Change</Anchor>}<ActionIcon variant="subtle" color="gray" size="md" aria-label="Coordinator history" title="Coordinator history" onClick={()=>setHistoryOpen(true)}><History size={16}/></ActionIcon></Group></div></SimpleGrid></Paper>
     {error&&<Alert color="red" role="alert">{error}</Alert>}
-    <Paper withBorder p="sm"><Text size="xs" fw={700} c="orange.8" tt="uppercase">Accountability</Text><Title order={4} mb={4}>Coordinator history</Title>
-      {project.coordinatorHistory.length===0?<Text size="sm" c="dimmed">No Coordinator changes recorded.</Text>:<Stack gap={4}>{project.coordinatorHistory.map((item,index)=><Text size="sm" key={`${item.changedAt}-${index}`}><b>{item.oldCoordinator==='—'?item.newCoordinator:`${item.oldCoordinator} → ${item.newCoordinator}`}</b> <Text span size="xs" c="dimmed">Changed by {item.changedBy} · {new Date(item.changedAt).toLocaleString()}</Text></Text>)}</Stack>}</Paper>
+    <Modal opened={historyOpen} onClose={()=>setHistoryOpen(false)} title="Coordinator history" size="md">{project.coordinatorHistory.length===0?<Text size="sm" c="dimmed">No Coordinator changes recorded.</Text>:<Stack gap="xs">{project.coordinatorHistory.map((item,index)=><div key={`${item.changedAt}-${index}`}><Text size="sm" fw={600}>{item.oldCoordinator==='—'?item.newCoordinator:`${item.oldCoordinator} → ${item.newCoordinator}`}</Text><Text size="xs" c="dimmed">Changed by {item.changedBy} · {new Date(item.changedAt).toLocaleString()}</Text></div>)}</Stack>}</Modal>
     <Group justify="space-between"><div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Execution</Text><Title order={4}>Project Sites</Title></div><Text size="sm" c="dimmed">{project.sites.length} total</Text></Group>
     {project.sites.length===0?<Paper withBorder p="md"><Text size="sm" c="dimmed" ta="center">No Sites yet.</Text></Paper>:<Paper withBorder><Table.ScrollContainer minWidth={620}><Table verticalSpacing={6} horizontalSpacing="sm" highlightOnHover fz="sm"><Table.Thead><Table.Tr><Table.Th>Site</Table.Th><Table.Th>Type</Table.Th><Table.Th>Target</Table.Th><Table.Th>Progress</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{project.sites.map(site=>{const progress=site.stageCount?site.completedStages/site.stageCount*100:0;return <Table.Tr key={site.id}>

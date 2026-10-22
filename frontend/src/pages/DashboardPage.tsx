@@ -64,7 +64,7 @@ export function DashboardPage() {
                 <Table.Td><Text size="xs" c={late?'red.7':undefined} fw={late?700:400}>{project.targetDate||'—'}</Text></Table.Td>
                 <Table.Td><StatusBadge status={project.status}/></Table.Td>
                 <Table.Td>{project.actionRequired>0?<Badge color="red" variant="filled">{project.actionRequired}</Badge>:<Text size="xs" c="dimmed">0</Text>}</Table.Td>
-              </Table.Tr>})}</Table.Tbody>
+              </Table.Tr>})}{sorted.length===0&&<Table.Tr><Table.Td colSpan={6}><Text size="sm" c="dimmed" ta="center" py="sm">No projects yet. Projects you are assigned to will show here.</Text></Table.Td></Table.Tr>}</Table.Tbody>
           </Table>
         </Table.ScrollContainer>
       </Card>
