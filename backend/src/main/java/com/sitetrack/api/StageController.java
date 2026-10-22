@@ -45,7 +45,7 @@ public class StageController {
                 select s.id,s.name,s.address,s.target_date,s.status,p.id project_id,p.name project_name,
                        st.name site_type,e.name coordinator
                 from sites s join projects p on p.id=s.project_id join site_types st on st.id=s.site_type_id
-                join employees e on e.id=s.coordinator_id where s.id=:id
+                join employees e on e.id=p.coordinator_id where s.id=:id
                 """).param("id",siteId).query((rs,n)->{
                     Map<String,Object> row=new LinkedHashMap<>(); row.put("id",rs.getLong("id"));
                     row.put("name",rs.getString("name")); row.put("address",rs.getString("address"));
@@ -53,8 +53,9 @@ public class StageController {
                     row.put("projectName",rs.getString("project_name")); row.put("siteType",rs.getString("site_type"));
                     row.put("coordinator",rs.getString("coordinator")); return row;
                 }).optional().orElseThrow(()->new ApiException(404,"Site not found"));
-        boolean canManage="ADMIN".equals(user.role()) || ("COORDINATOR".equals(user.role()) && user.employeeId()!=null &&
-                jdbc.sql("select coordinator_id from sites where id=:id").param("id",siteId).query(Long.class).single().equals(user.employeeId()));
+        boolean canManage=user.hasRole("ADMIN") || (user.employeeId()!=null &&
+                jdbc.sql("select p.coordinator_id from sites s join projects p on p.id=s.project_id where s.id=:id")
+                        .param("id",siteId).query(Long.class).single().equals(user.employeeId()));
         List<Map<String,Object>> stages=jdbc.sql("""
                 select ss.id,ss.name,ss.position,ss.status,ss.evidence_required,ss.depends_on_stage_id,ss.supervisor_id,
                        sup.name supervisor,tm.name team,count(ev.id) filter(where ev.upload_status='UPLOADED') evidence_count

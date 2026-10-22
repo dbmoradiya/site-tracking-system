@@ -184,7 +184,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .detail-hero__meta { display: flex; align-items: center; gap: 10px; }
 .detail-hero__meta > span:first-child { min-height: 30px; padding: 5px 11px; border-radius: 8px; background: rgba(255,255,255,.12); font-size: .75rem; font-weight: 800; }
 .detail-hero .status { background: #fff; }
+.detail-hero__actions { display: flex; align-items: center; gap: 10px; }
+.detail-hero__actions .button--danger { background: #fff; }
 .info-strip { margin: -1px 18px 36px; padding: 20px 22px; display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; background: #fff; border: 1px solid var(--line); border-radius: 0 0 14px 14px; }
+.info-strip--project { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .info-strip > div { display: flex; align-items: center; gap: 12px; }
 .info-strip svg { color: var(--accent); }
 .info-strip span { display: grid; gap: 4px; }
@@ -202,6 +205,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .project-site__progress { width: min(280px,40%); display: grid; gap: 7px; text-align: right; }
 .project-site__progress small { color: var(--slate); }
 .project-site__actions { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; }
+.project-site__actions > span { color: var(--slate); font-size: .82rem; }
 .project-site__actions svg { transition: transform .2s ease; }
 .project-site__actions .rotated { transform: rotate(180deg); }
 .project-stage-list { padding: 0 22px 22px; display: grid; gap: 10px; background: #f8fafc; }
@@ -275,6 +279,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .detail-modal > header { position: sticky; z-index: 1; top: 0; padding: 22px 24px; border-bottom: 1px solid var(--line); background: #fff; display: flex; align-items: flex-start; justify-content: space-between; }
 .detail-modal > header h2 { margin-bottom: 0; }
 .detail-modal__body { padding: 24px; display: grid; gap: 18px; }
+.confirm-dialog { width: min(520px,100%); }
+.confirm-dialog p { margin-bottom: 0; color: var(--slate); line-height: 1.65; }
+.coordinator-history { margin-bottom: 34px; }
+.coordinator-history .section-heading { margin-bottom: 14px; }
 .modal-form { display: grid; gap: 18px; }
 .modal-actions { padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
 .read-row { padding-bottom: 14px; border-bottom: 1px solid var(--line); display: grid; gap: 5px; }
@@ -386,6 +394,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   .project-row { grid-template-columns: auto 1fr auto; }
   .project-row__progress, .project-row > .status { display: none; }
   .info-strip { grid-template-columns: 1fr; }
+  .detail-hero__actions { width: 100%; flex-wrap: wrap; }
   .setup-split, .setup-grid { grid-template-columns: 1fr; }
   .stage-details__body { grid-template-columns: 1fr; }
   .evidence-upload { grid-template-columns: 1fr; }
@@ -433,6 +442,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   .completion-ring { width: 92px; height: 92px; }
   .project-site__actions { align-items: stretch; flex-direction: column; }
   .project-site__actions .button { width: 100%; }
+  .detail-hero__actions .button { flex: 1 1 180px; }
   .project-stage__summary { grid-template-columns: auto minmax(0,1fr) auto; }
   .project-stage__summary > .status { grid-column: 2/-1; justify-self: start; }
   .install-prompt { grid-template-columns: auto minmax(0,1fr) auto; }

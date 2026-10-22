@@ -40,7 +40,7 @@ public class SetupController {
                   coalesce(array_agg(er.role_code order by er.role_code) filter(where er.role_code is not null),array[]::varchar[]) roles,
                   coalesce((select string_agg(distinct p.name,'||') from projects p left join sites s on s.project_id=p.id
                     left join site_stages ss on ss.site_id=s.id
-                    where s.coordinator_id=e.id or ss.supervisor_id=e.id),'') assigned_projects
+                    where p.coordinator_id=e.id or ss.supervisor_id=e.id),'') assigned_projects
                 from employees e left join employee_roles er on er.employee_id=e.id
                 group by e.id order by e.name
                 """)

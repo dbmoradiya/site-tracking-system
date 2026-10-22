@@ -19,13 +19,13 @@ public class DashboardController {
 
     @GetMapping
     public Map<String, Object> dashboard(@AuthenticationPrincipal AppPrincipal user) {
-        String filter = switch (user.role()) {
-            case "ADMIN" -> "";
-            case "COORDINATOR" -> " where exists (select 1 from sites s where s.project_id=p.id and s.coordinator_id=:employeeId)";
-            default -> " where exists (select 1 from sites s join site_stages ss on ss.site_id=s.id where s.project_id=p.id and ss.supervisor_id=:employeeId)";
-        };
+        String filter = user.hasRole("ADMIN") ? "" : """
+                 where p.coordinator_id=:employeeId or exists (
+                   select 1 from sites s join site_stages ss on ss.site_id=s.id
+                   where s.project_id=p.id and ss.supervisor_id=:employeeId)
+                """;
         JdbcClient.StatementSpec spec = jdbc.sql("select status, count(*) total from projects p" + filter + " group by status");
-        if (!"ADMIN".equals(user.role())) spec = spec.param("employeeId", user.employeeId());
+        if (!user.hasRole("ADMIN")) spec = spec.param("employeeId", user.employeeId());
         List<Map<String, Object>> counts = spec.query((rs, n) -> Map.<String, Object>of(
                 "status", rs.getString("status"), "total", rs.getLong("total"))).list();
 
@@ -35,7 +35,7 @@ public class DashboardController {
                        count(distinct s.id) filter (where s.status='COMPLETED') completed_sites
                 from projects p left join sites s on s.project_id=p.id
                 """ + filter + " group by p.id order by p.updated_at desc limit 6");
-        if (!"ADMIN".equals(user.role())) recentSpec = recentSpec.param("employeeId", user.employeeId());
+        if (!user.hasRole("ADMIN")) recentSpec = recentSpec.param("employeeId", user.employeeId());
         List<Map<String, Object>> recent = recentSpec.query((rs, n) -> Map.<String, Object>of(
                 "id", rs.getLong("id"), "name", rs.getString("name"),
                 "customerName", rs.getString("customer_name"), "status", rs.getString("status"),

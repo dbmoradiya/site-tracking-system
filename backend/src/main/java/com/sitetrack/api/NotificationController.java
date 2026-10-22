@@ -20,18 +20,17 @@ public class NotificationController {
 
     @GetMapping
     public List<Map<String,Object>> list(@AuthenticationPrincipal AppPrincipal user) {
-        String condition=switch(user.role()) {
-            case "ADMIN" -> "(ss.status='REVIEW_PENDING' or ss.supervisor_id is null or ss.team_id is null)";
-            case "COORDINATOR" -> "s.coordinator_id=:employeeId and (ss.status='REVIEW_PENDING' or ss.supervisor_id is null or ss.team_id is null)";
-            default -> "ss.supervisor_id=:employeeId and ss.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED')";
-        };
+        String condition=user.hasRole("ADMIN")
+                ? "(ss.status='REVIEW_PENDING' or ss.supervisor_id is null or ss.team_id is null)"
+                : "((p.coordinator_id=:employeeId and (ss.status='REVIEW_PENDING' or ss.supervisor_id is null or ss.team_id is null)) " +
+                  "or (ss.supervisor_id=:employeeId and ss.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED')))";
         JdbcClient.StatementSpec spec=jdbc.sql("""
                 select ss.id stage_id,ss.name stage_name,ss.status,ss.updated_at,ss.supervisor_id,ss.team_id,s.id site_id,s.name site_name,
                        p.id project_id,p.name project_name
                 from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id
                 where %s order by ss.updated_at desc limit 25
                 """.formatted(condition));
-        if(!"ADMIN".equals(user.role())) spec=spec.param("employeeId",user.employeeId());
+        if(!user.hasRole("ADMIN")) spec=spec.param("employeeId",user.employeeId());
         return spec.query((rs,n)->{
             String status=rs.getString("status");
             Map<String,Object> row=new LinkedHashMap<>();

@@ -15,20 +15,22 @@ public class WorkflowService {
     }
 
     public void requireSiteManager(long siteId, AppPrincipal user) {
-        if ("ADMIN".equals(user.role())) return;
+        if (user.hasRole("ADMIN")) return;
         boolean owns = user.employeeId() != null && jdbc.sql(
-                "select count(*) from sites where id=:siteId and coordinator_id=:employeeId")
+                "select count(*) from sites s join projects p on p.id=s.project_id where s.id=:siteId and p.coordinator_id=:employeeId")
                 .param("siteId", siteId).param("employeeId", user.employeeId())
                 .query(Long.class).single() > 0;
         if (!owns) throw new ApiException(403, "You can manage only your own Sites");
     }
 
     public void requireProjectAccess(long projectId, AppPrincipal user) {
-        if ("ADMIN".equals(user.role())) return;
-        String sql = "COORDINATOR".equals(user.role())
-                ? "select count(*) from sites where project_id=:projectId and coordinator_id=:employeeId"
-                : "select count(*) from sites s join site_stages ss on ss.site_id=s.id " +
-                  "where s.project_id=:projectId and ss.supervisor_id=:employeeId";
+        if (user.hasRole("ADMIN")) return;
+        String sql = """
+                select count(*) from projects p where p.id=:projectId and (
+                  p.coordinator_id=:employeeId or exists(
+                    select 1 from sites s join site_stages ss on ss.site_id=s.id
+                    where s.project_id=p.id and ss.supervisor_id=:employeeId))
+                """;
         boolean allowed = user.employeeId() != null && jdbc.sql(sql)
                 .param("projectId", projectId).param("employeeId", user.employeeId())
                 .query(Long.class).single() > 0;
@@ -36,10 +38,12 @@ public class WorkflowService {
     }
 
     public void requireSiteAccess(long siteId, AppPrincipal user) {
-        if ("ADMIN".equals(user.role())) return;
-        String sql = "COORDINATOR".equals(user.role())
-                ? "select count(*) from sites where id=:siteId and coordinator_id=:employeeId"
-                : "select count(*) from site_stages where site_id=:siteId and supervisor_id=:employeeId";
+        if (user.hasRole("ADMIN")) return;
+        String sql = """
+                select count(*) from sites s join projects p on p.id=s.project_id where s.id=:siteId and (
+                  p.coordinator_id=:employeeId or exists(
+                    select 1 from site_stages ss where ss.site_id=s.id and ss.supervisor_id=:employeeId))
+                """;
         boolean allowed = user.employeeId() != null && jdbc.sql(sql)
                 .param("siteId", siteId).param("employeeId", user.employeeId())
                 .query(Long.class).single() > 0;
