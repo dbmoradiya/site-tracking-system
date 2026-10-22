@@ -61,13 +61,13 @@ function SiteAdminActions({site,onSaved}:{site:Site;onSaved:()=>void}){
   const save=async()=>{setSaving(true);setError('');try{if(mode==='edit')await put(`/sites/${site.id}`,{name,address,targetDate:targetDate||null});else await put(`/sites/${site.id}/project`,{projectId:Number(projectId)});setMode(null);await onSaved()}catch(err){setError(err instanceof Error?err.message:'Could not save')}finally{setSaving(false)}}
   return <>
     <Group gap="xs" mt="xs"><Button variant="white" color="dark" leftSection={<Pencil size={14}/>} onClick={()=>open('edit')}>Edit Site</Button><Button variant="white" color="dark" leftSection={<Shuffle size={14}/>} onClick={()=>open('move')}>Move to another Project</Button></Group>
-    <Modal opened={mode!==null} onClose={()=>setMode(null)} title={mode==='edit'?'Edit Site details':'Move Site to another Project'} size="sm">
+    <Modal opened={mode!==null} onClose={()=>setMode(null)} title={mode==='edit'?'Edit Site details':'Move Site to another Project'} size="md">
       {error&&<Alert color="red" role="alert" mb="xs">{error}</Alert>}
-      {mode==='edit'?<Group gap="sm" grow style={{flexDirection:'column',alignItems:'stretch'}}>
+      {mode==='edit'?<Stack gap="sm">
         <TextInput label="Site name" required value={name} onChange={e=>setName(e.currentTarget.value)}/>
         <Textarea label="Site address" autosize minRows={2} value={address} onChange={e=>setAddress(e.currentTarget.value)}/>
         <TextInput label="Target date" type="date" value={targetDate} onChange={e=>setTargetDate(e.currentTarget.value)}/>
-      </Group>:<NativeSelect label="Project" value={projectId} onChange={e=>setProjectId(e.currentTarget.value)} data={projects.map(p=>({value:String(p.id),label:p.name}))} description="Stages, evidence, assignments and history move with the Site."/>}
+      </Stack>:<NativeSelect label="Project" value={projectId} onChange={e=>setProjectId(e.currentTarget.value)} data={projects.map(p=>({value:String(p.id),label:p.name}))} description="Stages, evidence, assignments and history move with the Site."/>}
       <Group justify="flex-end" mt="md"><Button variant="default" onClick={()=>setMode(null)}>Cancel</Button><Button loading={saving} disabled={mode==='edit'?!name.trim():Number(projectId)===site.projectId} onClick={save}>{mode==='edit'?'Save changes':'Move Site'}</Button></Group>
     </Modal>
   </>
