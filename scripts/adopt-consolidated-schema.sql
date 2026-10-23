@@ -15,5 +15,5 @@ begin
   end if;
 end $$;
 delete from flyway_schema_history where version <> '1';
-update flyway_schema_history set description = 'initial schema', script = 'V1__initial_schema.sql', checksum = 1120572847 where version = '1';
+update flyway_schema_history set description = 'initial schema', script = 'V1__initial_schema.sql', checksum = 488284029 where version = '1';
 commit;
