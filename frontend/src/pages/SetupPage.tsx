@@ -71,7 +71,7 @@ function SiteTypeForm({item,onCancel,onSaved}:{item:SiteType;onCancel:()=>void;o
       <Badge circle size="lg" color="dark">{index+1}</Badge>
       <TextInput required style={{flex:'1 1 150px'}} label="Stage name" value={stage.name} onChange={e=>setStage(index,{name:e.currentTarget.value})}/>
       <NativeSelect style={{flex:'1 1 130px'}} label="Dependency" value={String(stage.dependsOnPosition??'')} onChange={e=>setStage(index,{dependsOnPosition:e.currentTarget.value?Number(e.currentTarget.value):null})} data={[{value:'',label:'No dependency'},...form.stages.slice(0,index).map((s,i)=>({value:String(i+1),label:`${i+1}. ${s.name||'Untitled'}`}))]}/>
-      <div style={{flex:'1 1 170px'}}><RolesSelect includeTeam label="Required Roles" selected={stage.requiredRoles} onChange={roles=>setStage(index,{requiredRoles:roles})}/></div>
+      <div style={{flex:'1 1 170px'}}><RolesSelect includeTeam excludeCoordinator label="Required Roles" selected={stage.requiredRoles} onChange={roles=>setStage(index,{requiredRoles:roles})}/></div>
       <Group gap={4}><ActionIcon variant="default" size="lg" disabled={index===0} onClick={()=>move(index,-1)} aria-label="Move Stage up"><ChevronUp size={14}/></ActionIcon><ActionIcon variant="default" size="lg" disabled={index===form.stages.length-1} onClick={()=>move(index,1)} aria-label="Move Stage down"><ChevronDown size={14}/></ActionIcon><ActionIcon color="red" variant="light" size="lg" onClick={()=>setForm({...form,stages:normalize(form.stages.filter((_,i)=>i!==index))})} aria-label="Remove Stage"><Trash2 size={14}/></ActionIcon></Group>
     </Group></Paper>)}</Stack>
     <Actions onCancel={onCancel} saving={saving}/></form>
