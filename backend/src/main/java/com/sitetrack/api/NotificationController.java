@@ -31,7 +31,7 @@ public class NotificationController {
                                    @RequestParam(defaultValue="") String search) {
         if(page<0) throw new ApiException(400,"Page must be zero or greater");
         if(size<1 || size>100) throw new ApiException(400,"Page size must be between 1 and 100");
-        type=type.trim().toUpperCase(); status=status.trim().toUpperCase(); search=search.trim();
+        type=type.trim().toUpperCase(); status=status.trim().toUpperCase(); search=search.trim().replace("\\","\\\\").replace("%","\\%").replace("_","\\_");
         if(!type.isEmpty() && !TYPES.contains(type)) throw new ApiException(400,"Invalid notification type");
         if(!status.isEmpty() && !STATUSES.contains(status)) throw new ApiException(400,"Invalid Stage status");
 
@@ -40,13 +40,13 @@ public class NotificationController {
                   select ss.id stage_id,ss.name stage_name,ss.status,ss.updated_at,s.id site_id,s.name site_name,
                          p.id project_id,p.name project_name,
                          (:isAdmin or p.coordinator_id=:employeeId) manager,
-                         exists(select 1 from site_stage_required_roles rr join site_role_assignments sra
-                           on sra.site_id=s.id and sra.role_code=rr.role_code
+                         exists(select 1 from site_stage_required_roles rr join site_stage_role_assignments sra
+                           on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
                            where rr.stage_id=ss.id and sra.employee_id=:employeeId) assigned,
                          (select count(*) from site_stage_required_roles rr where rr.stage_id=ss.id) required_count,
-                         (select count(*) from site_stage_required_roles rr left join site_role_assignments sra
-                           on sra.site_id=s.id and sra.role_code=rr.role_code
-                           where rr.stage_id=ss.id and sra.employee_id is null) missing_count,
+                         (select count(*) from site_stage_required_roles rr left join site_stage_role_assignments sra
+                           on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
+                           where rr.stage_id=ss.id and sra.employee_id is null and sra.team_id is null) missing_count,
                          (select count(*) from evidence ev where ev.stage_id=ss.id and ev.upload_status='UPLOADED') evidence_count
                   from site_stages ss join sites s on s.id=ss.site_id join projects p on p.id=s.project_id
                 ), pending as (
@@ -66,7 +66,7 @@ public class NotificationController {
                 """;
         String filters="""
                 where (:type='' or notification_type=:type) and (:status='' or status=:status)
-                  and (:search='' or lower(project_name||' '||site_name||' '||stage_name) like lower('%'||:search||'%'))
+                  and (:search='' or lower(project_name||' '||site_name||' '||stage_name) like lower('%'||:search||'%') escape '\\')
                 """;
         long employeeId=user.employeeId()==null ? -1 : user.employeeId();
         long total=parameters(jdbc.sql(cte+"select count(*) from pending "+filters),user,employeeId,type,status,search)

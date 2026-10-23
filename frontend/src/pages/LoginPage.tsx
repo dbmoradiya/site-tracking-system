@@ -1,15 +1,19 @@
 import { ArrowRight, CheckCircle2, HardHat, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { Alert, Button, PasswordInput, TextInput } from '@mantine/core'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+
 
 export function LoginPage() {
   const { login, loading } = useAuth()
-  const [email, setEmail] = useState('admin@sitetrack.local')
-  const [password, setPassword] = useState('SiteTrack123!')
+  const navigate = useNavigate()
+  const [mobile, setMobile] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError('')
-    try { await login(email, password) } catch (err) { setError(err instanceof Error ? err.message : 'Sign in failed') }
+    try { await login(mobile, password); navigate('/', { replace: true }) } catch (err) { setError(err instanceof Error ? err.message : 'Sign in failed') }
   }
   return <main className="login-page">
     <section className="login-hero">
@@ -32,14 +36,10 @@ export function LoginPage() {
         <p className="eyebrow">Secure workspace</p>
         <h2>Welcome back</h2>
         <p className="muted">Sign in to continue to your Sites.</p>
-        {error && <div className="alert alert--error" role="alert">{error}</div>}
-        <label>Email address<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required /></label>
-        <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required /></label>
-        <button className="button button--primary button--wide" disabled={loading}>{loading ? 'Signing in…' : <>Sign in <ArrowRight /></>}</button>
-        <div className="demo-accounts">
-          <strong>Demo accounts</strong>
-          {['admin', 'coordinator', 'supervisor'].map(role => <button type="button" key={role} onClick={() => setEmail(`${role}@sitetrack.local`)}>{role}</button>)}
-        </div>
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+        <TextInput label="Mobile number" type="tel" inputMode="tel" placeholder="e.g. 98765 43210" value={mobile} onChange={e => setMobile(e.currentTarget.value)} autoComplete="username" required />
+        <PasswordInput label="Password" value={password} onChange={e => setPassword(e.currentTarget.value)} autoComplete="current-password" required />
+        <Button type="submit" fullWidth loading={loading} rightSection={<ArrowRight size={16} />}>Sign in</Button>
       </form>
     </section>
   </main>

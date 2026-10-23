@@ -72,6 +72,8 @@ public class ProjectController {
     @Transactional
     public Map<String,Object> create(@Valid @RequestBody ProjectRequest request,@AuthenticationPrincipal AppPrincipal user) {
         projects.requireCoordinator(request.coordinatorId());
+        if(jdbc.sql("select count(*) from projects where lower(trim(name))=lower(trim(:n))").param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"A Project with this name already exists");
         long id=jdbc.sql("""
                 insert into projects(name,customer_name,customer_mobile,address,target_date,coordinator_id)
                 values(:name,:customer,:mobile,:address,:target,:coordinator) returning id
@@ -157,15 +159,15 @@ public class ProjectController {
         boolean projectExists=jdbc.sql("select count(*) from projects where id=:id").param("id",projectId)
                 .query(Long.class).single()>0;
         if(!projectExists) throw new ApiException(404,"Project not found");
-        var requiredRoles=request.stages().stream().flatMap(stage->stage.requiredRoles().stream()).collect(java.util.stream.Collectors.toSet());
-        if(!request.roleAssignments().keySet().equals(requiredRoles))
-            throw new ApiException(400,"Provide one Site assignment field for every required role");
-        request.roleAssignments().forEach(assignments::validate);
+        for(SiteStageRequest stage:request.stages())
+            for(String role:stage.requiredRoles()) assignments.validate(role,null);
+        if(jdbc.sql("select count(*) from sites where project_id=:p and lower(trim(name))=lower(trim(:n))").param("p",projectId).param("n",request.name()).query(Long.class).single()>0)
+            throw new ApiException(409,"This Project already has a Site with that name");
         long siteId=jdbc.sql("""
                 insert into sites(project_id,site_type_id,team_id,name,address,target_date)
                 values(:project,:type,:team,:name,:address,:target) returning id
                 """).param("project",projectId).param("type",request.siteTypeId())
-                .param("team",request.teamId())
+                .param("team",(Long) null)
                 .param("name",request.name()).param("address",request.address()).param("target",request.targetDate())
                 .query(Long.class).single();
         Map<Integer,Long> stageIds=new LinkedHashMap<>();
@@ -186,7 +188,6 @@ public class ProjectController {
             if(dep!=null && stageIds.containsKey(dep)) jdbc.sql("update site_stages set depends_on_stage_id=:dep where id=:id")
                     .param("dep",stageIds.get(dep)).param("id",stageIds.get(i+1)).update();
         }
-        assignments.createAssignments(siteId,request.roleAssignments(),request.teamId(),user);
         workflow.recalculate(siteId);
         return Map.of("id",siteId);
     }
@@ -219,9 +220,9 @@ public class ProjectController {
                 (select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and
                  (ssa.status='REVIEW_PENDING'
                   or (ssa.status not in ('APPROVED','COMPLETED') and exists(
-                    select 1 from site_stage_required_roles rr left join site_role_assignments sra
-                      on sra.site_id=sa.id and sra.role_code=rr.role_code
-                    where rr.stage_id=ssa.id and sra.employee_id is null))
+                    select 1 from site_stage_required_roles rr left join site_stage_role_assignments sra
+                      on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
+                    where rr.stage_id=ssa.id and sra.employee_id is null and sra.team_id is null))
                   or (ssa.status in ('NOT_STARTED','READY','IN_PROGRESS') and not exists(
                     select 1 from site_stage_required_roles rr where rr.stage_id=ssa.id))))
                 """;
@@ -229,26 +230,24 @@ public class ProjectController {
                 (select count(*) from sites sa join site_stages ssa on ssa.site_id=sa.id where sa.project_id=p.id and
                  ((p.coordinator_id=:employeeId and (ssa.status='REVIEW_PENDING'
                     or (ssa.status not in ('APPROVED','COMPLETED') and exists(
-                      select 1 from site_stage_required_roles missing_rr left join site_role_assignments missing_sra
-                        on missing_sra.site_id=sa.id and missing_sra.role_code=missing_rr.role_code
-                      where missing_rr.stage_id=ssa.id and missing_sra.employee_id is null))
+                      select 1 from site_stage_required_roles missing_rr left join site_stage_role_assignments missing_sra
+                        on missing_sra.stage_id=missing_rr.stage_id and missing_sra.role_code=missing_rr.role_code
+                      where missing_rr.stage_id=ssa.id and missing_sra.employee_id is null and missing_sra.team_id is null))
                     or (ssa.status in ('NOT_STARTED','READY','IN_PROGRESS') and not exists(
                       select 1 from site_stage_required_roles no_role_rr where no_role_rr.stage_id=ssa.id))))
                   or (ssa.status in ('READY','IN_PROGRESS','CHANGES_REQUESTED') and exists(
-                    select 1 from site_stage_required_roles rr join site_role_assignments sra
-                      on sra.site_id=sa.id and sra.role_code=rr.role_code
+                    select 1 from site_stage_required_roles rr join site_stage_role_assignments sra
+                      on sra.stage_id=rr.stage_id and sra.role_code=rr.role_code
                     where rr.stage_id=ssa.id and sra.employee_id=:employeeId))))
                 """;
     }
 
-    public record ProjectRequest(@NotBlank String name,@NotBlank String customerName,@NotBlank String customerMobile,
+    public record ProjectRequest(@NotBlank String name,@NotBlank String customerName,@NotBlank @jakarta.validation.constraints.Pattern(regexp="^$|^[+0-9][0-9 ()-]{5,22}$",message="must be a valid phone number") String customerMobile,
                                  String address,LocalDate targetDate,@NotNull Long coordinatorId) {}
     public record CoordinatorRequest(@NotNull Long coordinatorId) {}
     public record PersonAssignment(String role,String name) {}
-    public record SiteRequest(@NotBlank String name,@NotNull Long siteTypeId,Long teamId,Map<String,Long> roleAssignments,
-                              String address,LocalDate targetDate,@NotEmpty List<SiteStageRequest> stages) {
-        public SiteRequest { roleAssignments=roleAssignments==null?Map.of():roleAssignments; }
-    }
+    public record SiteRequest(@NotBlank String name,@NotNull Long siteTypeId,Long teamId,
+                              String address,LocalDate targetDate,@NotEmpty List<SiteStageRequest> stages) {}
     public record SiteStageRequest(@NotBlank String name,Integer dependsOnPosition,List<String> requiredRoles) {
         public SiteStageRequest { requiredRoles=requiredRoles==null?List.of():requiredRoles; }
     }

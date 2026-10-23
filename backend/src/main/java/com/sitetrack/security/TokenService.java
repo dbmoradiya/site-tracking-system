@@ -30,7 +30,7 @@ public class TokenService {
             claims.put("id", principal.id());
             claims.put("employeeId", principal.employeeId());
             claims.put("name", principal.name());
-            claims.put("email", principal.email());
+            claims.put("mobile", principal.mobile());
             claims.put("roles", principal.roles());
             claims.put("exp", Instant.now().plusSeconds(12 * 60 * 60).getEpochSecond());
             String payload = Base64.getUrlEncoder().withoutPadding()
@@ -55,7 +55,7 @@ public class TokenService {
                     ((Number) claims.get("id")).longValue(),
                     employeeId == null ? null : ((Number) employeeId).longValue(),
                     (String) claims.get("name"),
-                    (String) claims.get("email"),
+                    (String) claims.get("mobile"),
                     objectMapper.convertValue(claims.get("roles"), new TypeReference<List<String>>() {}));
         } catch (Exception ignored) {
             return null;

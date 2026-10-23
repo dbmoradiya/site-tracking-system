@@ -10,3 +10,4 @@ frontend/vite.config.d.ts
 *.tsbuildinfo
 data/
 *.log
+deploy/.env

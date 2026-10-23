@@ -73,6 +73,11 @@ public class WorkflowService {
 
         long projectId = jdbc.sql("select project_id from sites where id=:id")
                 .param("id", siteId).query(Long.class).single();
+        recalculateProject(projectId);
+    }
+
+    @Transactional
+    public void recalculateProject(long projectId) {
         String projectStatus = jdbc.sql("""
                 select case
                   when count(*) = 0 then 'NOT_STARTED'

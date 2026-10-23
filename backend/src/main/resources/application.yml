@@ -12,6 +12,10 @@ spring:
     password: ${DB_PASSWORD:sitetrack}
   flyway:
     enabled: true
+    # V1000 (removed) may have been applied on a database created by an earlier build
+    ignore-migration-patterns: "*:missing,*:future"
+    # V1000 may already be recorded on some databases; later migrations (V14...) must still apply
+    out-of-order: true
   servlet:
     multipart:
       max-file-size: 15MB
@@ -26,4 +30,4 @@ management:
 app:
   jwt-secret: ${APP_JWT_SECRET:local-development-secret-change-me}
   upload-dir: ${APP_UPLOAD_DIR:./data/uploads}
-  allowed-origin-patterns: ${APP_ALLOWED_ORIGIN_PATTERNS:http://localhost:5173,http://localhost:8080,https://*.ngrok-free.app,https://*.ngrok.app,https://*.ngrok.io}
+  allowed-origin-patterns: ${APP_ALLOWED_ORIGIN_PATTERNS:http://localhost:5173,http://localhost:8080,https://*.ngrok-free.app,https://*.ngrok.app,https://*.ngrok.io,https://*.ngrok-free.dev}

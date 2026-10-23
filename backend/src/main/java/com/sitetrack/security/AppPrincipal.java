@@ -2,7 +2,7 @@ package com.sitetrack.security;
 
 import java.util.List;
 
-public record AppPrincipal(long id, Long employeeId, String name, String email, List<String> roles) {
+public record AppPrincipal(long id, Long employeeId, String name, String mobile, List<String> roles) {
     public AppPrincipal {
         roles = List.copyOf(roles);
     }
