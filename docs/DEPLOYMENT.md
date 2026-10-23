@@ -4,12 +4,9 @@ Versions are identical to `develop`: Spring Boot 4.1.1, Java 21, React 19.3.1, N
 
 ## What the `prod` profile does
 - `SPRING_PROFILES_ACTIVE=prod` loads `application-prod.yml`.
-- Nothing is deleted automatically. Early builds shipped sample data and demo logins that a database carries from migrations V1 to V9. On the **first start of a brand-new database** the app stops with a message until you set `APP_BOOTSTRAP_CLEAR_DEMO_DATA=true`, which removes exactly that sample data (only when nothing was created after the migrations ran and the Admin still has the built-in password). Remove the variable after the first start. On a database that holds real data the variable is ignored and nothing is deleted.
-- If the Admin still has the built-in password, the app refuses to start until `APP_BOOTSTRAP_ADMIN_MOBILE` and `APP_BOOTSTRAP_ADMIN_PASSWORD` (12+ characters) are set; they replace that password and keep all data.
-- Migration V13 deactivates any non-Admin login that still has the old shared demo password. No rows are deleted. An Admin re-enables a person by setting a new password in Setup > Employees.
-- Flyway runs with out-of-order enabled and tolerates a recorded-but-missing V1000, so new migrations (V14 and up) apply even on a database whose history already contains V1000. Existing history is never rewritten.
-- Back up first (`pg_dump`, see below) before the first prod start or any upgrade.
-- The first Admin is created from `APP_BOOTSTRAP_ADMIN_MOBILE` / `APP_BOOTSTRAP_ADMIN_PASSWORD` (12+ characters) when no Admin exists. Create all other users in the app (Setup > Employees > Login password).
+- The schema comes from one migration, `V1__initial_schema.sql`, and a new database starts completely empty: no sample data and no built-in logins. Nothing is ever deleted at startup. Later schema changes are added as V2, V3, and so on.
+- A database created by the earlier incremental migrations (V1 to V13) has a different Flyway history and will refuse to start with a validation error. If it holds data you want to keep, back it up and run `scripts/adopt-consolidated-schema.sql` once (it only rewrites Flyway's bookkeeping table; the schema is identical). Otherwise use a new empty database. Never promote a development database to production: it can still hold sample records and logins. Production always starts from a new empty database.
+- The first Admin is created from `APP_BOOTSTRAP_ADMIN_MOBILE` / `APP_BOOTSTRAP_ADMIN_PASSWORD` (12+ characters) when no Admin exists; the app refuses to start without them. Create all other users in the app (Setup > Employees > Login password).
 - The app refuses to start when `APP_JWT_SECRET` is shorter than 32 characters or looks like a default, or when `APP_ALLOWED_ORIGIN_PATTERNS` is empty.
 - The Login page shows no demo accounts (`VITE_SHOW_DEMO_ACCOUNTS=false`).
 - Only `/actuator/health` is exposed (no details). Error messages and stack traces are not returned.
@@ -24,7 +21,6 @@ Versions are identical to `develop`: Spring Boot 4.1.1, Java 21, React 19.3.1, N
 | `APP_UPLOAD_DIR` | Evidence folder, default `/data/uploads`. **Must be on a persistent volume** |
 | `APP_ALLOWED_ORIGIN_PATTERNS` | Comma separated allowed browser origins |
 | `APP_BOOTSTRAP_ADMIN_*` | First start only (mobile number and password of the first Admin) |
-| `APP_BOOTSTRAP_CLEAR_DEMO_DATA` | `true` for the first start of a brand-new database only, to remove the built-in sample data. Default `false` |
 | `APP_ADMIN_MOBILE`, `APP_ADMIN_PASSWORD` | Optional, any profile: set the Admin mobile / reset the Admin password at startup. Remove after use |
 
 ## Run with Docker Compose (any VM)

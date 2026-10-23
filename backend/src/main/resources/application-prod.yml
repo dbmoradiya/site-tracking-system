@@ -31,7 +31,6 @@ app:
     mobile: ${APP_BOOTSTRAP_ADMIN_MOBILE:}
     name: ${APP_BOOTSTRAP_ADMIN_NAME:Administrator}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
-    clear-demo-data: ${APP_BOOTSTRAP_CLEAR_DEMO_DATA:false}
 
 logging:
   level:

@@ -29,9 +29,17 @@ export function InstallPrompt() {
     }
   }, [])
 
-  if (!installEvent || dismissed || isStandalone()) return null
+  const visible = Boolean(installEvent) && !dismissed && !isStandalone()
+
+  useEffect(() => {
+    document.body.classList.toggle('has-install-prompt', visible)
+    return () => document.body.classList.remove('has-install-prompt')
+  }, [visible])
+
+  if (!visible) return null
 
   const install = async () => {
+    if (!installEvent) return
     await installEvent.prompt()
     await installEvent.userChoice
     setInstallEvent(null)
