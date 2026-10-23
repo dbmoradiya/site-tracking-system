@@ -40,6 +40,14 @@ def call(m,p,body=None,tok=None):
     except urllib.error.HTTPError as e: sys.exit(f"{m} {p} {e.code} {e.read().decode()[:200]}")
 def login(e,p): return call('POST','/auth/login',{'mobile':e,'password':p})['token']
 adm=login(AM,pw)
+# Refuse to run twice: check everything the script creates BEFORE creating anything.
+_s = call('GET','/setup',None,adm)
+_clash = [t['name'] for t in _s.get('siteTypes',[]) if t['name'] in ('Solar Rooftop','Industrial Shed')] \
+       + [t['name'] for t in _s.get('teams',[]) if t['name'] in ('Sun Power Installers','Apex Steel Erectors','Gujarat Civil Works')]
+_mob = {'9000010001','9000010002','9000010003','9000010004','9000010005','9000010006','9000010007','9000010008'}
+_clash += [e['name'] for e in _s.get('employees',[]) if ''.join(c for c in str(e.get('mobile') or '') if c.isdigit())[-10:] in _mob]
+_proj = [p['name'] for p in call('GET','/projects',None,adm) if p['name'] in ('Sunrise Industrial Park','Navkar Logistics Hub','Greenfield Residency')]
+if _clash or _proj: sys.exit('Sample data already exists (' + ', '.join(_clash + _proj) + '). Nothing was changed. Use an empty database.')
 SUP,DE,PM,CO,TEAM='SUPERVISOR','DESIGN_ENGINEER','PROCUREMENT_MANAGER','COORDINATOR','TEAM'
 types={
  'Solar Rooftop':('Rooftop solar installation, survey to commissioning',[('Site Survey',None,[SUP]),('Structural Design',1,[DE]),('Material Procurement',2,[PM]),('Mounting and Panel Installation',3,[TEAM,SUP]),('Electrical and Commissioning',4,[SUP,DE])]),

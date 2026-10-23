@@ -12,6 +12,8 @@ spring:
     password: ${DB_PASSWORD:sitetrack}
   flyway:
     enabled: true
+    # V1000 (removed) may have been applied on a database created by an earlier build
+    ignore-migration-patterns: "*:missing,*:future"
   servlet:
     multipart:
       max-file-size: 15MB

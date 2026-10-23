@@ -20,6 +20,8 @@ class AdminCredentialsInitializer {
                                        @Value("${app.admin.mobile:}") String rawMobile,
                                        @Value("${app.admin.password:}") String password) {
         return args -> {
+            if (!rawMobile.isBlank() && password.isBlank() && LegacyDemoData.legacyAdminExists(jdbc))
+                throw new IllegalStateException("The Admin still has a built-in password. Set APP_ADMIN_PASSWORD (10 to 72 characters) together with APP_ADMIN_MOBILE.");
             if (!rawMobile.isBlank()) {
                 String mobile = Mobile.normalizeOrNull(rawMobile);
                 if (mobile == null) throw new IllegalStateException("APP_ADMIN_MOBILE is not a valid mobile number");
