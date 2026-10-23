@@ -55,6 +55,11 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(413).body(error("File is too large (max 15 MB)"));
     }
 
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    ResponseEntity<?> handleMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(405).body(error("Method not allowed"));
+    }
+
     @ExceptionHandler(NoResourceFoundException.class)
     ResponseEntity<?> handleNotFound(NoResourceFoundException ex) {
         return ResponseEntity.status(404).body(error("Resource not found"));
