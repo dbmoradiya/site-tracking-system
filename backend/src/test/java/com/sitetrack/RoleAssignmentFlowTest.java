@@ -2,6 +2,7 @@ package com.sitetrack;
 
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -23,8 +24,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** End-to-end API checks against a real (embedded) PostgreSQL with the Flyway schema and seed data. */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "app.admin.mobile=9000000009")
+/** End-to-end API checks against a real (embedded) PostgreSQL with the Flyway schema. The database starts empty; the test creates the people, team and site type it needs. */
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"app.admin.mobile=9000000009", "app.admin.password=SiteTrack123!"})
 class RoleAssignmentFlowTest {
     static EmbeddedPostgres postgres;
 
@@ -47,6 +48,22 @@ class RoleAssignmentFlowTest {
 
     @LocalServerPort int port;
     static final String PASSWORD = "SiteTrack123!";
+    static long siteTypeId = -1;
+
+    /** Creates the sample people, one team and one site type once (the schema ships no sample data). */
+    @BeforeEach
+    void seedOnce() {
+        if (siteTypeId > 0) return;
+        String admin = login("+919000000009");
+        record P(String name, String mobile, String role) {}
+        for (P p : List.of(new P("Kavita Shah", "9000000001", "COORDINATOR"), new P("Rakesh Solanki", "9000000002", "SUPERVISOR"),
+                new P("Anita Desai", "9000000003", "DESIGN_ENGINEER"), new P("Vikram Rao", "9000000004", "PROCUREMENT_MANAGER"),
+                new P("Mehul Parmar", "9000000005", "SUPERVISOR")))
+            post(admin, "/setup/employees", Map.of("name", p.name(), "mobile", p.mobile(), "roles", List.of(p.role()), "password", PASSWORD));
+        post(admin, "/setup/teams", Map.of("name", "Test Team", "contactName", "Lead", "mobile", "9825000000", "notes", ""));
+        siteTypeId = post(admin, "/setup/site-types", Map.of("name", "Test Type", "description", "Test",
+                "stages", List.of(Map.of("name", "Only", "requiredRoles", List.of("SUPERVISOR")))));
+    }
 
     RestClient client() { return RestClient.builder().baseUrl("http://localhost:" + port + "/api").build(); }
 
@@ -84,7 +101,7 @@ class RoleAssignmentFlowTest {
         String admin = login("+919000000009");
         String coordinator = login("+919000000001");
         String supervisor = login("+919000000002");
-        // seeded logins for the two other operational roles exist
+        // the logins for the two other operational roles exist
         assertNotNull(login("+919000000003"));
         assertNotNull(login("+919000000004"));
 
@@ -97,7 +114,7 @@ class RoleAssignmentFlowTest {
 
         long projectA = post(admin, "/projects", Map.of("name", "Project A", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
         long projectB = post(admin, "/projects", Map.of("name", "Project B", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
-        long site = post(admin, "/projects/" + projectA + "/sites", Map.of("name", "Site 1", "siteTypeId", 1, "stages", List.of(
+        long site = post(admin, "/projects/" + projectA + "/sites", Map.of("name", "Site 1", "siteTypeId", siteTypeId, "stages", List.of(
                 Map.of("name", "Design", "requiredRoles", List.of("DESIGN_ENGINEER", "SUPERVISOR")),
                 Map.of("name", "Build", "dependsOnPosition", 1, "requiredRoles", List.of("SUPERVISOR")),
                 Map.of("name", "Handover", "dependsOnPosition", 2, "requiredRoles", List.of()))));
@@ -132,7 +149,7 @@ class RoleAssignmentFlowTest {
         assertEquals("Site 1 renamed", detail.get("name"));
         assertEquals("2027-01-31", detail.get("targetDate"));
         assertEquals(404, send(HttpMethod.PUT, admin, "/sites/" + site + "/project", Map.of("projectId", projectB)));
-        long throwaway = post(admin, "/projects/" + projectB + "/sites", Map.of("name", "Throwaway", "siteTypeId", 1, "stages", List.of(
+        long throwaway = post(admin, "/projects/" + projectB + "/sites", Map.of("name", "Throwaway", "siteTypeId", siteTypeId, "stages", List.of(
                 Map.of("name", "Only", "requiredRoles", List.of("SUPERVISOR")))));
         assertEquals(403, send(HttpMethod.DELETE, coordinator, "/sites/" + throwaway, null));
         assertEquals(200, send(HttpMethod.DELETE, admin, "/sites/" + throwaway, null));
@@ -164,7 +181,7 @@ class RoleAssignmentFlowTest {
         // a Team is not a valid employee role
         assertEquals(400, send(HttpMethod.POST, admin, "/setup/employees", Map.of("name", "Bad Role", "mobile", "9000000055", "roles", List.of("TEAM"), "password", "Sample1234!")));
         long project = post(admin, "/projects", Map.of("name", "Team Project", "customerName", "Acme", "customerMobile", "9999999999", "coordinatorId", coordinatorId));
-        long site = post(admin, "/projects/" + project + "/sites", Map.of("name", "Team Site", "siteTypeId", 1, "stages", List.of(
+        long site = post(admin, "/projects/" + project + "/sites", Map.of("name", "Team Site", "siteTypeId", siteTypeId, "stages", List.of(
                 Map.of("name", "Civil", "requiredRoles", List.of("TEAM", "SUPERVISOR")))));
         Map<String, Object> detail = get(admin, "/sites/" + site, Map.class);
         Map<String, Object> stage = ((List<Map<String, Object>>) detail.get("stages")).get(0);

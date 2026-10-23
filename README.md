@@ -76,14 +76,12 @@ works), and Python 3 only if you want the sample data.
    environment when running `docker compose up --build`, then seed against
    `http://localhost:8081`.
 
-A fresh local database also carries a few built-in sample records from the early
-migrations (a couple of projects, employees and teams). Their old shared-password
-logins are switched off (inactive) by migration V13, so only the Admin you create
-works. The seed script adds its own people next to them, so a few names appear
-twice. For a clean demo, create an empty database for it. The seed script stops
-without changing anything if its data already exists. Do not start the backend with
-`SPRING_PROFILES_ACTIVE=prod` against a local database you care about; see
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+A new database is empty (no sample data and no built-in logins). The first start
+creates the Admin from `APP_ADMIN_MOBILE` and `APP_ADMIN_PASSWORD`. The seed script
+stops without changing anything if its data already exists, so run it once on an
+empty database. A database created by the older incremental migrations needs
+`scripts/adopt-consolidated-schema.sql` once (see
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 If you forget the Admin password, restart the API once with `APP_ADMIN_PASSWORD`
 set to a new value, then remove it.
