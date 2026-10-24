@@ -517,9 +517,9 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
 .stat-card__arrow { position: absolute; right: 6px; bottom: 6px; opacity: .35; }
 .notification-row { display: block; width: 100%; border-bottom: 1px solid var(--mantine-color-gray-2); border-radius: 4px; }
 .notification-row:hover, .notification-row:focus-visible { background: var(--mantine-color-orange-0); }
-.header-icon { display: inline-flex; align-items: center; min-width: 32px; min-height: 32px; justify-content: center; color: var(--mantine-color-gray-7); }
-.nav-profile { border-top: 1px solid var(--mantine-color-gray-3); }
-@media (max-width: 48em) { .main-content { padding: 10px 10px 24px; } .header-icon { min-width: 44px; min-height: 44px; } .mantine-NavLink-root { min-height: 44px; } }
+.nav-profile { display: block; width: 100%; min-height: 44px; text-align: left; border-top: 1px solid var(--mantine-color-gray-3); border-radius: var(--mantine-radius-sm); }
+.nav-profile:hover { background: var(--mantine-color-gray-0); }
+@media (max-width: 48em) { .main-content { padding: 10px 10px 24px; } .mantine-NavLink-root { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 /* Desktop density for pages still using the original markup */
