@@ -588,13 +588,13 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
 
 /* Shreeji Enterprise branding */
 .header-logo { height: 28px; width: auto; display: block; }
-.brand-lockup { display: inline-flex; flex-direction: column; align-items: center; width: fit-content; gap: 2px; padding: 18px 28px 16px; background: #fff; border-radius: 16px; }
-.brand-lockup__logo { height: 84px; width: auto; display: block; }
-.brand-lockup__name { margin-top: 8px; font-size: 1.7rem; font-weight: 800; letter-spacing: .12em; line-height: 1; color: #ff6200; }
-.brand-lockup__sub { font-size: .95rem; font-weight: 700; letter-spacing: .28em; line-height: 1.1; color: #0048a8; }
+.brand-lockup { display: inline-flex; flex-direction: column; align-items: center; width: fit-content; gap: 4px; padding: 28px 44px 26px; background: #fff; border-radius: 20px; }
+.brand-lockup__logo { height: 150px; width: auto; display: block; }
+.brand-lockup__name { margin-top: 14px; font-size: 2.3rem; font-weight: 800; letter-spacing: .12em; line-height: 1; color: #ff6200; }
+.brand-lockup__sub { font-size: 1.2rem; font-weight: 700; letter-spacing: .28em; line-height: 1.1; color: #0048a8; }
 .brand-lockup--mobile { display: none; }
 .login-panel { align-content: center; }
 @media (max-width: 800px) {
   .brand-lockup--mobile { display: inline-flex; margin: 0 auto 18px; padding: 8px 20px; background: transparent; }
-  .brand-lockup--mobile .brand-lockup__logo { height: 64px; }
+  .brand-lockup--mobile .brand-lockup__logo { height: 96px; }
 }
