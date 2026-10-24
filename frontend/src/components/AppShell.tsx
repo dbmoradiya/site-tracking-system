@@ -1,4 +1,4 @@
-import { AppShell as MantineAppShell, Avatar, Burger, Group, NavLink as MantineNavLink, ScrollArea, Stack, Text, UnstyledButton } from '@mantine/core'
+import { AppShell as MantineAppShell, Avatar, Burger, Group, Menu, NavLink as MantineNavLink, ScrollArea, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Bell, Building2, LayoutDashboard, KeyRound, LogOut, Settings } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
@@ -39,8 +39,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Group gap="xs" wrap="nowrap">
           <Text size="xs" c="dimmed" visibleFrom="sm" tt="capitalize">{roleLabel}</Text>
           <Avatar size="sm" color="orange" aria-label={`${user?.name}, ${roleLabel}`}>{initials}</Avatar>
-          <UnstyledButton onClick={() => setPwOpen(true)} aria-label="Change password" title="Change password" className="header-icon"><KeyRound size={18} aria-hidden="true" /></UnstyledButton>
-          <UnstyledButton onClick={logout} aria-label="Sign out" className="header-icon"><LogOut size={18} aria-hidden="true" /></UnstyledButton>
         </Group>
       </Group>
     </MantineAppShell.Header>
@@ -53,10 +51,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             active={to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)} />)}
         </Stack>
       </ScrollArea>
-      <Group mt="auto" gap="xs" p="xs" wrap="nowrap" className="nav-profile">
-        <Avatar size="sm" color="orange">{initials}</Avatar>
-        <div><Text size="sm" fw={600} lh={1.2}>{user?.name}</Text><Text size="xs" c="dimmed" tt="capitalize">{roleLabel}</Text></div>
-      </Group>
+      <Menu position="top-start" width={176}>
+        <Menu.Target>
+          <UnstyledButton mt="auto" p="xs" className="nav-profile" aria-label={`${user?.name}, account menu`}>
+            <Group gap="xs" wrap="nowrap">
+              <Avatar size="sm" color="orange" aria-hidden="true">{initials}</Avatar>
+              <div><Text size="sm" fw={600} lh={1.2}>{user?.name}</Text><Text size="xs" c="dimmed" tt="capitalize">{roleLabel}</Text></div>
+            </Group>
+          </UnstyledButton>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item leftSection={<KeyRound size={16} aria-hidden="true" />} onClick={() => setPwOpen(true)}>Change password</Menu.Item>
+          <Menu.Item leftSection={<LogOut size={16} aria-hidden="true" />} color="red" onClick={logout}>Logout</Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
     </MantineAppShell.Navbar>
     <MantineAppShell.Main>
       <main ref={mainRef} id="main-content" className="main-content" tabIndex={-1}>{children}</main>
