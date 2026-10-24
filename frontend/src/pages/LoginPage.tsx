@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { Alert, Button, PasswordInput, TextInput } from '@mantine/core'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { BrandLockup } from '../components/BrandLockup'
 
 
 export function LoginPage() {
@@ -17,7 +18,7 @@ export function LoginPage() {
   }
   return <main className="login-page">
     <section className="login-hero">
-      <div className="brand brand--light"><span className="brand__mark">ST</span><span>SiteTrack</span></div>
+      <BrandLockup />
       <div className="login-hero__content">
         <span className="eyebrow"><HardHat aria-hidden="true" /> Built for field execution</span>
         <h1>Every Site.<br />Every Stage.<br /><em>Clearly delivered.</em></h1>
@@ -31,6 +32,7 @@ export function LoginPage() {
       <span className="login-hero__footer">English-only product interface</span>
     </section>
     <section className="login-panel">
+      <BrandLockup className="brand-lockup--mobile" />
       <form className="login-card" onSubmit={submit}>
         <span className="login-card__icon"><ShieldCheck aria-hidden="true" /></span>
         <p className="eyebrow">Secure workspace</p>

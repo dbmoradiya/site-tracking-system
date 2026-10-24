@@ -593,3 +593,17 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
 @media (max-width: 820px) { main button, main summary { min-height: 44px; } }
 
 @media (max-width: 820px) { .text-button, .stage-details__toggle, .mantine-FileInput-input, main button.text-button { min-height: 44px !important; } }
+
+/* Shreeji Enterprise branding */
+.header-logo { height: 28px; width: auto; display: block; }
+.brand-lockup { display: inline-flex; flex-direction: column; align-items: center; width: fit-content; gap: 2px; padding: 18px 28px 16px; background: #fff; border-radius: 16px; }
+.brand-lockup__logo { height: 84px; width: auto; display: block; }
+.brand-lockup__name { margin-top: 8px; font-size: 1.7rem; font-weight: 800; letter-spacing: .12em; line-height: 1; color: #ff6200; }
+.brand-lockup__sub { font-size: .95rem; font-weight: 700; letter-spacing: .28em; line-height: 1.1; color: #0048a8; }
+.login-hero .brand-lockup { margin-bottom: 28px; }
+.brand-lockup--mobile { display: none; }
+.login-panel { align-content: center; }
+@media (max-width: 800px) {
+  .brand-lockup--mobile { display: inline-flex; margin: 0 auto 18px; padding: 8px 20px; background: transparent; }
+  .brand-lockup--mobile .brand-lockup__logo { height: 64px; }
+}
