@@ -34,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Group h="100%" px="sm" justify="space-between" wrap="nowrap">
         <Group gap="xs" wrap="nowrap">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Toggle navigation" />
-          <span className="brand__mark">ST</span><Text fw={700}>SiteTrack</Text>
+          <img className="header-logo" src="/logo.png" alt="" /><Text fw={700}>Shreeji Enterprise</Text>
         </Group>
         <Group gap="xs" wrap="nowrap">
           <Text size="xs" c="dimmed" visibleFrom="sm" tt="capitalize">{roleLabel}</Text>

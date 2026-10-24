@@ -337,16 +337,8 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
 .work-card > .card-link { margin-top: auto; }
 
 .login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(400px,1.2fr) minmax(420px,.8fr); background: #fff; }
-.login-hero { position: relative; overflow: hidden; min-height: 100vh; padding: 42px clamp(36px,6vw,90px); display: flex; flex-direction: column; color: #fff; background: var(--navy); }
+.login-hero { position: relative; overflow: hidden; min-height: 100vh; padding: 42px clamp(36px,6vw,90px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; background: var(--navy); }
 .login-hero::after { content: ''; position: absolute; width: 360px; height: 360px; border: 86px solid rgba(255,255,255,.04); border-radius: 50%; right: -120px; bottom: -110px; }
-.login-hero__content { margin: auto 0; max-width: 640px; position: relative; z-index: 1; }
-.login-hero h1 { font-size: clamp(3rem,6vw,5.8rem); }
-.login-hero h1 em { color: #fb923c; font-style: normal; }
-.login-hero__content > p { color: #cbd5e1; max-width: 560px; font-size: 1.08rem; line-height: 1.7; }
-.login-hero ul { display: grid; gap: 13px; padding: 0; margin: 32px 0 0; list-style: none; color: #e2e8f0; }
-.login-hero li { display: flex; align-items: center; gap: 10px; }
-.login-hero li svg { color: #fb923c; }
-.login-hero__footer { color: #94a3b8; font-size: .74rem; position: relative; z-index: 1; }
 .login-panel { display: grid; place-items: center; padding: 40px; background: #f8fafc; }
 .login-card { width: min(420px,100%); display: grid; gap: 19px; padding: 36px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: var(--shadow); }
 .login-card h2 { font-size: 2rem; margin: -4px 0; }
@@ -593,3 +585,16 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
 @media (max-width: 820px) { main button, main summary { min-height: 44px; } }
 
 @media (max-width: 820px) { .text-button, .stage-details__toggle, .mantine-FileInput-input, main button.text-button { min-height: 44px !important; } }
+
+/* Shreeji Enterprise branding */
+.header-logo { height: 28px; width: auto; display: block; }
+.brand-lockup { display: inline-flex; flex-direction: column; align-items: center; width: fit-content; gap: 4px; padding: 28px 44px 26px; background: #fff; border-radius: 20px; }
+.brand-lockup__logo { height: 150px; width: auto; display: block; }
+.brand-lockup__name { margin-top: 14px; font-size: 2.3rem; font-weight: 800; letter-spacing: .12em; line-height: 1; color: #ff6200; }
+.brand-lockup__sub { font-size: 1.2rem; font-weight: 700; letter-spacing: .28em; line-height: 1.1; color: #0048a8; }
+.brand-lockup--mobile { display: none; }
+.login-panel { align-content: center; }
+@media (max-width: 800px) {
+  .brand-lockup--mobile { display: inline-flex; margin: 0 auto 18px; padding: 8px 20px; background: transparent; }
+  .brand-lockup--mobile .brand-lockup__logo { height: 96px; }
+}
