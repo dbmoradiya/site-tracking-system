@@ -17,7 +17,7 @@ export function ChallanViewer({ blob }: { blob: Blob }) {
         const doc = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise
         if (dead || !el) return
         el.innerHTML = ''
-        const width = Math.max(260, el.clientWidth - 2)
+        const width = Math.max(240, el.clientWidth - 12 - 4)
         for (let n = 1; n <= doc.numPages; n++) {
           const page = await doc.getPage(n)
           const base = page.getViewport({ scale: 1 })
@@ -39,6 +39,6 @@ export function ChallanViewer({ blob }: { blob: Blob }) {
   return <div>
     {state === 'loading' && <Text size="sm" c="dimmed" ta="center" py="md"><Loader size="xs" mr={6} />Preparing challan...</Text>}
     {state === 'error' && <Text size="sm" c="red" py="xs">Could not show the challan here. Use Download PDF.</Text>}
-    <div ref={host} style={{ maxHeight: '70vh', overflow: 'auto', background: '#f1f3f5', padding: 6 }} />
+    <div ref={host} style={{ maxHeight: '70vh', overflowY: 'scroll', overflowX: 'hidden', background: '#f1f3f5', padding: 6 }} />
   </div>
 }
