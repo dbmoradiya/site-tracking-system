@@ -38,7 +38,7 @@ export function challanPdf(sale: Sale, vendor: Vendor | undefined, company: Comp
   const FS = 9.5
   const right = (xr: number, str: string, font: 'F1' | 'F2' | 'F3' | 'F4', size = FS) => text(xr - tw(str, size), y, str, font, size)
   const head = () => { text(L, y, 'Item', 'F1', FS); right(380, 'Qty', 'F1'); right(470, 'Rate', 'F1'); right(555, 'GST %', 'F1'); y -= 12; ['Amount', 'SGST', 'CGST', 'Total'].forEach((k, i) => right(L + 128 * (i + 1) + 3, k, 'F1', 8.5)); y -= 5; rule(y); y -= 13 }
-  const slots = (vals: [string, string][], font: 'F2' | 'F1' = 'F2') => vals.forEach(([, v], i) => right(L + 128 * (i + 1) + 3, v, font))
+  const slots = (vals: [string, string][], font: 'F2' | 'F1' = 'F2') => vals.forEach(([, v], i) => right(L + 128 * (i + 1) + 3, v, font, Math.min(FS, FS * 120 / Math.max(tw(v, FS), 120))))
   const needRows = (h: number) => { if (y - h < 60) { need(1e9); head() } }
   head()
   for (const l of sale.items) {
