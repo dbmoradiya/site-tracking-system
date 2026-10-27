@@ -33,20 +33,27 @@ export function challanPdf(sale: Sale, vendor: Vendor | undefined, company: Comp
   text(L, y, 'Sites', 'F1', 9); y -= 12
   for (const id of sale.siteIds) { const s = siteById(id); for (const line of wrap(s ? `${s.name} | ${s.projectName}` : `Site ${id}`, 95)) { need(14); text(L, y, line, 'F2', 9); y -= 11 } }
   y -= 6; rule(y); y -= 14
-  const cols = (a: string, b: string, c: string, d: string, e: string, f: string, g: string, h: string) =>
-    a.padEnd(22).slice(0, 22) + ' ' + b.padStart(13) + ' ' + c.padStart(10) + ' ' + d.padStart(14) + ' ' + e.padStart(4) + ' ' + f.padStart(12) + ' ' + g.padStart(12) + ' ' + h.padStart(14)
-  const longest = Math.max(...sale.items.map(l => { const c = calc(l.qty, l.rate, l.gst); return cols('', `${l.qty.toLocaleString('en-IN')} ${l.uom}`, money(l.rate), money(c.subtotal), String(l.gst), money(c.sgst), money(c.cgst), money(c.total)).length }), 100)
-  const fs = Math.min(8, Math.floor(5150 / (6 * longest)) / 10 * 10 || 8)
-  text(L, y, cols('Item', 'Qty', 'Rate', 'Amount', 'GST%', 'SGST', 'CGST', 'Total'), 'F4', fs); y -= 5; rule(y); y -= 12
+  // Helvetica digit/comma/dot widths so numbers can be right-aligned
+  const tw = (str: string, size: number) => [...str].reduce((a, ch) => a + (/[0-9]/.test(ch) ? 0.556 : /[.,: ]/.test(ch) ? 0.278 : 0.6) * size, 0)
+  const FS = 9.5
+  const right = (xr: number, str: string, font: 'F1' | 'F2' | 'F3' | 'F4', size = FS) => text(xr - tw(str, size), y, str, font, size)
+  const head = () => { text(L, y, 'Item', 'F1', FS); right(380, 'Qty', 'F1'); right(470, 'Rate', 'F1'); right(555, 'GST %', 'F1'); y -= 12; ['Amount', 'SGST', 'CGST', 'Total'].forEach((k, i) => right(L + 128 * (i + 1) + 3, k, 'F1', 8.5)); y -= 5; rule(y); y -= 13 }
+  const slots = (vals: [string, string][], font: 'F2' | 'F1' = 'F2') => vals.forEach(([, v], i) => right(L + 128 * (i + 1) + 3, v, font))
+  const needRows = (h: number) => { if (y - h < 60) { need(1e9); head() } }
+  head()
   for (const l of sale.items) {
     const c = calc(l.qty, l.rate, l.gst)
-    const names = wrap(l.material, 22).flatMap(w => w.length > 22 ? w.match(/.{1,22}/g)! : [w])
-    need(12 * names.length + 4)
-    names.forEach((nm, k) => { text(L, y, k === 0 ? cols(nm, `${l.qty.toLocaleString('en-IN')} ${l.uom}`, money(l.rate), money(c.subtotal), String(l.gst), money(c.sgst), money(c.cgst), money(c.total)) : nm, 'F3', fs); y -= 12 })
+    const names = wrap(l.material, 44).flatMap(w => w.length > 44 ? w.match(/.{1,44}/g)! : [w])
+    needRows(14 * names.length + 20)
+    names.forEach((nm, k) => { text(L, y, nm, 'F1', FS); if (k === 0) { right(380, `${l.qty.toLocaleString('en-IN')} ${l.uom}`, 'F2'); right(470, money(l.rate), 'F2'); right(555, String(l.gst), 'F2') } y -= 13 })
+    slots([['Amount', money(c.subtotal)], ['SGST', money(c.sgst)], ['CGST', money(c.cgst)], ['Total', money(c.total)]]); y -= 7
+    ops().push(`0.9 g 0.3 w 40 ${y + 2} m 555 ${y + 2} l S 0 g`); y -= 9
   }
   const t = docTotals(sale.items)
-  need(90); rule(y + 6); y -= 8
-  text(L, y, cols('Total', '', '', money(t.subtotal), '', money(t.sgst), money(t.cgst), money(t.total)), 'F4', fs); y -= 20
+  needRows(110); rule(y + 6); y -= 8
+  text(L, y, 'All items', 'F1', FS); y -= 13
+  ;['Amount', 'SGST', 'CGST', 'Total'].forEach((k, i) => right(L + 128 * (i + 1) + 3, k, 'F1', 8.5)); y -= 12
+  slots([['Amount', money(t.subtotal)], ['SGST', money(t.sgst)], ['CGST', money(t.cgst)], ['Total', money(t.total)]], 'F1'); y -= 20
   text(L, y, `Grand total (amount + SGST + CGST): Rs. ${money(t.total)}`, 'F1', 11); y -= 50
   text(L, y, 'Received by: ______________________', 'F2', 9); text(360, y, `For ${company.name}`, 'F1', 9); y -= 36
   text(L, y, 'SAMPLE challan made in the browser for the UI preview. The real PDF will be created by the backend when a sale is saved.', 'F2', 7)

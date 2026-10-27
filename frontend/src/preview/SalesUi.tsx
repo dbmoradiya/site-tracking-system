@@ -129,8 +129,8 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
             <div style={{ gridColumn: 'span 2' }}><Select size="xs" label={`Item ${i + 1} - material type`} required searchable placeholder="Search existing material type" data={materialTypes.map(x => x.name)} value={r.material || null} onChange={v => patch(r.key, { material: v ?? '' })} nothingFoundMessage="Not found. New material types are created from a Purchase, not from a sale." />
               {avail !== null && <Text size="xs" c="dimmed" mt={2}>Stock now: {num(avail)} {m!.uom}</Text>}</div>
             <TextInput size="xs" label="Unit" value={m?.uom ?? ''} disabled placeholder="From type" />
-            <NumberInput size="xs" label="Quantity" required min={0} decimalScale={3} value={r.qty} onChange={v => patch(r.key, { qty: v })} placeholder="0" hideControls error={over ? 'More than current stock' : undefined} />
-            <NumberInput size="xs" label="Price (excl. GST)" required min={0} decimalScale={2} value={r.rate} onChange={v => patch(r.key, { rate: v })} leftSection={'\u20B9'} placeholder="0.00" hideControls />
+            <NumberInput size="xs" label="Quantity" required min={0} max={99999} decimalScale={3} value={r.qty} onChange={v => patch(r.key, { qty: v })} placeholder="0" hideControls error={over ? 'More than current stock' : undefined} />
+            <NumberInput size="xs" label="Price (excl. GST)" required min={0} max={999999} decimalScale={2} value={r.rate} onChange={v => patch(r.key, { rate: v })} leftSection={'\u20B9'} placeholder="0.00" hideControls />
             <NativeSelect size="xs" label="GST %" value={r.gst} onChange={e => patch(r.key, { gst: e.currentTarget.value })} data={GST_RATES.map(g => ({ value: String(g), label: `${g}%` }))} />
           </SimpleGrid>
           <Group justify="space-between" mt={6}><Text size="xs" c="dimmed">Amount {inr(c.subtotal)} + SGST {inr(c.sgst)} ({Number(r.gst) / 2}%) + CGST {inr(c.cgst)} ({Number(r.gst) / 2}%) = <b>{inr(c.total)}</b></Text>
