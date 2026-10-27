@@ -3,9 +3,11 @@ import { notifications } from '@mantine/notifications'
 import { ArrowDownToLine, ArrowUpFromLine, ChevronDown, FileText, Filter, History, Info, Package, Pencil, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { CreatableSelect } from '../preview/CreatableSelect'
+import { MaterialSalesHistory, SaleDialog, SalesTab } from '../preview/SalesUi'
+import type { Sale } from '../preview/salesMock'
 import { Pager, usePaged } from '../preview/Pager'
 import { ExportMenu } from '../preview/ExportMenu'
-import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Issue, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../preview/materialMock'
+import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../preview/materialMock'
 import { addPurchase, deletePurchase, findMaterial, findVendor, nextPurchaseId, updatePurchase, useMaterialStore } from '../preview/materialStore'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -14,7 +16,9 @@ const itemsLabel = (p: { items: Line[] }) => p.items.length === 1 ? p.items[0].m
 
 export function MaterialPage() {
   const [tab, setTab] = useState<string | null>('stock')
-  const { purchases, issues } = useMaterialStore()
+  const { purchases, sales } = useMaterialStore()
+  const [saleId, setSaleId] = useState<number | null>(null)
+  const openSale = (id: number) => { setDetail(null); setTab('sales'); setSaleId(id) }
   const [detail, setDetail] = useState<string | null>(null)
   const [openId, setOpenId] = useState<number | null>(null)
   // Clicking a purchase anywhere (stock history or Purchase tab) opens the same dialog on the Purchase tab.
@@ -22,72 +26,71 @@ export function MaterialPage() {
   return <Stack gap="sm" className="page-compact">
     <Group justify="space-between" align="flex-end"><div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Inventory</Text><Title order={2}>Material</Title></div>
       <Badge color="gray" variant="light">UI preview - sample data</Badge></Group>
-    <Alert color="orange" variant="light" p="xs" icon={<Info size={16} aria-hidden="true" />}>Preview only. Everything here is sample data held in the browser and lost on reload. Stock, purchase and issue logic is not built yet.</Alert>
+    <Alert color="orange" variant="light" p="xs" icon={<Info size={16} aria-hidden="true" />}>Preview only. Everything here is sample data held in the browser and lost on reload. Stock, purchase, sales (debit/credit) and challan logic is not built yet.</Alert>
     <Tabs value={tab} onChange={setTab} keepMounted={false}>
       <Tabs.List><Tabs.Tab value="stock" leftSection={<Package size={14} aria-hidden="true" />}>Current stock</Tabs.Tab>
-        <Tabs.Tab value="purchase" leftSection={<ShoppingCart size={14} aria-hidden="true" />}>Purchase</Tabs.Tab></Tabs.List>
-      <Tabs.Panel value="stock" pt="sm"><StockTab purchases={purchases} issues={issues} onOpen={setDetail} /></Tabs.Panel>
+        <Tabs.Tab value="purchase" leftSection={<ShoppingCart size={14} aria-hidden="true" />}>Purchase</Tabs.Tab>
+        <Tabs.Tab value="sales" leftSection={<ArrowUpFromLine size={14} aria-hidden="true" />}>Sales</Tabs.Tab></Tabs.List>
+      <Tabs.Panel value="stock" pt="sm"><StockTab purchases={purchases} sales={sales} onOpen={setDetail} /></Tabs.Panel>
       <Tabs.Panel value="purchase" pt="sm"><PurchaseTab purchases={purchases} onOpen={openPurchase} /></Tabs.Panel>
+      <Tabs.Panel value="sales" pt="sm"><SalesTab onOpen={setSaleId} /></Tabs.Panel>
     </Tabs>
     <Drawer opened={!!detail} onClose={() => setDetail(null)} position="right" size="min(960px, 100%)" title={<Text fw={700}>{detail} - stock detail</Text>}>
-      {detail && <StockDetail material={detail} purchases={purchases} issues={issues} onOpenPurchase={openPurchase} />}
+      {detail && <StockDetail material={detail} purchases={purchases} onOpenPurchase={openPurchase} onOpenSale={openSale} />}
     </Drawer>
     <PurchaseDialog id={openId} onClose={() => setOpenId(null)} />
+    <SaleDialog id={saleId} onClose={() => setSaleId(null)} />
   </Stack>
 }
 
-function stockRows(purchases: Purchase[], issues: Issue[]) {
-  const map = new Map<string, { material: string; uom: string; bought: number; issued: number; lastPurchase: string }>()
+function stockRows(purchases: Purchase[], sales: Sale[]) {
+  const map = new Map<string, { material: string; uom: string; bought: number; debit: number; credit: number; lastPurchase: string }>()
   for (const p of purchases) for (const l of p.items) {
-    const r = map.get(l.material) ?? { material: l.material, uom: l.uom, bought: 0, issued: 0, lastPurchase: p.date }
+    const r = map.get(l.material) ?? { material: l.material, uom: l.uom, bought: 0, debit: 0, credit: 0, lastPurchase: p.date }
     r.bought += l.qty; if (p.date > r.lastPurchase) r.lastPurchase = p.date; map.set(l.material, r)
   }
-  for (const i of issues) { const r = map.get(i.material); if (r) r.issued += i.qty }
-  return [...map.values()].map(r => ({ ...r, stock: r.bought - r.issued })).sort((a, b) => a.material.localeCompare(b.material))
+  for (const x of sales) for (const l of x.items) { const r = map.get(l.material); if (r) { if (x.type === 'DEBIT') r.debit += l.qty; else r.credit += l.qty } }
+  return [...map.values()].map(r => ({ ...r, stock: r.bought - r.debit + r.credit })).sort((a, b) => a.material.localeCompare(b.material))
 }
-
-function StockTab({ purchases, issues, onOpen }: { purchases: Purchase[]; issues: Issue[]; onOpen: (m: string) => void }) {
+function StockTab({ purchases, sales, onOpen }: { purchases: Purchase[]; sales: Sale[]; onOpen: (m: string) => void }) {
   const [q, setQ] = useState('')
-  const rows = useMemo(() => stockRows(purchases, issues).filter(r => r.material.toLowerCase().includes(q.toLowerCase())), [purchases, issues, q])
+  const rows = useMemo(() => stockRows(purchases, sales).filter(r => r.material.toLowerCase().includes(q.toLowerCase())), [purchases, sales, q])
   const pg = usePaged(rows)
   return <Stack gap="xs">
     <Group gap="xs"><TextInput aria-label="Search material types" style={{ flex: '1 1 220px' }} size="xs" leftSection={<Search size={14} />} value={q} onChange={e => setQ(e.currentTarget.value)} placeholder="Search material types" /><Text size="xs" c="dimmed">{rows.length} material types</Text>
-      <ExportMenu filename="current-stock" note={q ? 'as filtered by search' : 'all'} table={{ sheet: 'Current stock', headers: ['Material type', 'UOM', 'Purchased', 'Issued', 'Current stock', 'Last purchase'], rows: rows.map(r => [r.material, r.uom, r.bought, r.issued, r.stock, fmtDate(r.lastPurchase)]) }} /></Group>
+      <ExportMenu filename="current-stock" note={q ? 'as filtered by search' : 'all'} table={{ sheet: 'Current stock', headers: ['Material type', 'UOM', 'Purchased', 'Debit (out)', 'Credit (in)', 'Current stock', 'Last purchase'], rows: rows.map(r => [r.material, r.uom, r.bought, r.debit, r.credit, r.stock, fmtDate(r.lastPurchase)]) }} /></Group>
     <Paper withBorder><Table.ScrollContainer minWidth={640}><Table highlightOnHover>
-      <Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th ta="right">Purchased</Table.Th><Table.Th ta="right">Issued</Table.Th><Table.Th ta="right">Current stock</Table.Th><Table.Th>Last purchase</Table.Th></Table.Tr></Table.Thead>
+      <Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th ta="right">Purchased</Table.Th><Table.Th ta="right">Debit (out)</Table.Th><Table.Th ta="right">Credit (in)</Table.Th><Table.Th ta="right">Current stock</Table.Th><Table.Th>Last purchase</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{pg.rows.map(r => <Table.Tr key={r.material} style={{ cursor: 'pointer' }} tabIndex={0} onClick={() => onOpen(r.material)} onKeyDown={e => e.key === 'Enter' && onOpen(r.material)} aria-label={`Open ${r.material} detail`}>
-        <Table.Td fw={600}>{r.material}</Table.Td><Table.Td>{r.uom}</Table.Td><Table.Td ta="right">{num(r.bought)}</Table.Td><Table.Td ta="right">{num(r.issued)}</Table.Td>
+        <Table.Td fw={600}>{r.material}</Table.Td><Table.Td>{r.uom}</Table.Td><Table.Td ta="right">{num(r.bought)}</Table.Td><Table.Td ta="right">{num(r.debit)}</Table.Td><Table.Td ta="right">{num(r.credit)}</Table.Td>
         <Table.Td ta="right"><Badge color="gray" variant="light" size="md">{num(r.stock)} {r.uom}</Badge></Table.Td><Table.Td>{fmtDate(r.lastPurchase)}</Table.Td>
       </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={pg} label="material types" /></Paper>
-    <Text size="xs" c="dimmed">Click a row to see purchase history (left) and issued history (right). Sample data.</Text>
+    <Text size="xs" c="dimmed">Click a row to see purchase history (left) and sales history (right). Sample data.</Text>
   </Stack>
 }
 
-function StockDetail({ material, purchases, issues: allIssues, onOpenPurchase }: { material: string; purchases: Purchase[]; issues: Issue[]; onOpenPurchase: (id: number) => void }) {
+function StockDetail({ material, purchases, onOpenPurchase, onOpenSale }: { material: string; purchases: Purchase[]; onOpenPurchase: (id: number) => void; onOpenSale: (id: number) => void }) {
+  const { sales } = useMaterialStore()
   // One row per purchase that contains this material; qty and total are for this material's line only.
   const bought = purchases.filter(p => p.items.some(l => l.material === material)).sort(byDateDesc).map(p => ({ p, lines: p.items.filter(l => l.material === material) }))
-  const issued = allIssues.filter(i => i.material === material).sort(byDateDesc)
-  const bPg = usePaged(bought), iPg = usePaged(issued)
+  const bPg = usePaged(bought)
+  const sl = sales.flatMap(x => x.items.filter(l => l.material === material).map(l => ({ type: x.type, qty: l.qty })))
   const uom = bought[0]?.lines[0].uom ?? ''
   const lineQty = (ls: Line[]) => ls.reduce((s, l) => s + l.qty, 0), lineTotal = (ls: Line[]) => ls.reduce((s, l) => s + calc(l.qty, l.rate, l.gst).total, 0)
-  const tb = bought.reduce((s, b) => s + lineQty(b.lines), 0), ti = issued.reduce((s, i) => s + i.qty, 0)
+  const tb = bought.reduce((s, b) => s + lineQty(b.lines), 0), td = sl.filter(x => x.type === 'DEBIT').reduce((a, x) => a + x.qty, 0), tc = sl.filter(x => x.type === 'CREDIT').reduce((a, x) => a + x.qty, 0)
   return <Stack gap="sm">
-    <SimpleGrid cols={3} spacing="xs">
+    <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
       <Paper withBorder p="xs"><Text size="xs" c="dimmed">Purchased</Text><Text fw={700}>{num(tb)} {uom}</Text></Paper>
-      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Issued</Text><Text fw={700}>{num(ti)} {uom}</Text></Paper>
-      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Current stock</Text><Text fw={700} c="green.8">{num(tb - ti)} {uom}</Text></Paper>
+      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Debit (out)</Text><Text fw={700} c="red.8">{num(td)} {uom}</Text></Paper>
+      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Credit (in)</Text><Text fw={700} c="green.8">{num(tc)} {uom}</Text></Paper>
+      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Current stock</Text><Text fw={700} c="green.8">{num(tb - td + tc)} {uom}</Text></Paper>
     </SimpleGrid>
-    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="sm" style={{ alignItems: 'start' }}>
+    <SimpleGrid cols={1} spacing="sm">
       <Paper withBorder><Group gap={6} p="xs" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}><ArrowDownToLine size={14} aria-hidden="true" /><Text fw={700} size="sm">Purchase history</Text><div style={{ marginLeft: 'auto' }}><ExportMenu filename={`${material}-purchase-history`} table={{ sheet: 'Purchase history', headers: ['Purchase ID', 'Bill number', 'Date', 'Vendor', 'Vendor mobile', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Total'], rows: bought.flatMap(({ p, lines }) => lines.map(l => { const c = calc(l.qty, l.rate, l.gst); return [p.purchaseId, p.billNumber, fmtDate(p.date), p.vendor, p.vendorMobile, l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] })) }} /></div></Group>
-        <Table.ScrollContainer minWidth={460}><Table><Table.Thead><Table.Tr><Table.Th>Purchase ID</Table.Th><Table.Th>Date</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
+        <Table.ScrollContainer minWidth={600}><Table><Table.Thead><Table.Tr><Table.Th>Purchase ID</Table.Th><Table.Th>Date</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
           <Table.Tbody>{bPg.rows.map(({ p, lines }) => <Table.Tr key={p.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open purchase ${p.purchaseId}`} onClick={() => onOpenPurchase(p.id)} onKeyDown={e => e.key === 'Enter' && onOpenPurchase(p.id)}><Table.Td fw={600} c="orange.8">{p.purchaseId}{p.items.length > 1 && <Text size="xs" c="dimmed" fw={400}>{p.items.length} items in purchase</Text>}</Table.Td><Table.Td>{fmtDate(p.date)}</Table.Td><Table.Td>{p.vendor}</Table.Td><Table.Td ta="right">{num(lineQty(lines))}</Table.Td><Table.Td ta="right">{inr(lineTotal(lines))}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={bPg} label="purchases" />
         <Text size="xs" c="dimmed" p="xs">Qty and total are for this material only, not the whole purchase.</Text></Paper>
-      <Paper withBorder><Group gap={6} p="xs" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}><ArrowUpFromLine size={14} aria-hidden="true" /><Text fw={700} size="sm">Issued history</Text><div style={{ marginLeft: 'auto' }}><ExportMenu filename={`${material}-issued-history`} table={{ sheet: 'Issued history', headers: ['Date', 'Project', 'Site', 'Issued to', 'Qty', 'UOM'], rows: issued.map(i => [fmtDate(i.date), i.project, i.site, i.issuedTo, i.qty, uom]) }} /></div></Group>
-        {issued.length === 0 ? <Text size="sm" c="dimmed" p="sm">Nothing issued yet.</Text> :
-          <Table.ScrollContainer minWidth={380}><Table><Table.Thead><Table.Tr><Table.Th>Date</Table.Th><Table.Th>Project / Site</Table.Th><Table.Th>Issued to</Table.Th><Table.Th ta="right">Qty</Table.Th></Table.Tr></Table.Thead>
-            <Table.Tbody>{iPg.rows.map(i => <Table.Tr key={i.id}><Table.Td>{fmtDate(i.date)}</Table.Td><Table.Td>{i.project}<Text size="xs" c="dimmed">{i.site}</Text></Table.Td><Table.Td>{i.issuedTo}</Table.Td><Table.Td ta="right">{num(i.qty)}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>}
-        {issued.length > 0 && <Pager p={iPg} label="issues" />}
-        <Text size="xs" c="dimmed" p="xs">Issue fields are placeholders. How material is issued (or sold) is not decided yet.</Text></Paper>
+      <MaterialSalesHistory material={material} onOpen={onOpenSale} />
     </SimpleGrid>
   </Stack>
 }
@@ -136,17 +139,18 @@ const blankRow = (): Row => ({ key: ++rowKey, material: '', uom: '', qty: '', ra
 
 function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Purchase }) {
   const { materialTypes, vendors } = useMaterialStore()
-  const [date, setDate] = useState(existing?.date ?? today()), [vendor, setVendor] = useState(existing?.vendor ?? ''), [mobile, setMobile] = useState(existing?.vendorMobile ?? '')
+  const [date, setDate] = useState(existing?.date ?? today()), [vendor, setVendor] = useState(existing?.vendor ?? ''), [mobile, setMobile] = useState(existing?.vendorMobile ?? ''), [vGst, setVGst] = useState(''), [vAddr, setVAddr] = useState('')
   const [rows, setRows] = useState<Row[]>(() => existing ? existing.items.map(l => ({ key: ++rowKey, material: l.material, uom: l.uom, qty: l.qty, rate: l.rate, gst: String(l.gst) })) : [blankRow()])
   const [bill, setBill] = useState(existing?.billNumber ?? ''), [invoice, setInvoice] = useState<Invoice | undefined>(existing?.invoice), [fileError, setFileError] = useState('')
   const existingVendor = findVendor(vendor), newVendor = !!vendor.trim() && !existingVendor
-  const pickVendor = (v: string) => { setVendor(v); const m = findVendor(v); setMobile(m ? m.mobile : '') }
+  const pickVendor = (v: string) => { setVendor(v); const m = findVendor(v); setMobile(m ? m.mobile : ''); setVGst(m ? m.gst : ''); setVAddr(m ? m.address : '') }
+  const gstBad = newVendor && vGst.trim() !== '' && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(vGst.trim().toUpperCase())
   const patch = (key: number, d: Partial<Row>) => setRows(rs => rs.map(r => r.key === key ? { ...r, ...d } : r))
   const pickMaterial = (key: number, v: string) => { const m = findMaterial(v); patch(key, { material: v, ...(m ? { uom: m.uom } : {}) }) }
   const items = rows.map(r => ({ r, c: calc(Number(r.qty) || 0, Number(r.rate) || 0, Number(r.gst)) }))
   const grand = docTotals(rows.map(r => ({ material: r.material, uom: r.uom, qty: Number(r.qty) || 0, rate: Number(r.rate) || 0, gst: Number(r.gst) })))
   const rowOk = (r: Row) => r.material.trim() && r.uom && Number(r.qty) > 0 && Number(r.rate) > 0
-  const valid = date && vendor.trim() && /^\d{10}$/.test(mobile) && rows.length > 0 && rows.every(rowOk)
+  const valid = date && vendor.trim() && /^\d{10}$/.test(mobile) && !gstBad && rows.length > 0 && rows.every(rowOk)
   const pickFile = (f: File | null) => {
     setFileError(''); if (!f) return
     if (!(f.type === 'application/pdf' || f.type.startsWith('image/'))) { setFileError('Only PDF or image files'); return }
@@ -154,7 +158,7 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
     setInvoice({ name: f.name, type: f.type, url: URL.createObjectURL(f) })
   }
   const save = () => {
-    const data: Snapshot = { date, vendor: vendor.trim(), vendorMobile: mobile, billNumber: bill.trim(), invoice, items: rows.map(r => ({ material: r.material.trim(), uom: r.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
+    const data: Snapshot = { date, vendor: vendor.trim(), vendorMobile: mobile, ...(newVendor ? { vendorGst: vGst.trim().toUpperCase(), vendorAddress: vAddr.trim() } : {}), billNumber: bill.trim(), invoice, items: rows.map(r => ({ material: r.material.trim(), uom: r.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
     if (existing) { updatePurchase(existing.id, data); notifications.show({ color: 'green', title: `${existing.purchaseId} updated`, message: 'Preview only - not saved to any database.' }) }
     else { addPurchase(data); notifications.show({ color: 'green', title: 'Added to sample list', message: 'Preview only - not saved to any database.' }) }
     onDone()
@@ -167,6 +171,8 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
       <TextInput size="xs" label="Bill number" value={bill} onChange={e => setBill(e.currentTarget.value)} placeholder="Vendor bill / invoice no." />
       <CreatableSelect label="Vendor" required placeholder="Search or add vendor" options={vendors.map(v => v.name)} value={vendor} onChange={pickVendor} createLabel="Create vendor" hint={newVendor ? 'New vendor will be created' : existingVendor ? 'Existing vendor - mobile filled from vendor' : undefined} />
       <div>      <TextInput size="xs" label="Vendor mobile" required value={mobile} inputMode="numeric" maxLength={10} disabled={!!existingVendor} onChange={e => setMobile(e.currentTarget.value.replace(/\D/g, ''))} placeholder="10-digit mobile" error={mobile && mobile.length !== 10 ? 'Enter 10 digits' : undefined} /></div>
+      <TextInput size="xs" label="Vendor GST number" value={existingVendor ? existingVendor.gst : vGst} disabled={!!existingVendor} maxLength={15} onChange={e => setVGst(e.currentTarget.value.toUpperCase())} placeholder="15-character GSTIN" error={gstBad ? 'GSTIN looks invalid (15 characters)' : undefined} />
+      <TextInput size="xs" label="Vendor address" value={existingVendor ? existingVendor.address : vAddr} disabled={!!existingVendor} onChange={e => setVAddr(e.currentTarget.value)} placeholder="Vendor address" />
     </SimpleGrid>
     <div>
       <Group justify="space-between" mb={4}><Text fw={700} size="sm">Items ({rows.length})</Text><Button size="compact-sm" variant="light" leftSection={<Plus size={14} />} onClick={() => setRows(rs => [...rs, blankRow()])}>Add item</Button></Group>
@@ -205,8 +211,9 @@ function ItemsTable({ items }: { items: Line[] }) {
 
 // Same dialog is opened from the Purchase tab and from the stock-detail purchase history.
 function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => void }) {
-  const { purchases } = useMaterialStore()
+  const { purchases, vendors } = useMaterialStore()
   const p = purchases.find(x => x.id === id)
+  const vendorInfo = p ? vendors.find(v => v.name === p.vendor) : undefined
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [viewing, setViewing] = useState(false), [showHistory, setShowHistory] = useState(false)
   const close = () => { setEditing(false); setConfirm(false); setViewing(false); setShowHistory(false); onClose() }
   return <>
@@ -215,6 +222,7 @@ function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => voi
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
           <Field label="Purchase ID">{p.purchaseId}</Field><Field label="Purchase date">{fmtDate(p.date)}</Field>
           <Field label="Vendor">{p.vendor}</Field><Field label="Vendor mobile">{p.vendorMobile}</Field>
+          <Field label="Vendor GST number">{vendorInfo?.gst || '-'}</Field><Field label="Vendor address">{vendorInfo?.address || '-'}</Field>
           <Field label="Bill number">{p.billNumber || '-'}</Field>
         </SimpleGrid>
         <div><Text size="xs" c="dimmed" mb={4}>Items ({p.items.length})</Text><ItemsTable items={p.items} /></div>

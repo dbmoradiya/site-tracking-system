@@ -6,6 +6,7 @@ import { Loading } from '../components/Loading'
 import { StatusBadge } from '../components/StatusBadge'
 import { api, del, hasRole, put } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { LinkedSales } from '../preview/SalesUi'
 
 type Site={id:number;name:string;address:string;targetDate:string;status:string;siteType:string;stageCount:number;completedStages:number}
 type CoordinatorHistory={oldCoordinator:string;newCoordinator:string;changedBy:string;changedAt:string}
@@ -28,6 +29,7 @@ export function ProjectDetailPage(){
       <CoordinatorField projectId={project.id} current={project.coordinatorId} name={project.coordinator} employees={coordinators} canEdit={isAdmin} onHistory={()=>setHistoryOpen(true)} onSaved={load}/></SimpleGrid></Paper>
     {error&&<Alert color="red" role="alert">{error}</Alert>}
     <Modal opened={historyOpen} onClose={()=>setHistoryOpen(false)} title="Coordinator history" size="md">{project.coordinatorHistory.length===0?<Text size="sm" c="dimmed">No Coordinator changes recorded.</Text>:<Stack gap="xs">{project.coordinatorHistory.map((item,index)=><div key={`${item.changedAt}-${index}`}><Text size="sm" fw={600}>{item.oldCoordinator==='—'?item.newCoordinator:`${item.oldCoordinator} → ${item.newCoordinator}`}</Text><Text size="xs" c="dimmed">Changed by {item.changedBy} · {new Date(item.changedAt).toLocaleString()}</Text></div>)}</Stack>}</Modal>
+    {isAdmin&&<LinkedSales projectId={project.id}/>}
     <Group justify="space-between"><div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Execution</Text><Title order={4}>Project Sites</Title></div><Text size="sm" c="dimmed">{project.sites.length} total</Text></Group>
     {project.sites.length===0?<Paper withBorder p="md"><Text size="sm" c="dimmed" ta="center">No Sites yet.</Text></Paper>:<Paper withBorder><Table.ScrollContainer minWidth={620}><Table verticalSpacing={6} horizontalSpacing="sm" highlightOnHover fz="sm"><Table.Thead><Table.Tr><Table.Th>Site</Table.Th><Table.Th>Type</Table.Th><Table.Th>Target</Table.Th><Table.Th>Progress</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{project.sites.map(site=>{const progress=site.stageCount?site.completedStages/site.stageCount*100:0;return <Table.Tr key={site.id}>

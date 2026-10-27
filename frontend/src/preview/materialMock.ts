@@ -2,7 +2,7 @@
 export type Invoice = { name: string; type: string; url: string }
 // A purchase is one document (one vendor, one bill, one invoice) with one or more item lines.
 export type Line = { material: string; uom: string; qty: number; rate: number; gst: number }
-export type Snapshot = { date: string; vendor: string; vendorMobile: string; billNumber: string; invoice?: Invoice; items: Line[] }
+export type Snapshot = { date: string; vendor: string; vendorMobile: string; vendorGst?: string; vendorAddress?: string; billNumber: string; invoice?: Invoice; items: Line[] }
 // Prior versions of an edited purchase, with the period each was active. UI preview only: held in browser memory.
 export type PurchaseVersion = Snapshot & { version: number; activeFrom: string; activeTo: string }
 export type Purchase = Snapshot & { id: number; purchaseId: string; activeFrom: string; versions: PurchaseVersion[] }
