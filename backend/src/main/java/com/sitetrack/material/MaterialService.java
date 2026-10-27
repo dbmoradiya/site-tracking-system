@@ -71,7 +71,7 @@ public class MaterialService {
 
     private void checkVendorFields(String mobile, String gst) {
         if (!mobile.matches("\\d{10}")) throw bad("Vendor mobile must be 10 digits");
-        if (gst.length() > 15) throw bad("GST number can be at most 15 characters"); // wrong format is only a warning in the UI
+        if (gst.length() > 40) throw bad("GST number can be at most 40 characters"); // wrong format is only a warning in the UI
     }
 
     // ---------- reference data ----------
@@ -142,7 +142,7 @@ public class MaterialService {
     public Map<String, Object> saveCompany(CompanyIn in) {
         String address = s(in.address()), gst = s(in.gst()).toUpperCase(), mobile = s(in.mobile());
         if (address.isEmpty()) throw bad("Company address is required");
-        if (gst.length() > 15) throw bad("GST number can be at most 15 characters"); // wrong format is only a warning in the UI
+        if (gst.length() > 40) throw bad("GST number can be at most 40 characters"); // wrong format is only a warning in the UI
         if (!mobile.matches("\\d{10}")) throw bad("Mobile must be 10 digits");
         jdbc.sql("update company_profile set address=:a,gst=:g,mobile=:m,updated_at=now() where id=1").param("a", address).param("g", gst).param("m", mobile).update();
         return company();

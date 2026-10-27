@@ -168,8 +168,8 @@ class MaterialFlowTest {
         // vendor rename + validation
         long vid = ((Number) ((List<Map<String, Object>>) get(admin, "/material/bootstrap", Map.class).get("vendors")).get(0).get("id")).longValue();
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "123", "gst", "", "address", "")));
-        assertEquals(200, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "BADGST", "address", "")), "a wrongly formatted GST is saved (UI warns)");
-        assertEquals(400, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "1234567890123456", "address", "")));
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "BADGST1234567890", "address", "")), "a wrongly formatted GST is saved (UI warns)");
+        assertEquals(400, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "1234567890123456789012345678901234567890X", "address", "")));
         assertEquals(200, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders Co", "mobile", "9825012345", "gst", "24BBBBB1111B1Z6", "address", "Vasna")));
         assertEquals("Ambika Traders Co", get(admin, "/material/purchases/" + id1, Map.class).get("vendor"));
     }
@@ -288,7 +288,7 @@ class MaterialFlowTest {
         assertEquals(200, status(HttpMethod.PUT, admin, "/material/company", Map.of("name", "ignored", "address", "Plot 1, Ahmedabad", "gst", "24AAAAA0000A1Z5", "mobile", "9876543210")));
         Map<String, Object> co = (Map<String, Object>) get(admin, "/material/bootstrap", Map.class).get("company");
         assertEquals("Shreeji Enterprise", co.get("name")); assertEquals("Plot 1, Ahmedabad", co.get("address"));
-        assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "1234567890123456", "mobile", "9876543210")));
+        assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "1234567890123456789012345678901234567890X", "mobile", "9876543210")));
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "24AAAAA0000A1Z5", "mobile", "1")));
     }
 }
