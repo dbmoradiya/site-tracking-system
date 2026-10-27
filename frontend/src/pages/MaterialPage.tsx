@@ -90,21 +90,23 @@ function StockDetail({ material, purchases, issues: allIssues, onOpenPurchase }:
 
 function PurchaseTab({ purchases, onOpen }: { purchases: Purchase[]; onOpen: (id: number) => void }) {
   const [open, setOpen] = useState(false)
-  const [from, setFrom] = useState(''), [to, setTo] = useState(''), [vendorF, setVendorF] = useState(''), [materialF, setMaterialF] = useState('')
+  const [from, setFrom] = useState(''), [to, setTo] = useState(''), [vendorF, setVendorF] = useState(''), [materialF, setMaterialF] = useState(''), [idF, setIdF] = useState(''), [billF, setBillF] = useState('')
   const vendorNames = [...new Set(purchases.map(p => p.vendor))].sort(), materialNames = [...new Set(purchases.flatMap(p => p.items.map(l => l.material)))].sort()
   // Material filter keeps every purchase that contains that material (whole purchase shown).
-  const sorted = [...purchases].filter(p => (!from || p.date >= from) && (!to || p.date <= to) && (!vendorF || p.vendor === vendorF) && (!materialF || p.items.some(l => l.material === materialF))).sort(byDateDesc)
-  const active = [from, to, vendorF, materialF].filter(Boolean).length
+  const sorted = [...purchases].filter(p => (!from || p.date >= from) && (!to || p.date <= to) && (!vendorF || p.vendor === vendorF) && (!materialF || p.items.some(l => l.material === materialF)) && (!idF.trim() || p.purchaseId.toLowerCase().includes(idF.trim().toLowerCase())) && (!billF.trim() || (p.billNumber || '').toLowerCase().includes(billF.trim().toLowerCase()))).sort(byDateDesc)
+  const active = [from, to, vendorF, materialF, idF.trim(), billF.trim()].filter(Boolean).length
   const [showFilters, setShowFilters] = useState(false)
-  const chips = [from && `From ${fmtDate(from)}`, to && `To ${fmtDate(to)}`, vendorF && `Vendor: ${vendorF}`, materialF && `Material: ${materialF}`].filter(Boolean) as string[]
-  const clear = () => { setFrom(''); setTo(''); setVendorF(''); setMaterialF('') }
+  const chips = [from && `From ${fmtDate(from)}`, to && `To ${fmtDate(to)}`, vendorF && `Vendor: ${vendorF}`, materialF && `Material: ${materialF}`, idF.trim() && `Purchase ID: ${idF.trim()}`, billF.trim() && `Bill no.: ${billF.trim()}`].filter(Boolean) as string[]
+  const clear = () => { setFrom(''); setTo(''); setVendorF(''); setMaterialF(''); setIdF(''); setBillF('') }
   const lineRows = sorted.flatMap(p => p.items.map(l => { const c = calc(l.qty, l.rate, l.gst); return [p.purchaseId, p.billNumber, fmtDate(p.date), p.vendor, p.vendorMobile, l.material, l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] }))
   return <Stack gap="sm">
     <Group justify="space-between"><div><Text fw={700} size="sm">Purchases</Text><Text size="xs" c="dimmed">Latest first - {sorted.length} of {purchases.length} purchases</Text></div>
       <Group gap="xs"><ExportMenu filename="purchases" note={`${sorted.length} purchases, one row per item line${active ? ', filtered only' : ''}`} table={{ sheet: 'Purchases', headers: ['Purchase ID', 'Bill number', 'Date', 'Vendor', 'Vendor mobile', 'Material type', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Line total'], rows: lineRows }} /><Button variant={active ? 'filled' : 'default'} leftSection={<Filter size={14} />} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>Filters{active ? ` (${active})` : ''}</Button>
         <Button leftSection={<Plus size={14} />} onClick={() => setOpen(true)}>Purchase</Button></Group></Group>
     {!showFilters && active > 0 && <Group gap={6}>{chips.map(c => <Badge key={c} variant="light" color="orange" size="md" tt="none">{c}</Badge>)}<Button size="compact-xs" variant="subtle" onClick={clear}>Clear filters</Button></Group>}
-    <Collapse expanded={showFilters}><Paper withBorder p="xs"><SimpleGrid cols={{ base: 2, md: 5 }} spacing="xs" style={{ alignItems: 'end' }}>
+    <Collapse expanded={showFilters}><Paper withBorder p="xs"><SimpleGrid cols={{ base: 2, md: 4 }} spacing="xs" style={{ alignItems: 'end' }}>
+      <TextInput size="xs" label="Purchase ID" placeholder="e.g. SE261022" value={idF} onChange={e => setIdF(e.currentTarget.value)} />
+      <TextInput size="xs" label="Bill number" placeholder="e.g. JS/2410" value={billF} onChange={e => setBillF(e.currentTarget.value)} />
       <TextInput size="xs" type="date" label="Date from" value={from} onChange={e => setFrom(e.currentTarget.value)} />
       <TextInput size="xs" type="date" label="Date to" value={to} onChange={e => setTo(e.currentTarget.value)} />
       <NativeSelect size="xs" label="Vendor" value={vendorF} onChange={e => setVendorF(e.currentTarget.value)} data={[{ value: '', label: 'All vendors' }, ...vendorNames.map(v => ({ value: v, label: v }))]} />
