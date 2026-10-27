@@ -1,4 +1,4 @@
-import { Accordion, Alert, Badge, Button, Collapse, Drawer, FileInput, Group, Modal, NativeSelect, NumberInput, Paper, SimpleGrid, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core'
+import { Accordion, Alert, Badge, Button, Collapse, Drawer, FileInput, Group, Modal, NativeSelect, NumberInput, Paper, ScrollArea, SimpleGrid, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { ArrowDownToLine, ArrowUpFromLine, ChevronDown, FileText, Filter, History, Info, Package, Pencil, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
@@ -119,7 +119,7 @@ function PurchaseTab({ purchases, onOpen }: { purchases: Purchase[]; onOpen: (id
           <Table.Td>{p.billNumber || <Text span c="dimmed">-</Text>}{p.invoice && <FileText size={12} style={{ marginLeft: 4, verticalAlign: 'middle' }} aria-label="Has invoice" />}</Table.Td>
           <Table.Td>{p.vendor}<Text size="xs" c="dimmed">{p.vendorMobile}</Text></Table.Td>
           <Table.Td ta="right">{inr(t.subtotal)}</Table.Td><Table.Td ta="right">{inr(t.sgst)}</Table.Td><Table.Td ta="right">{inr(t.cgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.total)}</Table.Td></Table.Tr> })}</Table.Tbody></Table></Table.ScrollContainer></Paper>
-    <Modal opened={open} onClose={() => setOpen(false)} size="xl" title="Purchase material"><PurchaseForm onDone={() => setOpen(false)} /></Modal>
+    <Modal opened={open} onClose={() => setOpen(false)} size="xl" title="Purchase material" scrollAreaComponent={ScrollArea.Autosize}><PurchaseForm onDone={() => setOpen(false)} /></Modal>
   </Stack>
 }
 
@@ -184,7 +184,7 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
     </div>
     <Paper withBorder p="xs" bg="gray.0"><Group justify="space-between" wrap="wrap">
       <div><Text size="xs" c="dimmed">Amount (all items)</Text><Text fw={600}>{inr(grand.subtotal)}</Text></div><div><Text size="xs" c="dimmed">SGST</Text><Text fw={600}>{inr(grand.sgst)}</Text></div><div><Text size="xs" c="dimmed">CGST</Text><Text fw={600}>{inr(grand.cgst)}</Text></div><div><Text size="xs" c="dimmed">Grand total (amount + SGST + CGST)</Text><Text fw={700} size="lg" c="orange.8">{inr(grand.total)}</Text></div></Group></Paper>
-    <Group justify="flex-end"><Button variant="default" onClick={onDone}>Cancel</Button><Button leftSection={existing ? <Pencil size={14} /> : <Plus size={14} />} disabled={!valid} onClick={save}>{existing ? 'Save changes' : 'Save purchase'}</Button></Group>
+    <Group justify="flex-end" style={{ position: 'sticky', bottom: 0, background: 'var(--mantine-color-body)', padding: '8px 0', borderTop: '1px solid var(--mantine-color-gray-3)', zIndex: 2 }}><Button variant="default" onClick={onDone}>Cancel</Button><Button leftSection={existing ? <Pencil size={14} /> : <Plus size={14} />} disabled={!valid} onClick={save}>{existing ? 'Save changes' : 'Save purchase'}</Button></Group>
   </Stack>
 }
 
@@ -204,7 +204,7 @@ function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => voi
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [viewing, setViewing] = useState(false), [showHistory, setShowHistory] = useState(false)
   const close = () => { setEditing(false); setConfirm(false); setViewing(false); setShowHistory(false); onClose() }
   return <>
-    <Modal opened={!!p} onClose={close} closeOnEscape={!viewing && !confirm} size="xl" title={p ? <Text fw={700}>{editing ? `Edit purchase ${p.purchaseId}` : `Purchase ${p.purchaseId}`}</Text> : ''}>
+    <Modal opened={!!p} onClose={close} closeOnEscape={!viewing && !confirm} size="xl" scrollAreaComponent={ScrollArea.Autosize} title={p ? <Text fw={700}>{editing ? `Edit purchase ${p.purchaseId}` : `Purchase ${p.purchaseId}`}</Text> : ''}>
       {p && (editing ? <PurchaseForm existing={p} onDone={() => setEditing(false)} /> : <Stack gap="sm">
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
           <Field label="Purchase ID">{p.purchaseId}</Field><Field label="Purchase date">{fmtDate(p.date)}</Field>
@@ -236,7 +236,7 @@ function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => voi
   </>
 }
 
-const fmtStamp = (iso: string) => { const [d, t] = iso.split('T'); return `${fmtDate(d)} ${t.slice(0, 5)}` }
+const fmtStamp = (iso: string) => { const [d, t] = iso.split('T'); return `${fmtDate(d)} ${t.slice(0, 8)}` }
 const lineSig = (l: Line) => `${l.qty} ${l.uom} @ ${inr(l.rate)} GST ${l.gst}%`
 // Plain-text changes between an older version and the next newer one. Items are matched by material type.
 function changesBetween(older: Snapshot, newer: Snapshot) {
