@@ -2,14 +2,14 @@ import { Accordion, Alert, Badge, Button, Collapse, Drawer, FileInput, Group, Mo
 import { notifications } from '@mantine/notifications'
 import { ArrowDownToLine, ArrowUpFromLine, ChevronDown, FileText, Filter, History, Info, Package, Pencil, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
-import { CreatableSelect } from '../preview/CreatableSelect'
-import { MaterialSalesHistory, SaleDialog, SalesTab } from '../preview/SalesUi'
-import type { Sale } from '../preview/salesMock'
-import { InvoiceViewer, ItemsTable } from '../preview/DocViews'
-import { Pager, usePaged } from '../preview/Pager'
-import { ExportMenu } from '../preview/ExportMenu'
-import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../preview/materialMock'
-import { addPurchase, deletePurchase, findMaterial, findVendor, nextPurchaseId, updatePurchase, useMaterialStore } from '../preview/materialStore'
+import { CreatableSelect } from '../material/CreatableSelect'
+import { MaterialSalesHistory, SaleDialog, SalesTab } from '../material/SalesUi'
+import type { Sale } from '../material/sales'
+import { InvoiceViewer, ItemsTable } from '../material/DocViews'
+import { Pager, usePaged } from '../material/Pager'
+import { ExportMenu } from '../material/ExportMenu'
+import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../material/types'
+import { addPurchase, deletePurchase, findMaterial, findVendor, updatePurchase, useMaterialStore } from '../material/materialStore'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const byDateDesc = <T extends { date: string; id: number }>(a: T, b: T) => b.date.localeCompare(a.date) || b.id - a.id
@@ -17,7 +17,7 @@ const itemsLabel = (p: { items: Line[] }) => p.items.length === 1 ? p.items[0].m
 
 export function MaterialPage() {
   const [tab, setTab] = useState<string | null>('stock')
-  const { purchases, sales } = useMaterialStore()
+  const { purchases, sales, loaded, error } = useMaterialStore()
   const [saleId, setSaleId] = useState<number | null>(null)
   const openSale = (id: number) => { setDetail(null); setTab('sales'); setSaleId(id) }
   const [detail, setDetail] = useState<string | null>(null)
@@ -26,8 +26,9 @@ export function MaterialPage() {
   const openPurchase = (id: number) => { setDetail(null); setTab('purchase'); setOpenId(id) }
   return <Stack gap="sm" className="page-compact">
     <Group justify="space-between" align="flex-end"><div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Inventory</Text><Title order={2}>Material</Title></div>
-      <Badge color="gray" variant="light">UI preview - sample data</Badge></Group>
-    <Alert color="orange" variant="light" p="xs" icon={<Info size={16} aria-hidden="true" />}>Preview only. Everything here is sample data held in the browser and lost on reload. Stock, purchase, sales (debit/credit) and challan logic is not built yet.</Alert>
+    </Group>
+    {error && <Alert color="red" variant="light" p="xs">{error}</Alert>}
+    {!loaded && !error && <Text size="sm" c="dimmed">Loading...</Text>}
     <Tabs value={tab} onChange={setTab} keepMounted={false}>
       <Tabs.List><Tabs.Tab value="stock" leftSection={<Package size={14} aria-hidden="true" />}>Current stock</Tabs.Tab>
         <Tabs.Tab value="purchase" leftSection={<ShoppingCart size={14} aria-hidden="true" />}>Purchase</Tabs.Tab>
@@ -66,7 +67,7 @@ function StockTab({ purchases, sales, onOpen }: { purchases: Purchase[]; sales: 
         <Table.Td fw={600}>{r.material}</Table.Td><Table.Td>{r.uom}</Table.Td><Table.Td ta="right">{num(r.bought)}</Table.Td><Table.Td ta="right">{num(r.debit)}</Table.Td><Table.Td ta="right">{num(r.credit)}</Table.Td>
         <Table.Td ta="right"><Badge color="gray" variant="light" size="md">{num(r.stock)} {r.uom}</Badge></Table.Td><Table.Td>{fmtDate(r.lastPurchase)}</Table.Td>
       </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={pg} label="material types" /></Paper>
-    <Text size="xs" c="dimmed">Click a row to see purchase history (left) and sales history (right). Sample data.</Text>
+    <Text size="xs" c="dimmed">Click a row to see purchase history (left) and sales history (right).</Text>
   </Stack>
 }
 
@@ -155,17 +156,21 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
   const pickFile = (f: File | null) => {
     setFileError(''); if (!f) return
     if (!(f.type === 'application/pdf' || f.type.startsWith('image/'))) { setFileError('Only PDF or image files'); return }
-    if (f.size > 5 * 1024 * 1024) { setFileError('Max 5 MB in this preview'); return }
-    setInvoice({ name: f.name, type: f.type, url: URL.createObjectURL(f) })
+    if (f.size > 15 * 1024 * 1024) { setFileError('Max 15 MB'); return }
+    setInvoice({ name: f.name, type: f.type, url: URL.createObjectURL(f), file: f })
   }
-  const save = () => {
+  const [busy, setBusy] = useState(false)
+  const save = async () => {
     const data: Snapshot = { date, vendor: vendor.trim(), vendorMobile: mobile, ...(newVendor ? { vendorGst: vGst.trim().toUpperCase(), vendorAddress: vAddr.trim() } : {}), billNumber: bill.trim(), invoice, items: rows.map(r => ({ material: r.material.trim(), uom: r.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
-    if (existing) { updatePurchase(existing.id, data); notifications.show({ color: 'green', title: `${existing.purchaseId} updated`, message: 'Preview only - not saved to any database.' }) }
-    else { addPurchase(data); notifications.show({ color: 'green', title: 'Added to sample list', message: 'Preview only - not saved to any database.' }) }
-    onDone()
+    setBusy(true)
+    try {
+      if (existing) await updatePurchase(existing.id, data); else await addPurchase(data)
+      notifications.show({ color: 'green', title: existing ? `${existing.purchaseId} updated` : 'Purchase saved', message: 'Saved.' })
+      onDone()
+    } catch (e) { notifications.show({ color: 'red', title: 'Could not save purchase', message: (e as Error).message }) } finally { setBusy(false) }
   }
   return <Stack gap="sm">
-    <Paper withBorder p="xs" bg="gray.0"><Text size="xs" c="dimmed">Purchase ID</Text><Text fw={700}>{existing ? existing.purchaseId : `${nextPurchaseId(date)} (generated on save)`}</Text>
+    <Paper withBorder p="xs" bg="gray.0"><Text size="xs" c="dimmed">Purchase ID</Text><Text fw={700}>{existing ? existing.purchaseId : 'Generated on save'}</Text>
       {existing && <Text size="xs" c="dimmed">The ID does not change when a purchase is edited.</Text>}</Paper>
     <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs">
       <TextInput size="xs" type="date" label="Purchase date" required value={date} onChange={e => setDate(e.currentTarget.value)} />
@@ -197,7 +202,7 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
     </div>
     <Paper withBorder p="xs" bg="gray.0"><Group justify="space-between" wrap="wrap">
       <div><Text size="xs" c="dimmed">Amount (all items)</Text><Text fw={600}>{inr(grand.subtotal)}</Text></div><div><Text size="xs" c="dimmed">SGST</Text><Text fw={600}>{inr(grand.sgst)}</Text></div><div><Text size="xs" c="dimmed">CGST</Text><Text fw={600}>{inr(grand.cgst)}</Text></div><div><Text size="xs" c="dimmed">Grand total (amount + SGST + CGST)</Text><Text fw={700} size="lg" c="orange.8">{inr(grand.total)}</Text></div></Group></Paper>
-    <Group justify="flex-end" style={{ position: 'sticky', bottom: 0, background: 'var(--mantine-color-body)', padding: '8px 0', borderTop: '1px solid var(--mantine-color-gray-3)', zIndex: 2 }}><Button variant="default" onClick={onDone}>Cancel</Button><Button leftSection={existing ? <Pencil size={14} /> : <Plus size={14} />} disabled={!valid} onClick={save}>{existing ? 'Save changes' : 'Save purchase'}</Button></Group>
+    <Group justify="flex-end" style={{ position: 'sticky', bottom: 0, background: 'var(--mantine-color-body)', padding: '8px 0', borderTop: '1px solid var(--mantine-color-gray-3)', zIndex: 2 }}><Button variant="default" onClick={onDone}>Cancel</Button><Button leftSection={existing ? <Pencil size={14} /> : <Plus size={14} />} disabled={!valid || busy} onClick={save}>{existing ? 'Save changes' : 'Save purchase'}</Button></Group>
   </Stack>
 }
 
@@ -235,9 +240,9 @@ function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => voi
       {p?.invoice && <InvoiceViewer invoice={p.invoice} alt={`Invoice ${p.billNumber || p.purchaseId}`} />}
     </Modal>
     <Modal opened={confirm && !!p} onClose={() => setConfirm(false)} title="Delete this purchase?" zIndex={400} size="sm">
-      {p && <Stack gap="sm"><Text size="sm">Delete purchase <b>{p.purchaseId}</b> ({itemsLabel(p)}, {p.items.length} {p.items.length === 1 ? 'item' : 'items'} from {p.vendor})? Current stock will reduce by the quantity of every item in it. This cannot be undone in this preview.</Text>
+      {p && <Stack gap="sm"><Text size="sm">Delete purchase <b>{p.purchaseId}</b> ({itemsLabel(p)}, {p.items.length} {p.items.length === 1 ? 'item' : 'items'} from {p.vendor})? Current stock will reduce by the quantity of every item in it. It is removed from lists and stock; the record, its edit history and invoice file are kept.</Text>
         <Group justify="flex-end"><Button variant="default" onClick={() => setConfirm(false)}>Cancel</Button>
-          <Button color="red" leftSection={<Trash2 size={14} />} onClick={() => { deletePurchase(p.id); notifications.show({ color: 'red', title: `${p.purchaseId} deleted`, message: 'Preview only - sample data.' }); close() }}>Delete purchase</Button></Group></Stack>}
+          <Button color="red" leftSection={<Trash2 size={14} />} onClick={async () => { try { const w = await deletePurchase(p.id); notifications.show({ color: 'red', title: `${p.purchaseId} deleted`, message: 'Removed from lists and stock. History is kept.' }); if (w.length) notifications.show({ color: 'yellow', title: 'Stock warning', message: w.join('. '), autoClose: 8000 }); close() } catch (e) { notifications.show({ color: 'red', title: 'Could not delete', message: (e as Error).message }) } }}>Delete purchase</Button></Group></Stack>}
     </Modal>
   </>
 }
@@ -249,7 +254,7 @@ function changesBetween(older: Snapshot, newer: Snapshot) {
   const out: string[] = []
   const head: [string, string, string][] = [['Date', older.date, newer.date], ['Vendor', older.vendor, newer.vendor], ['Vendor mobile', older.vendorMobile, newer.vendorMobile], ['Bill number', older.billNumber, newer.billNumber]]
   for (const [l, a, b] of head) if (a !== b) out.push(`${l}: ${a || '-'} \u2192 ${b || '-'}`)
-  if (older.invoice?.url !== newer.invoice?.url) out.push(`Invoice: ${older.invoice?.name ?? 'none'} \u2192 ${newer.invoice?.name ?? 'none'}`)
+  if (older.invoice?.name !== newer.invoice?.name) out.push(`Invoice: ${older.invoice?.name ?? 'none'} \u2192 ${newer.invoice?.name ?? 'none'}`)
   for (const o of older.items) { const n = newer.items.find(x => x.material === o.material); if (!n) out.push(`Item removed: ${o.material} (${lineSig(o)})`); else if (lineSig(o) !== lineSig(n)) out.push(`${o.material}: ${lineSig(o)} \u2192 ${lineSig(n)}`) }
   for (const n of newer.items) if (!older.items.some(x => x.material === n.material)) out.push(`Item added: ${n.material} (${lineSig(n)})`)
   return out
@@ -271,6 +276,5 @@ function VersionHistory({ p }: { p: Purchase }) {
             <ItemsTable items={v.items} />
             <div><Text size="xs" c="dimmed">Replaced by the next version with these changes</Text>{ch.map(x => <Text key={x} size="xs">{x}</Text>)}</div>
           </Stack></Accordion.Panel></Accordion.Item> })}</Accordion>}
-    <Text size="xs" c="dimmed">Not decided yet: who made each edit, and whether history is kept or removed when a purchase is deleted.</Text>
   </Stack>
 }

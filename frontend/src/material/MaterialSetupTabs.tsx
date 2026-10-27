@@ -2,16 +2,16 @@ import { Button, Group, Modal, NativeSelect, Paper, Stack, Table, Text, TextInpu
 import { notifications } from '@mantine/notifications'
 import { Pencil, Plus, Save } from 'lucide-react'
 import { useState } from 'react'
-import { UOMS } from './materialMock'
+import { UOMS } from './types'
 import { addMaterialType, addVendor, editMaterialType, editVendor, findMaterial, findVendor, setCompany, useMaterialStore, type MaterialType, type Vendor } from './materialStore'
 
-// UI PREVIEW ONLY: Setup tabs for Material types and Vendors. Items created in the Purchase form appear here.
+// Setup tabs for Material types, Vendors and Company. Material types created in the Purchase form appear here.
 export function MaterialTypesTab() {
   const { materialTypes, purchases } = useMaterialStore()
   const [sel, setSel] = useState<{ old: string; name: string; uom: string } | null>(null)
   const dupe = sel && sel.name.trim() && sel.name.trim().toLowerCase() !== sel.old.toLowerCase() && !!findMaterial(sel.name)
-  const used = !!sel?.old && purchases.some(p => p.items.some(l => l.material === sel.old))
-  const save = () => { if (!sel) return; const next: MaterialType = { name: sel.name.trim(), uom: used ? (findMaterial(sel.old)?.uom ?? sel.uom) : sel.uom }; sel.old ? editMaterialType(sel.old, next) : addMaterialType(next); notifications.show({ color: 'green', message: 'Saved in preview only' }); setSel(null) }
+  const used = !!sel?.old && (findMaterial(sel.old)?.usedCount ?? 0) > 0
+  const save = async () => { if (!sel) return; const next: MaterialType = { name: sel.name.trim(), uom: used ? (findMaterial(sel.old)?.uom ?? sel.uom) : sel.uom }; try { if (sel.old) await editMaterialType(sel.old, next); else await addMaterialType(next); notifications.show({ color: 'green', message: 'Saved' }); setSel(null) } catch (e) { notifications.show({ color: 'red', title: 'Could not save', message: (e as Error).message }) } }
   return <Stack gap="xs">
     <Group justify="space-between"><div><Title order={4}>Material Types</Title><Text size="xs" c="dimmed">{materialTypes.length} types - added automatically from the Purchase form</Text></div>
       <Button leftSection={<Plus size={14} />} onClick={() => setSel({ old: '', name: '', uom: '' })}>Add Material Type</Button></Group>
@@ -29,7 +29,7 @@ export function VendorsTab() {
   const { vendors, purchases, sales } = useMaterialStore()
   const [sel, setSel] = useState<{ old: string; name: string; mobile: string; gst: string; address: string } | null>(null)
   const dupe = sel && sel.name.trim() && sel.name.trim().toLowerCase() !== sel.old.toLowerCase() && !!findVendor(sel.name)
-  const save = () => { if (!sel) return; const next: Vendor = { name: sel.name.trim(), mobile: sel.mobile, gst: sel.gst.trim().toUpperCase(), address: sel.address.trim() }; sel.old ? editVendor(sel.old, next) : addVendor(next); notifications.show({ color: 'green', message: 'Saved in preview only' }); setSel(null) }
+  const save = async () => { if (!sel) return; const next: Vendor = { name: sel.name.trim(), mobile: sel.mobile, gst: sel.gst.trim().toUpperCase(), address: sel.address.trim() }; try { if (sel.old) await editVendor(sel.old, next); else await addVendor(next); notifications.show({ color: 'green', message: 'Saved' }); setSel(null) } catch (e) { notifications.show({ color: 'red', title: 'Could not save', message: (e as Error).message }) } }
   return <Stack gap="xs">
     <Group justify="space-between"><div><Title order={4}>Vendors</Title><Text size="xs" c="dimmed">{vendors.length} vendors - one list for purchases and sales</Text></div>
       <Button leftSection={<Plus size={14} />} onClick={() => setSel({ old: '', name: '', mobile: '', gst: '', address: '' })}>Add Vendor</Button></Group>
@@ -45,20 +45,20 @@ export function VendorsTab() {
   </Stack>
 }
 
-// Company Setup: Shreeji Enterprise address, GST number and mobile. These print on the challan. Sample values until the user edits them.
+// Company Setup: Shreeji Enterprise address, GST number and mobile. These print on the challan.
 export function CompanyTab() {
   const { company } = useMaterialStore()
   const [edit, setEdit] = useState(false), [d, setD] = useState(company)
   const ok = d.address.trim() && /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(d.gst.trim().toUpperCase()) && /^\d{10}$/.test(d.mobile)
   return <Stack gap="xs">
-    <Group justify="space-between"><div><Title order={4}>Company Setup</Title><Text size="xs" c="dimmed">Printed on the challan. Values shown are sample values - edit them.</Text></div>
+    <Group justify="space-between"><div><Title order={4}>Company Setup</Title><Text size="xs" c="dimmed">Printed on the challan.</Text></div>
       {!edit && <Button leftSection={<Pencil size={14} />} onClick={() => { setD(company); setEdit(true) }}>Edit</Button>}</Group>
     <Paper withBorder p="sm"><Stack gap="sm" maw={560}>
       <TextInput size="xs" label="Company name" value={company.name} disabled />
       <TextInput size="xs" label="Address" required value={edit ? d.address : company.address} disabled={!edit} onChange={e => setD({ ...d, address: e.currentTarget.value })} />
       <TextInput size="xs" label="GST number" required value={edit ? d.gst : company.gst} disabled={!edit} maxLength={15} onChange={e => setD({ ...d, gst: e.currentTarget.value.toUpperCase() })} error={edit && d.gst && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(d.gst) ? 'GSTIN looks invalid (15 characters)' : undefined} />
       <TextInput size="xs" label="Mobile number" required value={edit ? d.mobile : company.mobile} disabled={!edit} inputMode="numeric" maxLength={10} onChange={e => setD({ ...d, mobile: e.currentTarget.value.replace(/\D/g, '') })} error={edit && d.mobile && d.mobile.length !== 10 ? 'Enter 10 digits' : undefined} />
-      {edit && <Group justify="flex-end"><Button variant="default" onClick={() => setEdit(false)}>Cancel</Button><Button leftSection={<Save size={14} />} disabled={!ok} onClick={() => { setCompany({ ...d, gst: d.gst.trim().toUpperCase(), address: d.address.trim() }); notifications.show({ color: 'green', message: 'Saved in preview only' }); setEdit(false) }}>Save changes</Button></Group>}
+      {edit && <Group justify="flex-end"><Button variant="default" onClick={() => setEdit(false)}>Cancel</Button><Button leftSection={<Save size={14} />} disabled={!ok} onClick={async () => { try { await setCompany({ ...d, gst: d.gst.trim().toUpperCase(), address: d.address.trim() }); notifications.show({ color: 'green', message: 'Saved' }); setEdit(false) } catch (e) { notifications.show({ color: 'red', title: 'Could not save', message: (e as Error).message }) } }}>Save changes</Button></Group>}
     </Stack></Paper>
   </Stack>
 }

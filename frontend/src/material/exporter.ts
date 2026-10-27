@@ -1,4 +1,4 @@
-// UI PREVIEW ONLY: client-side export of the sample data shown on screen. Not connected to any backend or real stock.
+// Client-side export of the rows shown on screen.
 export type Cell = string | number
 export type Table = { sheet: string; headers: string[]; rows: Cell[][] }
 

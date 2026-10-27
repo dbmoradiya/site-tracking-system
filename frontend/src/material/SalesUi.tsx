@@ -1,4 +1,4 @@
-// UI PREVIEW ONLY: Sales (debit / credit) screens with sample data held in the browser. No API, database, stock or challan backend.
+// Sales (debit / credit) screens: admin Sales tab, sale dialog, history, and read-only linked sales on project and site pages.
 import { Accordion, Badge, Button, Collapse, Group, Modal, MultiSelect, NativeSelect, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { ChevronDown, Download, FileText, Filter, History, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -8,10 +8,10 @@ import { ExportMenu } from './ExportMenu'
 import { Pager, usePaged } from './Pager'
 import { ChallanViewer } from './ChallanViewer'
 import { ItemsTable } from './DocViews'
-import { challanPdf } from './challanPdf'
-import { GST_RATES, calc, docTotals, fmtDate, inr, num, type Line, type Purchase } from './materialMock'
-import { addSale, deleteSale, findMaterial, findVendor, nextSaleId, updateSale, useMaterialStore, type Vendor } from './materialStore'
-import { PREVIEW_SITES, siteById, siteLabel, type Sale, type SaleSnap, type SaleType, type SaleVersion } from './salesMock'
+import { api, apiBlob } from '../lib/api'
+import { GST_RATES, calc, docTotals, fmtDate, inr, num, type Line, type Purchase } from './types'
+import { addSale, deleteSale, findMaterial, findVendor, rememberSites, siteById, updateSale, useMaterialStore, type Vendor } from './materialStore'
+import { siteLabel, type Sale, type SaleSnap, type SaleType, type SaleVersion } from './sales'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const byDateDesc = (a: Sale, b: Sale) => b.date.localeCompare(a.date) || b.id - a.id
@@ -23,7 +23,7 @@ const Field = ({ label: l, children }: { label: string; children: ReactNode }) =
 
 export const TypeBadge = ({ type }: { type: SaleType }) => <Badge color={type === 'DEBIT' ? 'red' : 'green'} variant="light" size="md" tt="none" style={{ flexShrink: 0, whiteSpace: 'nowrap', overflow: 'visible' }}>{type === 'DEBIT' ? 'Debit - Out' : 'Credit - In'}</Badge>
 
-// Stock effect of sales: debit takes stock out, credit brings it in (preview math only).
+// Stock effect of sales: debit takes stock out, credit brings it in .
 export function stockOf(material: string, purchases: Purchase[], sales: Sale[], skipSaleId?: number) {
   let q = 0
   for (const p of purchases) for (const l of p.items) if (l.material === material) q += l.qty
@@ -33,11 +33,11 @@ export function stockOf(material: string, purchases: Purchase[], sales: Sale[], 
 
 // ---------- Sales tab ----------
 export function SalesTab({ onOpen }: { onOpen: (id: number) => void }) {
-  const { sales, vendors, materialTypes } = useMaterialStore()
+  const { sales, vendors, materialTypes, sites } = useMaterialStore()
   const [formOpen, setFormOpen] = useState(false), [showFilters, setShowFilters] = useState(false)
   const [f, setF] = useState({ id: '', from: '', to: '', type: '', vendor: '', material: '', site: '', project: '' })
   const set = (d: Partial<typeof f>) => setF(x => ({ ...x, ...d }))
-  const projects = [...new Map(PREVIEW_SITES.map(s => [s.projectId, s.projectName])).entries()]
+  const projects = [...new Map(sites.map(s => [s.projectId, s.projectName])).entries()]
   const sorted = useMemo(() => [...sales].filter(s =>
     (!f.id.trim() || s.saleId.toLowerCase().includes(f.id.trim().toLowerCase())) && (!f.from || s.date >= f.from) && (!f.to || s.date <= f.to) && (!f.type || s.type === f.type) && (!f.vendor || s.vendor === f.vendor)
     && (!f.material || s.items.some(l => l.material === f.material)) && (!f.site || s.siteIds.includes(Number(f.site)))
@@ -61,7 +61,7 @@ export function SalesTab({ onOpen }: { onOpen: (id: number) => void }) {
       <TextInput size="xs" type="date" label="Date to" value={f.to} onChange={e => set({ to: e.currentTarget.value })} />
       <NativeSelect size="xs" label="Vendor" value={f.vendor} onChange={e => set({ vendor: e.currentTarget.value })} data={[{ value: '', label: 'All vendors' }, ...vendors.map(v => ({ value: v.name, label: v.name }))]} />
       <NativeSelect size="xs" label="Material type (any item)" value={f.material} onChange={e => set({ material: e.currentTarget.value })} data={[{ value: '', label: 'All material types' }, ...materialTypes.map(m => ({ value: m.name, label: m.name }))]} />
-      <NativeSelect size="xs" label="Site" value={f.site} onChange={e => set({ site: e.currentTarget.value })} data={[{ value: '', label: 'All sites' }, ...PREVIEW_SITES.map(s => ({ value: String(s.id), label: siteLabel(s) }))]} />
+      <NativeSelect size="xs" label="Site" value={f.site} onChange={e => set({ site: e.currentTarget.value })} data={[{ value: '', label: 'All sites' }, ...sites.map(s => ({ value: String(s.id), label: siteLabel(s) }))]} />
       <NativeSelect size="xs" label="Project" value={f.project} onChange={e => set({ project: e.currentTarget.value })} data={[{ value: '', label: 'All projects' }, ...projects.map(([id, n]) => ({ value: String(id), label: n }))]} />
     </SimpleGrid><Group justify="flex-end" mt={6}><Button size="xs" variant="subtle" onClick={clear} disabled={!active}>Clear filters{active ? ` (${active})` : ''}</Button></Group></Paper></Collapse>
     <Paper withBorder><Table.ScrollContainer minWidth={1020} type="native"><Table highlightOnHover fz="xs" horizontalSpacing={8}><Table.Thead><Table.Tr><Table.Th miw={118}>Sale ID</Table.Th><Table.Th miw={110}>Type</Table.Th><Table.Th miw={84}>Date</Table.Th><Table.Th>Items</Table.Th><Table.Th>Vendor</Table.Th><Table.Th>Sites</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
@@ -81,7 +81,7 @@ let rowKey = 0
 const blankRow = (): Row => ({ key: ++rowKey, material: '', qty: '', rate: '', gst: '18' })
 
 function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale }) {
-  const { materialTypes, vendors, purchases, sales } = useMaterialStore()
+  const { materialTypes, vendors, purchases, sales, sites } = useMaterialStore()
   const [type, setType] = useState<SaleType | ''>(existing?.type ?? '')
   const [date, setDate] = useState(existing?.date ?? today()), [vendor, setVendor] = useState(existing?.vendor ?? '')
   const [mobile, setMobile] = useState(''), [gst, setGst] = useState(''), [address, setAddress] = useState('')
@@ -96,15 +96,20 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
   const gstBad = newVendor && gst.trim() !== '' && !GST_RE.test(gst.trim().toUpperCase())
   const rowOk = (r: Row) => !!findMaterial(r.material) && Number(r.qty) > 0 && Number(r.rate) > 0
   const valid = !!type && !!date && !!vendor.trim() && (!newVendor || /^\d{10}$/.test(mobile)) && !gstBad && siteIds.length > 0 && rows.length > 0 && rows.every(rowOk)
-  const save = () => {
+  const [busy, setBusy] = useState(false)
+  const save = async () => {
     const data: SaleSnap = { type: type as SaleType, date, vendor: vendor.trim(), siteIds: siteIds.map(Number), items: rows.map(r => ({ material: r.material, uom: findMaterial(r.material)!.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
     const nv: Vendor | undefined = newVendor ? { name: vendor.trim(), mobile, gst: gst.trim().toUpperCase(), address: address.trim() } : undefined
-    if (existing) { updateSale(existing.id, data, nv); notifications.show({ color: 'green', title: `${existing.saleId} updated`, message: 'Preview only - not saved to any database.' }) }
-    else { addSale(data, nv); notifications.show({ color: 'green', title: 'Sale added to sample list', message: 'Preview only - no challan was generated by a backend.' }) }
-    onDone()
+    setBusy(true)
+    try {
+      const warnings = existing ? await updateSale(existing.id, data, nv) : await addSale(data, nv)
+      notifications.show({ color: 'green', title: existing ? `${existing.saleId} updated` : 'Sale saved', message: 'Saved.' })
+      if (warnings.length) notifications.show({ color: 'yellow', title: 'Stock warning', message: warnings.join('. '), autoClose: 8000 })
+      onDone()
+    } catch (e) { notifications.show({ color: 'red', title: 'Could not save sale', message: (e as Error).message }) } finally { setBusy(false) }
   }
   return <Stack gap="sm">
-    <Paper withBorder p="xs" bg="gray.0"><Text size="xs" c="dimmed">Sale ID</Text><Text fw={700}>{existing ? existing.saleId : `${nextSaleId(date)} (generated on save)`}</Text>
+    <Paper withBorder p="xs" bg="gray.0"><Text size="xs" c="dimmed">Sale ID</Text><Text fw={700}>{existing ? existing.saleId : 'Generated on save'}</Text>
       {existing && <Text size="xs" c="dimmed">The ID does not change when a sale is edited.</Text>}</Paper>
     <div><Text size="xs" fw={500} mb={4}>Sale type <span style={{ color: 'var(--mantine-color-red-6)' }}>*</span></Text>
       <Group gap="xs" role="group" aria-label="Sale type">
@@ -120,7 +125,7 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
       <TextInput size="xs" label="Vendor address" value={showAddr} disabled={!!ev} onChange={e => setAddress(e.currentTarget.value)} placeholder="Vendor address" />
     </SimpleGrid>
     <MultiSelect size="xs" label="Sites" required searchable clearable placeholder={siteIds.length ? undefined : 'Select one or more sites'} value={siteIds} onChange={setSiteIds}
-      data={PREVIEW_SITES.map(s => ({ value: String(s.id), label: siteLabel(s) }))} nothingFoundMessage="No such site" description="Shown as Site | Project. Sites are only linked to this sale; the item quantity reduces (or adds to) stock once." />
+      data={sites.map(s => ({ value: String(s.id), label: siteLabel(s) }))} nothingFoundMessage="No such site" description="Shown as Site | Project. Sites are only linked to this sale; the item quantity reduces (or adds to) stock once." />
     <div>
       <Group justify="space-between" mb={4}><Text fw={700} size="sm">Items ({rows.length})</Text><Button size="compact-sm" variant="light" leftSection={<Plus size={14} />} onClick={() => setRows(rs => [...rs, blankRow()])}>Add item</Button></Group>
       <Stack gap="xs">{items.map(({ r, c, m }, i) => {
@@ -142,8 +147,8 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
     </div>
     <Paper withBorder p="xs" bg="gray.0"><Group justify="space-between" wrap="wrap">
       <div><Text size="xs" c="dimmed">Amount (all items)</Text><Text fw={600}>{inr(grand.subtotal)}</Text></div><div><Text size="xs" c="dimmed">SGST</Text><Text fw={600}>{inr(grand.sgst)}</Text></div><div><Text size="xs" c="dimmed">CGST</Text><Text fw={600}>{inr(grand.cgst)}</Text></div><div><Text size="xs" c="dimmed">Grand total (amount + SGST + CGST)</Text><Text fw={700} size="lg" c="orange.8">{inr(grand.total)}</Text></div></Group></Paper>
-    <Text size="xs" c="dimmed">After saving, the real build will generate a challan PDF on the backend. The preview shows a sample challan for View and Download.</Text>
-    <Group justify="flex-end" style={{ position: 'sticky', bottom: 0, background: 'var(--mantine-color-body)', padding: '8px 0', borderTop: '1px solid var(--mantine-color-gray-3)', zIndex: 2 }}><Button variant="default" onClick={onDone}>Cancel</Button><Button color={type === 'DEBIT' ? 'red' : type === 'CREDIT' ? 'green' : 'orange'} leftSection={existing ? <Pencil size={14} /> : <Plus size={14} />} disabled={!valid} onClick={save}>{existing ? 'Save changes' : 'Save sale'}</Button></Group>
+    <Text size="xs" c="dimmed">After saving, a challan PDF is generated by the server for View and Download.</Text>
+    <Group justify="flex-end" style={{ position: 'sticky', bottom: 0, background: 'var(--mantine-color-body)', padding: '8px 0', borderTop: '1px solid var(--mantine-color-gray-3)', zIndex: 2 }}><Button variant="default" onClick={onDone}>Cancel</Button><Button color={type === 'DEBIT' ? 'red' : type === 'CREDIT' ? 'green' : 'orange'} leftSection={existing ? <Pencil size={14} /> : <Plus size={14} />} disabled={!valid || busy} onClick={save}>{existing ? 'Save changes' : 'Save sale'}</Button></Group>
   </Stack>
 }
 
@@ -174,22 +179,28 @@ function SaleHistory({ s }: { s: Sale }) {
             <ItemsTable items={v.items} />
             <div><Text size="xs" c="dimmed">Replaced by the next version with these changes</Text>{changes(v, newer).map(x => <Text key={x} size="xs">{x}</Text>)}</div>
           </Stack></Accordion.Panel></Accordion.Item> })}</Accordion>}
-    <Text size="xs" c="dimmed">Not decided yet: who made each edit, and whether history is kept or removed when a sale is deleted.</Text>
   </Stack>
 }
 
-export function SaleDialog({ id, onClose, readOnly = false, scopeProjectId }: { id: number | null; onClose: () => void; readOnly?: boolean; scopeProjectId?: number }) {
-  const { sales, vendors, company } = useMaterialStore()
-  const raw = sales.find(x => x.id === id)
-  // Coordinator scope (preview): sites of other projects are removed from the popup, history and challan.
-  const s = useMemo(() => { if (!raw || scopeProjectId === undefined) return raw; const keep = (ids: number[]) => ids.filter(i => siteById(i)?.projectId === scopeProjectId); return { ...raw, siteIds: keep(raw.siteIds), versions: raw.versions.map(v => ({ ...v, siteIds: keep(v.siteIds) })) } }, [raw, scopeProjectId])
-  const hiddenSites = !!raw && !!s && raw.siteIds.length !== s.siteIds.length
-  const v = s ? vendors.find(x => x.name === s.vendor) : undefined
+export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number | null; onClose: () => void; readOnly?: boolean; sale?: Sale }) {
+  const { sales, vendors } = useMaterialStore()
+  // Admin: the live store copy (fresh after edits). Read-only viewers: the server-scoped copy passed in.
+  const s = readOnly ? sale : (sales.find(x => x.id === id) ?? sale)
+  const vi = s?.vendorInfo ?? vendors.find(x => x.name === s?.vendor)
+  const v = vi ? { mobile: vi.mobile, gst: vi.gst, address: vi.address } : undefined
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [challan, setChallan] = useState(false), [showHistory, setShowHistory] = useState(false)
-  const close = () => { setEditing(false); setConfirm(false); setChallan(false); setShowHistory(false); onClose() }
-  const blob = useMemo(() => s && challan ? challanPdf(s, v, company) : null, [s, v, company, challan])
+  const [blob, setBlob] = useState<Blob | null>(null), [challanErr, setChallanErr] = useState('')
+  const close = () => { setEditing(false); setConfirm(false); setChallan(false); setShowHistory(false); setBlob(null); onClose() }
+  const sid = s?.id
+  useEffect(() => {
+    if (!challan || sid === undefined) return
+    let dead = false; setBlob(null); setChallanErr('')
+    apiBlob(`/material/sales/${sid}/challan`).then(b => { if (!dead) setBlob(b) }).catch(e => { if (!dead) setChallanErr((e as Error).message) })
+    return () => { dead = true }
+  }, [challan, sid, s?.activeFrom])
   const openTab = () => { if (!blob) return; const u = URL.createObjectURL(blob); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60000) }
-  const download = () => { if (!s) return; const u = URL.createObjectURL(challanPdf(s, v, company)); const a = document.createElement('a'); a.href = u; a.download = `challan-${s.saleId}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000) }
+  const download = async () => { if (!s) return; try { const b = blob ?? await apiBlob(`/material/sales/${s.id}/challan`); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `challan-${s.saleId}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000) } catch (e) { notifications.show({ color: 'red', title: 'Could not download challan', message: (e as Error).message }) } }
+  const del = async () => { if (!s) return; try { const w = await deleteSale(s.id); notifications.show({ color: 'red', title: `${s.saleId} deleted`, message: 'Removed from lists and stock. History is kept.' }); if (w.length) notifications.show({ color: 'yellow', title: 'Stock warning', message: w.join('. '), autoClose: 8000 }); close() } catch (e) { notifications.show({ color: 'red', title: 'Could not delete', message: (e as Error).message }) } }
   return <>
     <Modal opened={!!s} onClose={close} closeOnEscape={!challan && !confirm} size="xl" title={s ? <Text fw={700}>{editing ? `Edit sale ${s.saleId}` : `Sale ${s.saleId}`}</Text> : ''}>
       {s && (editing ? <SaleForm existing={s} onDone={() => setEditing(false)} /> : <Stack gap="sm" style={{ minWidth: 0 }}>
@@ -198,10 +209,10 @@ export function SaleDialog({ id, onClose, readOnly = false, scopeProjectId }: { 
           <Field label="Sale date">{fmtDate(s.date)}</Field><Field label="Vendor">{s.vendor}</Field>
           <Field label="Vendor mobile">{v?.mobile || '-'}</Field><Field label="Vendor GST number">{v?.gst || '-'}</Field>
           <Field label="Vendor address">{v?.address || '-'}</Field>
-          <Field label="Sites (Site | Project)"><Group gap={4}>{sitesText(s.siteIds).map(t => <Badge key={t} variant="light" color="gray" tt="none">{t}</Badge>)}</Group>{hiddenSites && <Text size="xs" c="dimmed" fw={400}>Other sites on this sale are outside your assignment and are not shown.</Text>}</Field>
+          <Field label="Sites (Site | Project)"><Group gap={4}>{s.sites.map(siteLabel).map(t => <Badge key={t} variant="light" color="gray" tt="none">{t}</Badge>)}</Group>{readOnly && <Text size="xs" c="dimmed" fw={400}>Only sites of your own projects are listed.</Text>}</Field>
         </SimpleGrid>
         <div><Text size="xs" c="dimmed" mb={4}>Items ({s.items.length})</Text><ItemsTable items={s.items} /></div>
-        <Group justify="space-between" align="center"><div><Text size="xs" c="dimmed">Challan</Text><Text size="sm" fw={600}>challan-{s.saleId}.pdf</Text><Text size="xs" c="dimmed">Sample made in the browser. The real build creates it on the backend.</Text></div>
+        <Group justify="space-between" align="center"><div><Text size="xs" c="dimmed">Challan</Text><Text size="sm" fw={600}>challan-{s.saleId}.pdf</Text></div>
           <Group gap="xs"><Button variant="default" leftSection={<FileText size={14} />} onClick={() => setChallan(true)}>View challan</Button><Button variant="default" leftSection={<Download size={14} />} onClick={download}>Download PDF</Button></Group></Group>
         {readOnly ? <Group justify="space-between" mt="xs"><Text size="xs" c="dimmed">Read only - view access from the project or site page.</Text><Button variant="default" onClick={close}>Close</Button></Group> : <Group justify="space-between" mt="xs"><Button color="red" variant="light" leftSection={<Trash2 size={14} />} onClick={() => setConfirm(true)}>Delete</Button>
           <Group><Button variant="default" onClick={close}>Close</Button><Button leftSection={<Pencil size={14} />} onClick={() => setEditing(true)}>Edit</Button></Group></Group>}
@@ -213,13 +224,13 @@ export function SaleDialog({ id, onClose, readOnly = false, scopeProjectId }: { 
       </Stack>)}
     </Modal>
     <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}` : 'Challan'} zIndex={400}>
-      {s && blob && <div><ChallanViewer blob={blob} />
-        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Sample challan for the preview.</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div>}
+      {s && (challanErr ? <Text size="sm" c="red">{challanErr}</Text> : blob ? <div><ChallanViewer blob={blob} />
+        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Created by the server from the saved sale.</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div> : <Text size="sm" c="dimmed">Loading challan...</Text>)}
     </Modal>
     <Modal opened={confirm && !!s} onClose={() => setConfirm(false)} title="Delete this sale?" zIndex={400} size="sm">
-      {s && <Stack gap="sm"><Text size="sm">Delete sale <b>{s.saleId}</b> ({label(s)}, {s.items.length} {s.items.length === 1 ? 'item' : 'items'}, {s.vendor})? Current stock will {s.type === 'DEBIT' ? 'increase (the material comes back)' : 'reduce'} by the quantity of every item in it. This cannot be undone.</Text>
+      {s && <Stack gap="sm"><Text size="sm">Delete sale <b>{s.saleId}</b> ({label(s)}, {s.items.length} {s.items.length === 1 ? 'item' : 'items'}, {s.vendor})? Current stock will {s.type === 'DEBIT' ? 'increase (the material comes back)' : 'reduce'} by the quantity of every item in it. It is removed from lists and stock; the record and its edit history are kept.</Text>
         <Group justify="flex-end"><Button variant="default" onClick={() => setConfirm(false)}>Cancel</Button>
-          <Button color="red" leftSection={<Trash2 size={14} />} onClick={() => { deleteSale(s.id); notifications.show({ color: 'red', title: `${s.saleId} deleted`, message: 'Preview only - sample data.' }); close() }}>Delete sale</Button></Group></Stack>}
+          <Button color="red" leftSection={<Trash2 size={14} />} onClick={del}>Delete sale</Button></Group></Stack>}
     </Modal>
   </>
 }
@@ -242,18 +253,24 @@ export function MaterialSalesHistory({ material, onOpen }: { material: string; o
 
 // ---------- Linked sales (project / site detail pages) ----------
 export function LinkedSales({ projectId, siteId, readOnly = false }: { projectId?: number; siteId?: number; readOnly?: boolean }) {
-  const { sales } = useMaterialStore()
+  const { sales: storeSales } = useMaterialStore(readOnly)
   const [open, setOpen] = useState(false), [openId, setOpenId] = useState<number | null>(null)
-  const list = sales.filter(s => s.siteIds.some(i => siteId !== undefined ? i === siteId : siteById(i)?.projectId === projectId)).sort(byDateDesc)
+  const [list, setList] = useState<Sale[]>([]), [err, setErr] = useState('')
+  const path = siteId !== undefined ? `/sites/${siteId}/sales` : `/projects/${projectId}/sales`
+  useEffect(() => {
+    let dead = false
+    api<Sale[]>(path).then(l => { if (!dead) { setList([...l].sort(byDateDesc)); setErr(''); l.forEach(x => { rememberSites(x.sites); x.versions.forEach(v => rememberSites(v.sites)) }) } }).catch(e => { if (!dead) setErr((e as Error).message) })
+    return () => { dead = true }
+  }, [path, storeSales])
   const pg = usePaged(list)
   return <Paper withBorder p="xs">
     <Button variant="subtle" size="compact-sm" leftSection={<FileText size={14} />} rightSection={<ChevronDown size={14} style={{ transform: open ? 'rotate(180deg)' : undefined }} />} onClick={() => setOpen(v => !v)} aria-expanded={open}>Linked sales ({list.length})</Button>
-    <Text size="xs" c="dimmed">UI preview - sample sales{readOnly ? '. Read only: sales for this assignment only.' : ''}</Text>
-    <Collapse expanded={open}>{list.length === 0 ? <Text size="sm" c="dimmed" py="xs">No sales linked yet.</Text> : <>
+    {readOnly && <Text size="xs" c="dimmed">Read only: sales linked to your own project.</Text>}
+    <Collapse expanded={open}>{err ? <Text size="sm" c="red" py="xs">{err}</Text> : list.length === 0 ? <Text size="sm" c="dimmed" py="xs">No sales linked yet.</Text> : <>
       <Table.ScrollContainer minWidth={560}><Table highlightOnHover fz="sm"><Table.Thead><Table.Tr><Table.Th>Sale ID</Table.Th><Table.Th>Type</Table.Th><Table.Th>Date</Table.Th><Table.Th>Items</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
         <Table.Tbody>{pg.rows.map(s => <Table.Tr key={s.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open sale ${s.saleId}`} onClick={() => setOpenId(s.id)} onKeyDown={e => e.key === 'Enter' && setOpenId(s.id)}>
           <Table.Td fw={600} c="orange.8">{s.saleId}</Table.Td><Table.Td><TypeBadge type={s.type} /></Table.Td><Table.Td>{fmtDate(s.date)}</Table.Td><Table.Td>{label(s)}</Table.Td><Table.Td>{s.vendor}</Table.Td><Table.Td ta="right" fw={600}>{inr(docTotals(s.items).total)}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>
       <Pager p={pg} label="sales" /></>}</Collapse>
-    <SaleDialog id={openId} onClose={() => setOpenId(null)} readOnly={readOnly} scopeProjectId={readOnly ? (projectId ?? siteById(siteId ?? -1)?.projectId) : undefined} />
+    <SaleDialog id={openId} onClose={() => setOpenId(null)} readOnly={readOnly} sale={list.find(x => x.id === openId)} />
   </Paper>
 }

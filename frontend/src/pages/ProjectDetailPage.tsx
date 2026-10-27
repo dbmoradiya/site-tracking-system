@@ -6,7 +6,7 @@ import { Loading } from '../components/Loading'
 import { StatusBadge } from '../components/StatusBadge'
 import { api, del, hasRole, put } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { LinkedSales } from '../preview/SalesUi'
+import { LinkedSales } from '../material/SalesUi'
 
 type Site={id:number;name:string;address:string;targetDate:string;status:string;siteType:string;stageCount:number;completedStages:number}
 type CoordinatorHistory={oldCoordinator:string;newCoordinator:string;changedBy:string;changedAt:string}

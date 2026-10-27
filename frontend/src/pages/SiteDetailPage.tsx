@@ -8,12 +8,12 @@ import { ActionIcon, Alert, Button, Group, Modal, NativeSelect, Stack, Text, Tex
 import { Pencil, Trash2 } from 'lucide-react'
 import { api, apiBlob, del, hasRole, post, put } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { LinkedSales } from '../preview/SalesUi'
+import { LinkedSales } from '../material/SalesUi'
 
 type StageAssignment={role:string;employeeId:number|null;employeeName:string|null}
 type Stage={id:number;name:string;position:number;status:string;evidenceRequired:boolean;requiredRoles:string[];assignments:StageAssignment[];evidenceCount:number;canManage:boolean;canUpload:boolean}
 type AssignmentHistory={stageId?:number;type:string;role:string;stage?:string;oldValue:string;newValue:string;changedBy:string;changedAt:string}
-type Site={id:number;name:string;address:string;targetDate:string|null;status:string;projectId:number;projectName:string;siteType:string;coordinator:string;teamId:number|null;team:string;canManage:boolean;assignmentHistory:AssignmentHistory[];stages:Stage[]}
+type Site={id:number;name:string;address:string;targetDate:string|null;status:string;projectId:number;projectCoordinatorId:number;projectName:string;siteType:string;coordinator:string;teamId:number|null;team:string;canManage:boolean;assignmentHistory:AssignmentHistory[];stages:Stage[]}
 type Setup={employees:{id:number;name:string;roles:string[]}[];teams:{id:number;name:string}[]}
 type Evidence={id:number;fileName:string;contentType:string;comment:string;uploadedAt:string;uploadedBy:string}
 type Audit={reviews:{action:string;note:string;createdAt:string;actionBy:string}[]}
@@ -27,7 +27,7 @@ export function SiteDetailPage(){
   if(!site)return error?<div className="page"><Alert color="red" role="alert" mb="xs">{error}</Alert><Button component={Link} to="/projects" variant="default">Back to Projects</Button></div>:<Loading label="Loading Site"/>
   const terminal=site.stages.filter(s=>['APPROVED','COMPLETED'].includes(s.status)).length;const progress=site.stages.length?terminal/site.stages.length*100:0
   return <div className="page"><Link className="back-link" to={`/projects/${site.projectId}`}><ArrowLeft/>{site.projectName}</Link><header className="detail-hero detail-hero--site"><div><div className="detail-hero__meta"><span>{site.siteType}</span><StatusBadge status={site.status}/></div><h1>{site.name}</h1><p>{site.address||'No Site address'} · Project Coordinator: {site.coordinator}{site.targetDate?` · Target: ${site.targetDate}`:''}</p>{hasRole(user,'ADMIN')&&<SiteAdminActions site={site} onSaved={load}/>}</div><div className="completion-ring" style={{'--progress':`${progress*3.6}deg`} as CSSProperties} aria-label={`${Math.round(progress)}% of Stages complete`}><strong>{Math.round(progress)}%</strong><small>complete</small></div></header>{error&&<Alert color="red" role="alert" mb="xs">{error}</Alert>}
-    {!error&&(hasRole(user,'ADMIN')||(hasRole(user,'COORDINATOR')&&user?.employeeId===(site as {projectCoordinatorId?:number}).projectCoordinatorId))&&<LinkedSales siteId={site.id} readOnly={!hasRole(user,'ADMIN')}/>}
+    {!error&&(hasRole(user,'ADMIN')||(hasRole(user,'COORDINATOR')&&user?.employeeId===site.projectCoordinatorId))&&<LinkedSales siteId={site.id} readOnly={!hasRole(user,'ADMIN')}/>}
     <StagesSection site={site} setup={setup} load={load} terminal={terminal} complete={complete} review={review} askChanges={setReviewStageId}/>
     {reviewStageId!==null&&<ChangesDialog onClose={()=>setReviewStageId(null)} onSubmit={note=>review(reviewStageId,'CHANGES_REQUESTED',note)}/>}
   </div>

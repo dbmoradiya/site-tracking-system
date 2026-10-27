@@ -1,4 +1,4 @@
-// UI PREVIEW ONLY: shows the sample challan PDF as page images drawn on canvases, so it works on phones
+// Draws a PDF as page images on canvases, so it works on phones
 // and in dev mode (native <iframe>/<embed> PDF viewers are blocked or blank on many mobile browsers).
 import { useEffect, useRef, useState } from 'react'
 import { Loader, Text } from '@mantine/core'

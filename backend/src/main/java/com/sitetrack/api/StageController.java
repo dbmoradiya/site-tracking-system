@@ -48,7 +48,7 @@ public class StageController {
     public Map<String,Object> site(@PathVariable long siteId,@AuthenticationPrincipal AppPrincipal user) {
         workflow.requireSiteAccess(siteId,user);
         Map<String,Object> site=jdbc.sql("""
-                select s.id,s.name,s.address,s.target_date,s.status,p.id project_id,p.name project_name,
+                select s.id,s.name,s.address,s.target_date,s.status,p.id project_id,p.coordinator_id project_coordinator_id,p.name project_name,
                        st.name site_type,e.name coordinator,s.team_id,tm.name team
                 from sites s join projects p on p.id=s.project_id join site_types st on st.id=s.site_type_id
                 join employees e on e.id=p.coordinator_id left join teams tm on tm.id=s.team_id where s.id=:id
@@ -56,7 +56,7 @@ public class StageController {
                     Map<String,Object> row=new LinkedHashMap<>(); row.put("id",rs.getLong("id"));
                     row.put("name",rs.getString("name")); row.put("address",rs.getString("address"));
                     row.put("status",rs.getString("status")); row.put("targetDate",rs.getDate("target_date")==null?null:rs.getDate("target_date").toLocalDate().toString()); row.put("projectId",rs.getLong("project_id"));
-                    row.put("projectName",rs.getString("project_name")); row.put("siteType",rs.getString("site_type"));
+                    row.put("projectCoordinatorId",rs.getLong("project_coordinator_id")); row.put("projectName",rs.getString("project_name")); row.put("siteType",rs.getString("site_type"));
                     row.put("coordinator",rs.getString("coordinator")); row.put("teamId",rs.getObject("team_id"));
                     row.put("team",rs.getString("team")==null?"Unassigned":rs.getString("team")); return row;
                 }).optional().orElseThrow(()->new ApiException(404,"Site not found"));

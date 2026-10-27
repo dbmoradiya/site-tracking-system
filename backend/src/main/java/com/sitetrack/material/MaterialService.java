@@ -506,7 +506,7 @@ public class MaterialService {
             Map<String, Object> o = new LinkedHashMap<>();
             Map<String, Object> v = vendors.get(((Number) r.get("vendor_id")).longValue());
             o.put("id", id); o.put("saleId", r.get("sale_code")); o.put("type", r.get("sale_type")); o.put("date", r.get("sale_date").toString());
-            o.put("vendor", v.get("name")); o.put("siteIds", vis); o.put("sites", siteRefs(vis, sites));
+            o.put("vendor", v.get("name")); o.put("vendorInfo", Map.of("mobile", v.get("mobile"), "gst", v.get("gst"), "address", v.get("address"))); o.put("siteIds", vis); o.put("sites", siteRefs(vis, sites));
             o.put("activeFrom", iso(r.get("active_from")));
             o.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst from sale_items where sale_id=:id order by position").param("id", id).query().listOfRows()
                     .stream().map(i -> itemOut(i, names)).toList());

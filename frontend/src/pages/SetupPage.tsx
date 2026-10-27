@@ -2,7 +2,7 @@ import { ActionIcon, Alert, Badge, Button, Group, Modal, NativeSelect, Paper, St
 import { ChevronDown, ChevronUp, Building2, Layers3, Package, Store, Pencil, Plus, Save, Trash2, UsersRound, Wrench } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { api, post, put } from '../lib/api'
-import { CompanyTab, MaterialTypesTab, VendorsTab } from '../preview/MaterialSetupTabs'
+import { CompanyTab, MaterialTypesTab, VendorsTab } from '../material/MaterialSetupTabs'
 import { Loading } from '../components/Loading'
 import { RolesSelect, titleCase, type BusinessRole } from '../components/RolesSelect'
 
@@ -17,7 +17,7 @@ const stagesOf=(item:SiteType)=>typeof item.stages==='string'?JSON.parse(item.st
 
 export function SetupPage(){
   const [data,setData]=useState<Setup|null>(null);const [tab,setTab]=useState<Tab>('types');const [error,setError]=useState('')
-  const load=useCallback(()=>(import.meta.env.VITE_UI_PREVIEW?Promise.resolve({siteTypes:[],employees:[],teams:[]} as Setup):api<Setup>('/setup')).then(setData).catch(e=>setError(e.message)),[]);useEffect(()=>{load()},[load])
+  const load=useCallback(()=>api<Setup>('/setup').then(setData).catch(e=>setError(e.message)),[]);useEffect(()=>{load()},[load])
   if(!data)return <Loading label="Loading setup"/>
   return <Stack gap="sm" className="page-compact">
     <div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Admin controls</Text><Title order={2}>Setup</Title><Text size="sm" c="dimmed">Open a row to review details. Editing starts from its detail popup.</Text></div>

@@ -1,11 +1,12 @@
-// UI PREVIEW: shared pieces for the purchase and sale popups. Items show as a table on wide screens and as
+// Shared pieces for the purchase and sale popups. Items show as a table on wide screens and as
 // stacked cards on phones (a wide table inside a popup scrolls the whole popup sideways on a phone).
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Group, Paper, SimpleGrid, Stack, Table, Text } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Download } from 'lucide-react'
 import { ChallanViewer } from './ChallanViewer'
-import { calc, docTotals, inr, num, type Invoice, type Line } from './materialMock'
+import { apiBlob } from '../lib/api'
+import { calc, docTotals, inr, num, type Invoice, type Line } from './types'
 
 export function ItemsTable({ items }: { items: Line[] }) {
   const t = docTotals(items)
@@ -33,14 +34,17 @@ export function InvoiceViewer({ invoice, alt }: { invoice: Invoice; alt: string 
   const isPdf = invoice.type === 'application/pdf' || /\.pdf$/i.test(invoice.name)
   useEffect(() => {
     let dead = false; setBlob(null); setErr(false)
-    if (isPdf) fetch(invoice.url).then(r => r.blob()).then(b => { if (!dead) setBlob(b) }).catch(() => { if (!dead) setErr(true) })
+    const get = invoice.file ? Promise.resolve<Blob>(invoice.file) : invoice.url.startsWith('/material') ? apiBlob(invoice.url) : fetch(invoice.url).then(r => r.blob())
+    get.then(b => { if (!dead) setBlob(b) }).catch(() => { if (!dead) setErr(true) })
     return () => { dead = true }
-  }, [invoice.url, isPdf])
-  const openTab = () => { window.open(invoice.url, '_blank') }
-  const download = () => { const a = document.createElement('a'); a.href = invoice.url; a.download = invoice.name; document.body.appendChild(a); a.click(); a.remove() }
+  }, [invoice.url, invoice.file])
+  const objUrl = useMemo(() => blob ? URL.createObjectURL(blob) : '', [blob])
+  useEffect(() => () => { if (objUrl) URL.revokeObjectURL(objUrl) }, [objUrl])
+  const openTab = () => { if (objUrl) window.open(objUrl, '_blank') }
+  const download = () => { if (!objUrl) return; const a = document.createElement('a'); a.href = objUrl; a.download = invoice.name; document.body.appendChild(a); a.click(); a.remove() }
   return <div>
-    {isPdf ? (err ? <Text size="sm" c="red">Could not read this file here. Use Download.</Text> : blob && <ChallanViewer blob={blob} />)
-      : <div style={{ maxHeight: '70vh', overflow: 'auto', background: '#f1f3f5', padding: 6 }}><img src={invoice.url} alt={alt} style={{ maxWidth: '100%', display: 'block', margin: '0 auto', background: '#fff' }} /></div>}
-    <Group justify="flex-end" gap={6} mt={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download</Button></Group>
+    {err ? <Text size="sm" c="red">Could not open this file.</Text> : !blob ? <Text size="sm" c="dimmed">Loading...</Text> : isPdf ? <ChallanViewer blob={blob} />
+      : <div style={{ maxHeight: '70vh', overflow: 'auto', background: '#f1f3f5', padding: 6 }}><img src={objUrl} alt={alt} style={{ maxWidth: '100%', display: 'block', margin: '0 auto', background: '#fff' }} /></div>}
+    <Group justify="flex-end" gap={6} mt={6}><Button size="compact-xs" variant="default" disabled={!blob} onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" disabled={!blob} leftSection={<Download size={12} />} onClick={download}>Download</Button></Group>
   </div>
 }
