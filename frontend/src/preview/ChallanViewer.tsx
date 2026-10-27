@@ -5,7 +5,7 @@ import { Loader, Text } from '@mantine/core'
 
 export function ChallanViewer({ blob }: { blob: Blob }) {
   const host = useRef<HTMLDivElement>(null)
-  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading'), [why, setWhy] = useState('')
   useEffect(() => {
     let dead = false
     const el = host.current
@@ -32,13 +32,13 @@ export function ChallanViewer({ blob }: { blob: Blob }) {
           if (dead) return
         }
         setState('ready')
-      } catch { if (!dead) setState('error') }
+      } catch (e) { if (!dead) { setWhy(String((e as Error)?.message ?? e).slice(0, 160)); setState('error') } }
     })()
     return () => { dead = true }
   }, [blob])
   return <div>
     {state === 'loading' && <Text size="sm" c="dimmed" ta="center" py="md"><Loader size="xs" mr={6} />Preparing challan...</Text>}
-    {state === 'error' && <Text size="sm" c="red" py="xs">Could not show the challan here. Use Download PDF.</Text>}
+    {state === 'error' && <Text size="sm" c="red" py="xs">Could not show the challan here. Use Download PDF.{why && <Text span size="xs" c="dimmed"> ({why})</Text>}</Text>}
     <div ref={host} style={{ maxHeight: '70vh', overflowY: 'scroll', overflowX: 'hidden', background: '#f1f3f5', padding: 6 }} />
   </div>
 }

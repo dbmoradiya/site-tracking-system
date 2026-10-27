@@ -7,6 +7,7 @@ import { CreatableSelect } from './CreatableSelect'
 import { ExportMenu } from './ExportMenu'
 import { Pager, usePaged } from './Pager'
 import { ChallanViewer } from './ChallanViewer'
+import { ItemsTable } from './DocViews'
 import { challanPdf } from './challanPdf'
 import { GST_RATES, calc, docTotals, fmtDate, inr, num, type Line, type Purchase } from './materialMock'
 import { addSale, deleteSale, findMaterial, findVendor, nextSaleId, updateSale, useMaterialStore, type Vendor } from './materialStore'
@@ -158,12 +159,6 @@ function changes(o: SaleSnap, n: SaleSnap) {
   for (const a of o.items) { const b = n.items.find(x => x.material === a.material); if (!b) out.push(`Item removed: ${a.material} (${lineSig(a)})`); else if (lineSig(a) !== lineSig(b)) out.push(`${a.material}: ${lineSig(a)} \u2192 ${lineSig(b)}`) }
   for (const b of n.items) if (!o.items.some(x => x.material === b.material)) out.push(`Item added: ${b.material} (${lineSig(b)})`)
   return out
-}
-function ItemsTable({ items }: { items: Line[] }) {
-  const t = docTotals(items)
-  return <Paper withBorder style={{ minWidth: 0, maxWidth: "100%" }}><Table.ScrollContainer minWidth={560} type="native" style={{ maxWidth: "100%" }}><Table fz="xs"><Table.Thead><Table.Tr><Table.Th>Item</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Price</Table.Th><Table.Th ta="right">GST</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
-    <Table.Tbody>{items.map((l, i) => { const c = calc(l.qty, l.rate, l.gst); return <Table.Tr key={i}><Table.Td fw={600}>{l.material}</Table.Td><Table.Td ta="right">{num(l.qty)} {l.uom}</Table.Td><Table.Td ta="right">{inr(l.rate)}</Table.Td><Table.Td ta="right">{l.gst}%</Table.Td><Table.Td ta="right">{inr(c.subtotal)}</Table.Td><Table.Td ta="right">{inr(c.sgst)}</Table.Td><Table.Td ta="right">{inr(c.cgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(c.total)}</Table.Td></Table.Tr> })}
-      <Table.Tr bg="gray.0"><Table.Td colSpan={4} fw={700}>Grand total</Table.Td><Table.Td ta="right" fw={700}>{inr(t.subtotal)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.sgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.cgst)}</Table.Td><Table.Td ta="right" fw={700} c="orange.8">{inr(t.total)}</Table.Td></Table.Tr></Table.Tbody></Table></Table.ScrollContainer></Paper>
 }
 function SaleHistory({ s }: { s: Sale }) {
   const list: SaleVersion[] = s.versions

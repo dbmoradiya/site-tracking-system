@@ -5,6 +5,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { CreatableSelect } from '../preview/CreatableSelect'
 import { MaterialSalesHistory, SaleDialog, SalesTab } from '../preview/SalesUi'
 import type { Sale } from '../preview/salesMock'
+import { InvoiceViewer, ItemsTable } from '../preview/DocViews'
 import { Pager, usePaged } from '../preview/Pager'
 import { ExportMenu } from '../preview/ExportMenu'
 import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../preview/materialMock'
@@ -202,13 +203,6 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
 
 function Field({ label, children }: { label: string; children: ReactNode }) { return <div><Text size="xs" c="dimmed">{label}</Text><Text size="sm" fw={600} component="div">{children}</Text></div> }
 
-function ItemsTable({ items }: { items: Line[] }) {
-  const t = docTotals(items)
-  return <Paper withBorder><Table.ScrollContainer minWidth={560} type="native"><Table fz="xs"><Table.Thead><Table.Tr><Table.Th>Item</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Rate</Table.Th><Table.Th ta="right">GST</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
-    <Table.Tbody>{items.map((l, i) => { const c = calc(l.qty, l.rate, l.gst); return <Table.Tr key={i}><Table.Td fw={600}>{l.material}</Table.Td><Table.Td ta="right">{num(l.qty)} {l.uom}</Table.Td><Table.Td ta="right">{inr(l.rate)}</Table.Td><Table.Td ta="right">{l.gst}%</Table.Td><Table.Td ta="right">{inr(c.subtotal)}</Table.Td><Table.Td ta="right">{inr(c.sgst)}</Table.Td><Table.Td ta="right">{inr(c.cgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(c.total)}</Table.Td></Table.Tr> })}
-      <Table.Tr bg="gray.0"><Table.Td colSpan={4} fw={700}>Grand total</Table.Td><Table.Td ta="right" fw={700}>{inr(t.subtotal)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.sgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.cgst)}</Table.Td><Table.Td ta="right" fw={700} c="orange.8">{inr(t.total)}</Table.Td></Table.Tr></Table.Tbody></Table></Table.ScrollContainer></Paper>
-}
-
 // Same dialog is opened from the Purchase tab and from the stock-detail purchase history.
 function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => void }) {
   const { purchases, vendors } = useMaterialStore()
@@ -217,7 +211,7 @@ function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => voi
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [viewing, setViewing] = useState(false), [showHistory, setShowHistory] = useState(false)
   const close = () => { setEditing(false); setConfirm(false); setViewing(false); setShowHistory(false); onClose() }
   return <>
-    <Modal opened={!!p} onClose={close} closeOnEscape={!viewing && !confirm} size="xl" scrollAreaComponent={ScrollArea.Autosize} title={p ? <Text fw={700}>{editing ? `Edit purchase ${p.purchaseId}` : `Purchase ${p.purchaseId}`}</Text> : ''}>
+    <Modal opened={!!p} onClose={close} closeOnEscape={!viewing && !confirm} size="xl" title={p ? <Text fw={700}>{editing ? `Edit purchase ${p.purchaseId}` : `Purchase ${p.purchaseId}`}</Text> : ''}>
       {p && (editing ? <PurchaseForm existing={p} onDone={() => setEditing(false)} /> : <Stack gap="sm">
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
           <Field label="Purchase ID">{p.purchaseId}</Field><Field label="Purchase date">{fmtDate(p.date)}</Field>
@@ -238,9 +232,7 @@ function PurchaseDialog({ id, onClose }: { id: number | null; onClose: () => voi
       </Stack>)}
     </Modal>
     <Modal opened={viewing && !!p?.invoice} onClose={() => setViewing(false)} size="xl" title={p?.invoice?.name ?? 'Invoice'} zIndex={400}>
-      {p?.invoice && (p.invoice.type === 'application/pdf'
-        ? <div><iframe title="Invoice PDF" src={p.invoice.url} style={{ width: '100%', height: '70vh', border: '1px solid var(--mantine-color-gray-3)' }} /><Text size="xs" c="dimmed" mt={4}>If the PDF does not show on your device, <a href={p.invoice.url} target="_blank" rel="noreferrer">open it in a new tab</a>.</Text></div>
-        : <img src={p.invoice.url} alt={`Invoice ${p.billNumber || p.purchaseId}`} style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block', margin: '0 auto' }} />)}
+      {p?.invoice && <InvoiceViewer invoice={p.invoice} alt={`Invoice ${p.billNumber || p.purchaseId}`} />}
     </Modal>
     <Modal opened={confirm && !!p} onClose={() => setConfirm(false)} title="Delete this purchase?" zIndex={400} size="sm">
       {p && <Stack gap="sm"><Text size="sm">Delete purchase <b>{p.purchaseId}</b> ({itemsLabel(p)}, {p.items.length} {p.items.length === 1 ? 'item' : 'items'} from {p.vendor})? Current stock will reduce by the quantity of every item in it. This cannot be undone in this preview.</Text>
