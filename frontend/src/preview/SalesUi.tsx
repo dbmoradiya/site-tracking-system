@@ -17,7 +17,7 @@ const GST_RE = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/ // tentative GSTIN f
 const label = (s: Sale) => s.items.length === 1 ? s.items[0].material : `${s.items[0].material} +${s.items.length - 1} more`
 const sitesText = (ids: number[]) => ids.map(i => { const s = siteById(i); return s ? siteLabel(s) : `Site ${i}` })
 const sitesShort = (ids: number[]) => { const t = sitesText(ids); return t.length <= 1 ? t[0] ?? '-' : `${t[0]} +${t.length - 1} more` }
-const Field = ({ label: l, children }: { label: string; children: ReactNode }) => <div><Text size="xs" c="dimmed">{l}</Text><Text size="sm" fw={600} component="div">{children}</Text></div>
+const Field = ({ label: l, children }: { label: string; children: ReactNode }) => <div style={{ minWidth: 0 }}><Text size="xs" c="dimmed">{l}</Text><Text size="sm" fw={600} component="div" style={{ overflowWrap: "anywhere" }}>{children}</Text></div>
 
 export const TypeBadge = ({ type }: { type: SaleType }) => <Badge color={type === 'DEBIT' ? 'red' : 'green'} variant="light" size="md" tt="none" style={{ flexShrink: 0, whiteSpace: 'nowrap', overflow: 'visible' }}>{type === 'DEBIT' ? 'Debit - Out' : 'Credit - In'}</Badge>
 
@@ -62,7 +62,7 @@ export function SalesTab({ onOpen }: { onOpen: (id: number) => void }) {
       <NativeSelect size="xs" label="Site" value={f.site} onChange={e => set({ site: e.currentTarget.value })} data={[{ value: '', label: 'All sites' }, ...PREVIEW_SITES.map(s => ({ value: String(s.id), label: siteLabel(s) }))]} />
       <NativeSelect size="xs" label="Project" value={f.project} onChange={e => set({ project: e.currentTarget.value })} data={[{ value: '', label: 'All projects' }, ...projects.map(([id, n]) => ({ value: String(id), label: n }))]} />
     </SimpleGrid><Group justify="flex-end" mt={6}><Button size="xs" variant="subtle" onClick={clear} disabled={!active}>Clear filters{active ? ` (${active})` : ''}</Button></Group></Paper></Collapse>
-    <Paper withBorder><Table.ScrollContainer minWidth={1300}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Sale ID</Table.Th><Table.Th miw={120}>Type</Table.Th><Table.Th>Date</Table.Th><Table.Th miw={170}>Items</Table.Th><Table.Th miw={150}>Vendor</Table.Th><Table.Th miw={200}>Sites</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
+    <Paper withBorder><Table.ScrollContainer minWidth={1020} type="native"><Table highlightOnHover fz="xs" horizontalSpacing={8}><Table.Thead><Table.Tr><Table.Th miw={118}>Sale ID</Table.Th><Table.Th miw={110}>Type</Table.Th><Table.Th miw={84}>Date</Table.Th><Table.Th>Items</Table.Th><Table.Th>Vendor</Table.Th><Table.Th>Sites</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{sorted.length === 0 && <Table.Tr><Table.Td colSpan={10}><Text size="sm" c="dimmed" ta="center" py="sm">No sales match these filters.</Text></Table.Td></Table.Tr>}
         {pg.rows.map(s => { const t = docTotals(s.items); return <Table.Tr key={s.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open sale ${s.saleId}`} onClick={() => onOpen(s.id)} onKeyDown={e => e.key === 'Enter' && onOpen(s.id)}>
           <Table.Td fw={600} c="orange.8" style={{ whiteSpace: 'nowrap' }}>{s.saleId}</Table.Td><Table.Td><TypeBadge type={s.type} /></Table.Td><Table.Td style={{ whiteSpace: 'nowrap' }}>{fmtDate(s.date)}</Table.Td>
@@ -126,8 +126,8 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
         const over = type === 'DEBIT' && avail !== null && Number(r.qty) > avail
         return <Paper withBorder p="xs" key={r.key} aria-label={`Item ${i + 1}`}>
           <SimpleGrid cols={{ base: 2, sm: 6 }} spacing="xs" style={{ alignItems: 'start' }}>
-            <div style={{ gridColumn: 'span 2' }}><Select size="xs" label={`Item ${i + 1} - material type`} required searchable placeholder="Search existing material type" data={materialTypes.map(x => x.name)} value={r.material || null} onChange={v => patch(r.key, { material: v ?? '' })} nothingFoundMessage="Not found. New material types are created from a Purchase, not from a sale."
-              description={avail !== null ? `Stock now: ${num(avail)} ${m!.uom}` : undefined} /></div>
+            <div style={{ gridColumn: 'span 2' }}><Select size="xs" label={`Item ${i + 1} - material type`} required searchable placeholder="Search existing material type" data={materialTypes.map(x => x.name)} value={r.material || null} onChange={v => patch(r.key, { material: v ?? '' })} nothingFoundMessage="Not found. New material types are created from a Purchase, not from a sale." />
+              {avail !== null && <Text size="xs" c="dimmed" mt={2}>Stock now: {num(avail)} {m!.uom}</Text>}</div>
             <TextInput size="xs" label="Unit" value={m?.uom ?? ''} disabled placeholder="From type" />
             <NumberInput size="xs" label="Quantity" required min={0} decimalScale={3} value={r.qty} onChange={v => patch(r.key, { qty: v })} placeholder="0" hideControls error={over ? 'More than current stock' : undefined} />
             <NumberInput size="xs" label="Price (excl. GST)" required min={0} decimalScale={2} value={r.rate} onChange={v => patch(r.key, { rate: v })} leftSection={'\u20B9'} placeholder="0.00" hideControls />
@@ -160,7 +160,7 @@ function changes(o: SaleSnap, n: SaleSnap) {
 }
 function ItemsTable({ items }: { items: Line[] }) {
   const t = docTotals(items)
-  return <Paper withBorder><Table.ScrollContainer minWidth={560}><Table fz="xs"><Table.Thead><Table.Tr><Table.Th>Item</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Price</Table.Th><Table.Th ta="right">GST</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
+  return <Paper withBorder style={{ minWidth: 0, maxWidth: "100%" }}><Table.ScrollContainer minWidth={560} type="native" style={{ maxWidth: "100%" }}><Table fz="xs"><Table.Thead><Table.Tr><Table.Th>Item</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Price</Table.Th><Table.Th ta="right">GST</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
     <Table.Tbody>{items.map((l, i) => { const c = calc(l.qty, l.rate, l.gst); return <Table.Tr key={i}><Table.Td fw={600}>{l.material}</Table.Td><Table.Td ta="right">{num(l.qty)} {l.uom}</Table.Td><Table.Td ta="right">{inr(l.rate)}</Table.Td><Table.Td ta="right">{l.gst}%</Table.Td><Table.Td ta="right">{inr(c.subtotal)}</Table.Td><Table.Td ta="right">{inr(c.sgst)}</Table.Td><Table.Td ta="right">{inr(c.cgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(c.total)}</Table.Td></Table.Tr> })}
       <Table.Tr bg="gray.0"><Table.Td colSpan={4} fw={700}>Grand total</Table.Td><Table.Td ta="right" fw={700}>{inr(t.subtotal)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.sgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.cgst)}</Table.Td><Table.Td ta="right" fw={700} c="orange.8">{inr(t.total)}</Table.Td></Table.Tr></Table.Tbody></Table></Table.ScrollContainer></Paper>
 }
@@ -174,7 +174,7 @@ function SaleHistory({ s }: { s: Sale }) {
         return <Accordion.Item key={v.version} value={String(v.version)}>
           <Accordion.Control><Text size="sm" fw={600}>Version {v.version}</Text><Text size="xs" c="dimmed">Active {fmtStamp(v.activeFrom)} to {fmtStamp(v.activeTo)}</Text></Accordion.Control>
           <Accordion.Panel><Stack gap={6}>
-            <SimpleGrid cols={2} spacing="xs"><Field label="Type"><TypeBadge type={v.type} /></Field><Field label="Date">{fmtDate(v.date)}</Field><Field label="Vendor">{v.vendor}</Field><Field label="Sites">{sitesText(v.siteIds).join(', ')}</Field></SimpleGrid>
+            <SimpleGrid cols={2} spacing="xs" style={{ minWidth: 0 }}><Field label="Type"><TypeBadge type={v.type} /></Field><Field label="Date">{fmtDate(v.date)}</Field><Field label="Vendor">{v.vendor}</Field><Field label="Sites">{sitesText(v.siteIds).join(', ')}</Field></SimpleGrid>
             <ItemsTable items={v.items} />
             <div><Text size="xs" c="dimmed">Replaced by the next version with these changes</Text>{changes(v, newer).map(x => <Text key={x} size="xs">{x}</Text>)}</div>
           </Stack></Accordion.Panel></Accordion.Item> })}</Accordion>}
@@ -192,8 +192,8 @@ export function SaleDialog({ id, onClose }: { id: number | null; onClose: () => 
   useEffect(() => () => { if (url) URL.revokeObjectURL(url) }, [url])
   const download = () => { if (!s) return; const u = URL.createObjectURL(challanPdf(s, v, company)); const a = document.createElement('a'); a.href = u; a.download = `challan-${s.saleId}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000) }
   return <>
-    <Modal opened={!!s} onClose={close} closeOnEscape={!challan && !confirm} size="xl" scrollAreaComponent={ScrollArea.Autosize} title={s ? <Text fw={700}>{editing ? `Edit sale ${s.saleId}` : `Sale ${s.saleId}`}</Text> : ''}>
-      {s && (editing ? <SaleForm existing={s} onDone={() => setEditing(false)} /> : <Stack gap="sm">
+    <Modal opened={!!s} onClose={close} closeOnEscape={!challan && !confirm} size="xl" title={s ? <Text fw={700}>{editing ? `Edit sale ${s.saleId}` : `Sale ${s.saleId}`}</Text> : ''}>
+      {s && (editing ? <SaleForm existing={s} onDone={() => setEditing(false)} /> : <Stack gap="sm" style={{ minWidth: 0 }}>
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
           <Field label="Sale ID">{s.saleId}</Field><Field label="Type"><TypeBadge type={s.type} /></Field>
           <Field label="Sale date">{fmtDate(s.date)}</Field><Field label="Vendor">{s.vendor}</Field>

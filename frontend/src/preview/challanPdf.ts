@@ -17,6 +17,7 @@ export function challanPdf(sale: Sale, vendor: Vendor | undefined, company: Comp
   const text = (x: number, yy: number, s: string, font: 'F1' | 'F2' | 'F3' | 'F4', size: number) => ops().push(`BT /${font} ${size} Tf ${x} ${yy} Td (${esc(s)}) Tj ET`)
   const rule = (yy: number) => ops().push(`0.6 w 40 ${yy} m 555 ${yy} l S`)
   const L = 40
+  const need = (h: number) => { if (y - h < 60) { pages.push([]); y = 800; text(L, y, `${sale.saleId} (continued)`, 'F1', 10); y -= 20 } }
   text(L, y, company.name, 'F1', 17); y -= 15
   for (const line of wrap(company.address, 95)) { text(L, y, line, 'F2', 9); y -= 11 }
   text(L, y, `GSTIN: ${company.gst || '-'}    Mobile: ${company.mobile || '-'}`, 'F2', 9); y -= 8
@@ -25,25 +26,27 @@ export function challanPdf(sale: Sale, vendor: Vendor | undefined, company: Comp
   text(330, y, sale.type === 'DEBIT' ? 'Debit - material given out' : 'Credit - material taken in', 'F2', 9); y -= 18
   text(L, y, `Challan no: ${sale.saleId}`, 'F1', 10); text(330, y, `Date: ${fmtDate(sale.date)}`, 'F1', 10); y -= 18
   text(L, y, 'Party (vendor)', 'F1', 9); y -= 12
-  text(L, y, vendor?.name ?? sale.vendor, 'F2', 10); y -= 12
+  for (const line of wrap(vendor?.name ?? sale.vendor, 80)) { need(14); text(L, y, line, 'F2', 10); y -= 12 }
   text(L, y, `Mobile: ${vendor?.mobile || '-'}    GSTIN: ${vendor?.gst || '-'}`, 'F2', 9); y -= 11
-  for (const line of wrap(`Address: ${vendor?.address || '-'}`, 95)) { text(L, y, line, 'F2', 9); y -= 11 }
+  for (const line of wrap(`Address: ${vendor?.address || '-'}`, 95)) { need(14); text(L, y, line, 'F2', 9); y -= 11 }
   y -= 4
   text(L, y, 'Sites', 'F1', 9); y -= 12
-  for (const id of sale.siteIds) { const s = siteById(id); text(L, y, s ? `${s.name} | ${s.projectName}` : `Site ${id}`, 'F2', 9); y -= 11 }
+  for (const id of sale.siteIds) { const s = siteById(id); for (const line of wrap(s ? `${s.name} | ${s.projectName}` : `Site ${id}`, 95)) { need(14); text(L, y, line, 'F2', 9); y -= 11 } }
   y -= 6; rule(y); y -= 14
   const cols = (a: string, b: string, c: string, d: string, e: string, f: string, g: string, h: string) =>
-    a.padEnd(22).slice(0, 22) + ' ' + b.padStart(9) + ' ' + c.padStart(10) + ' ' + d.padStart(12) + ' ' + e.padStart(4) + ' ' + f.padStart(10) + ' ' + g.padStart(10) + ' ' + h.padStart(12)
-  text(L, y, cols('Item', 'Qty', 'Rate', 'Amount', 'GST%', 'SGST', 'CGST', 'Total'), 'F4', 8); y -= 5; rule(y); y -= 12
+    a.padEnd(22).slice(0, 22) + ' ' + b.padStart(13) + ' ' + c.padStart(10) + ' ' + d.padStart(14) + ' ' + e.padStart(4) + ' ' + f.padStart(12) + ' ' + g.padStart(12) + ' ' + h.padStart(14)
+  const longest = Math.max(...sale.items.map(l => { const c = calc(l.qty, l.rate, l.gst); return cols('', `${l.qty.toLocaleString('en-IN')} ${l.uom}`, money(l.rate), money(c.subtotal), String(l.gst), money(c.sgst), money(c.cgst), money(c.total)).length }), 100)
+  const fs = Math.min(8, Math.floor(5150 / (6 * longest)) / 10 * 10 || 8)
+  text(L, y, cols('Item', 'Qty', 'Rate', 'Amount', 'GST%', 'SGST', 'CGST', 'Total'), 'F4', fs); y -= 5; rule(y); y -= 12
   for (const l of sale.items) {
-    if (y < 150) { pages.push([]); y = 800; text(L, y, `${sale.saleId} (continued)`, 'F1', 10); y -= 20 }
     const c = calc(l.qty, l.rate, l.gst)
-    const name = l.material.length > 22 ? l.material.slice(0, 20) + '..' : l.material
-    text(L, y, cols(name, `${l.qty.toLocaleString('en-IN')} ${l.uom}`, money(l.rate), money(c.subtotal), String(l.gst), money(c.sgst), money(c.cgst), money(c.total)), 'F3', 8); y -= 12
+    const names = wrap(l.material, 22).flatMap(w => w.length > 22 ? w.match(/.{1,22}/g)! : [w])
+    need(12 * names.length + 4)
+    names.forEach((nm, k) => { text(L, y, k === 0 ? cols(nm, `${l.qty.toLocaleString('en-IN')} ${l.uom}`, money(l.rate), money(c.subtotal), String(l.gst), money(c.sgst), money(c.cgst), money(c.total)) : nm, 'F3', fs); y -= 12 })
   }
   const t = docTotals(sale.items)
-  rule(y + 6); y -= 8
-  text(L, y, cols('Total', '', '', money(t.subtotal), '', money(t.sgst), money(t.cgst), money(t.total)), 'F4', 8); y -= 20
+  need(90); rule(y + 6); y -= 8
+  text(L, y, cols('Total', '', '', money(t.subtotal), '', money(t.sgst), money(t.cgst), money(t.total)), 'F4', fs); y -= 20
   text(L, y, `Grand total (amount + SGST + CGST): Rs. ${money(t.total)}`, 'F1', 11); y -= 50
   text(L, y, 'Received by: ______________________', 'F2', 9); text(360, y, `For ${company.name}`, 'F1', 9); y -= 36
   text(L, y, 'SAMPLE challan made in the browser for the UI preview. The real PDF will be created by the backend when a sale is saved.', 'F2', 7)
