@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { CreatableSelect } from './CreatableSelect'
 import { ExportMenu } from './ExportMenu'
 import { Pager, usePaged } from './Pager'
+import { ChallanViewer } from './ChallanViewer'
 import { challanPdf } from './challanPdf'
 import { GST_RATES, calc, docTotals, fmtDate, inr, num, type Line, type Purchase } from './materialMock'
 import { addSale, deleteSale, findMaterial, findVendor, nextSaleId, updateSale, useMaterialStore, type Vendor } from './materialStore'
@@ -191,8 +192,8 @@ export function SaleDialog({ id, onClose, readOnly = false, scopeProjectId }: { 
   const v = s ? vendors.find(x => x.name === s.vendor) : undefined
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [challan, setChallan] = useState(false), [showHistory, setShowHistory] = useState(false)
   const close = () => { setEditing(false); setConfirm(false); setChallan(false); setShowHistory(false); onClose() }
-  const url = useMemo(() => s && challan ? URL.createObjectURL(challanPdf(s, v, company)) : '', [s, v, company, challan])
-  useEffect(() => () => { if (url) URL.revokeObjectURL(url) }, [url])
+  const blob = useMemo(() => s && challan ? challanPdf(s, v, company) : null, [s, v, company, challan])
+  const openTab = () => { if (!blob) return; const u = URL.createObjectURL(blob); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60000) }
   const download = () => { if (!s) return; const u = URL.createObjectURL(challanPdf(s, v, company)); const a = document.createElement('a'); a.href = u; a.download = `challan-${s.saleId}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000) }
   return <>
     <Modal opened={!!s} onClose={close} closeOnEscape={!challan && !confirm} size="xl" title={s ? <Text fw={700}>{editing ? `Edit sale ${s.saleId}` : `Sale ${s.saleId}`}</Text> : ''}>
@@ -217,8 +218,8 @@ export function SaleDialog({ id, onClose, readOnly = false, scopeProjectId }: { 
       </Stack>)}
     </Modal>
     <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}` : 'Challan'} zIndex={400}>
-      {s && <div><iframe title="Challan PDF" src={url} style={{ width: '100%', height: '70vh', border: '1px solid var(--mantine-color-gray-3)' }} />
-        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Sample challan for the preview. If the PDF does not show on your device, use Download PDF.</Text><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></div>}
+      {s && blob && <div><ChallanViewer blob={blob} />
+        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Sample challan for the preview.</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div>}
     </Modal>
     <Modal opened={confirm && !!s} onClose={() => setConfirm(false)} title="Delete this sale?" zIndex={400} size="sm">
       {s && <Stack gap="sm"><Text size="sm">Delete sale <b>{s.saleId}</b> ({label(s)}, {s.items.length} {s.items.length === 1 ? 'item' : 'items'}, {s.vendor})? Current stock will {s.type === 'DEBIT' ? 'increase (the material comes back)' : 'reduce'} by the quantity of every item in it. This cannot be undone.</Text>

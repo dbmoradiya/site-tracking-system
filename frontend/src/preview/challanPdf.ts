@@ -33,27 +33,32 @@ export function challanPdf(sale: Sale, vendor: Vendor | undefined, company: Comp
   text(L, y, 'Sites', 'F1', 9); y -= 12
   for (const id of sale.siteIds) { const s = siteById(id); for (const line of wrap(s ? `${s.name} | ${s.projectName}` : `Site ${id}`, 95)) { need(14); text(L, y, line, 'F2', 9); y -= 11 } }
   y -= 6; rule(y); y -= 14
-  // Helvetica digit/comma/dot widths so numbers can be right-aligned
-  const tw = (str: string, size: number) => [...str].reduce((a, ch) => a + (/[0-9]/.test(ch) ? 0.556 : /[.,: ]/.test(ch) ? 0.278 : 0.6) * size, 0)
-  const FS = 9.5
-  const right = (xr: number, str: string, font: 'F1' | 'F2' | 'F3' | 'F4', size = FS) => text(xr - tw(str, size), y, str, font, size)
-  const head = () => { text(L, y, 'Item', 'F1', FS); right(380, 'Qty', 'F1'); right(470, 'Rate', 'F1'); right(555, 'GST %', 'F1'); y -= 12; ['Amount', 'SGST', 'CGST', 'Total'].forEach((k, i) => right(L + 128 * (i + 1) + 3, k, 'F1', 8.5)); y -= 5; rule(y); y -= 13 }
-  const slots = (vals: [string, string][], font: 'F2' | 'F1' = 'F2') => vals.forEach(([, v], i) => right(L + 128 * (i + 1) + 3, v, font, Math.min(FS, FS * 120 / Math.max(tw(v, FS), 120))))
+  // One header row, one data row per item, values right-aligned under their column.
+  const tw = (str: string, size: number) => [...str].reduce((a, ch) => a + (/[0-9]/.test(ch) ? 0.556 : /[.,: ]/.test(ch) ? 0.278 : /[A-Z]/.test(ch) ? 0.68 : 0.54) * size, 0)
+  const FS = 9
+  const COLS = [ // [label, right edge, max width]
+    ['Qty', 190, 52], ['Rate', 248, 54], ['GST%', 280, 28], ['Amount', 345, 62], ['SGST', 402, 52], ['CGST', 459, 52], ['Total', 555, 70],
+  ] as const
+  const ITEM_W = 96
+  const cell = (i: number, str: string, font: 'F1' | 'F2') => { const [, xr, mw] = COLS[i]; const size = Math.min(FS, (FS * mw) / Math.max(tw(str, FS), 1)); text(xr - tw(str, size), y, str, font, size) }
+  const head = () => { text(L, y, 'Item', 'F1', FS); COLS.forEach(([l, xr], i) => text(xr - tw(l, FS), y, l, 'F1', FS)); y -= 5; rule(y); y -= 13 }
   const needRows = (h: number) => { if (y - h < 60) { need(1e9); head() } }
+  const wrapW = (str: string, maxW: number) => { const out: string[] = []; let cur = ''; for (const w of str.split(/\s+/)) { let word = w; while (tw(word, FS) > maxW) { let k = word.length; while (k > 1 && tw(word.slice(0, k), FS) > maxW) k--; if (cur) { out.push(cur); cur = '' } out.push(word.slice(0, k)); word = word.slice(k) } const t2 = cur ? cur + ' ' + word : word; if (tw(t2, FS) > maxW && cur) { out.push(cur); cur = word } else cur = t2 } if (cur) out.push(cur); return out }
   head()
   for (const l of sale.items) {
     const c = calc(l.qty, l.rate, l.gst)
-    const names = wrap(l.material, 44).flatMap(w => w.length > 44 ? w.match(/.{1,44}/g)! : [w])
-    needRows(14 * names.length + 20)
-    names.forEach((nm, k) => { text(L, y, nm, 'F1', FS); if (k === 0) { right(380, `${l.qty.toLocaleString('en-IN')} ${l.uom}`, 'F2'); right(470, money(l.rate), 'F2'); right(555, String(l.gst), 'F2') } y -= 13 })
-    slots([['Amount', money(c.subtotal)], ['SGST', money(c.sgst)], ['CGST', money(c.cgst)], ['Total', money(c.total)]]); y -= 7
-    ops().push(`0.9 g 0.3 w 40 ${y + 2} m 555 ${y + 2} l S 0 g`); y -= 9
+    const names = wrapW(l.material, ITEM_W)
+    needRows(12 * names.length + 8)
+    names.forEach((nm, k) => {
+      text(L, y, nm, 'F1', FS)
+      if (k === 0) { [`${l.qty.toLocaleString('en-IN')} ${l.uom}`, money(l.rate), String(l.gst), money(c.subtotal), money(c.sgst), money(c.cgst), money(c.total)].forEach((v, i) => cell(i, v, 'F2')) }
+      y -= 12
+    })
+    y -= 2; ops().push(`0.9 g 0.3 w 40 ${y + 8} m 555 ${y + 8} l S 0 g`); y -= 4
   }
   const t = docTotals(sale.items)
   needRows(110); rule(y + 6); y -= 8
-  text(L, y, 'All items', 'F1', FS); y -= 13
-  ;['Amount', 'SGST', 'CGST', 'Total'].forEach((k, i) => right(L + 128 * (i + 1) + 3, k, 'F1', 8.5)); y -= 12
-  slots([['Amount', money(t.subtotal)], ['SGST', money(t.sgst)], ['CGST', money(t.cgst)], ['Total', money(t.total)]], 'F1'); y -= 20
+  text(L, y, 'All items', 'F1', FS); [t.subtotal, t.sgst, t.cgst, t.total].forEach((v, i) => cell(i + 3, money(v), 'F1')); y -= 22
   text(L, y, `Grand total (amount + SGST + CGST): Rs. ${money(t.total)}`, 'F1', 11); y -= 50
   text(L, y, 'Received by: ______________________', 'F2', 9); text(360, y, `For ${company.name}`, 'F1', 9); y -= 36
   text(L, y, 'SAMPLE challan made in the browser for the UI preview. The real PDF will be created by the backend when a sale is saved.', 'F2', 7)
