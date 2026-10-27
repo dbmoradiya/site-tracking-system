@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   // UI preview build only: there is no backend, so skip network calls.
-  if (import.meta.env.VITE_UI_PREVIEW) { const { previewApi } = await import('../preview/projectMock'); return previewApi(path, options.method) as T }
+  if (import.meta.env.VITE_UI_PREVIEW) { const { previewApi } = await import('../preview/projectMock'); return previewApi(path, options.method, options.body) as T }
   const token = localStorage.getItem('sitetrack-token')
   const headers = new Headers(options.headers)
   if (token) headers.set('Authorization', `Bearer ${token}`)

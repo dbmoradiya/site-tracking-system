@@ -640,8 +640,10 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
 .stg-body > :first-child { margin-top: 12px; }
 @media (max-width: 640px) {
   .stg-banner { flex-direction: column; align-items: stretch; }
-  .stg-banner__actions .mantine-Button-root { flex: 1; }
+  .stg-banner__actions .mantine-Button-root { flex: 1 1 auto; }
+  .stg-banner__actions .mantine-Button-label { overflow: visible; }
   .stg-head { padding: 12px; gap: 10px; }
   .stg-body { padding: 4px 12px 14px; }
   .stg-dot { width: 32px; height: 32px; }
 }
+.stg-item { scroll-margin-top: 84px; } .stg { scroll-margin-top: 84px; }

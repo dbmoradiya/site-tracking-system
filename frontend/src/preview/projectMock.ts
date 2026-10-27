@@ -26,19 +26,20 @@ const demo = (): DStage[] => [
 let demoStages = demo()
 const isAdmin = () => { const u = me(); return !u.roles || u.roles.includes('ADMIN') }
 const unlockNext = (id: number) => { const i = demoStages.findIndex(x => x.id === id); const n = demoStages[i + 1]; if (n && n.status === 'BLOCKED') n.status = 'IN_PROGRESS'; if (n && n.status === 'IN_PROGRESS' && n.requiredRoles.length) n.canUpload = true }
-function demoAction(p: string, method?: string): boolean {
+function demoAction(p: string, method?: string, body?: unknown): boolean {
   let m = p.match(/^\/stages\/(\d+)\/(review|complete|submit|evidence)$/)
   if (!m || !method || method === 'GET') return false
   const st = demoStages.find(x => x.id === Number(m[1])); if (!st) return true
   if (m[2] === 'complete') { st.status = 'COMPLETED'; unlockNext(st.id) }
   else if (m[2] === 'submit') st.status = 'REVIEW_PENDING'
   else if (m[2] === 'evidence') { st.evidenceCount += 1; st.status = st.status === 'REVIEW_PENDING' ? st.status : 'IN_PROGRESS' }
+  else if (typeof body === 'string' && body.includes('CHANGES_REQUESTED')) st.status = 'CHANGES_REQUESTED'
   else { st.status = 'APPROVED'; unlockNext(st.id) }
   return true
 }
-export function previewApi(path: string, method?: string): unknown {
+export function previewApi(path: string, method?: string, body?: unknown): unknown {
   const p = path.split('?')[0]
-  if (demoAction(p, method)) return undefined
+  if (demoAction(p, method, body)) return undefined
   if (/^\/stages\/\d+\/evidence$/.test(p)) return [{ id: 1, fileName: 'site-photo-1.jpg', contentType: 'image/jpeg', comment: 'Roof front view', uploadedAt: '2026-10-25T10:20:00', uploadedBy: 'Ravi Patel' }]
   if (/^\/stages\/\d+\/history$/.test(p)) return { reviews: [{ action: 'SUBMITTED', note: '—', createdAt: '2026-10-25T10:30:00', actionBy: 'Ravi Patel' }] }
 
