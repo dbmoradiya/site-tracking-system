@@ -1,6 +1,6 @@
-import { Alert, Badge, Button, Drawer, Group, Modal, NativeSelect, NumberInput, Paper, SimpleGrid, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Badge, Button, Collapse, Drawer, Group, Modal, NativeSelect, NumberInput, Paper, SimpleGrid, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { ArrowDownToLine, ArrowUpFromLine, Info, Package, Plus, Search, ShoppingCart } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Filter, Info, Package, Plus, Search, ShoppingCart } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { CreatableSelect } from '../preview/CreatableSelect'
 import { GST_RATES, UOMS, calc, fmtDate, inr, num, type Issue, type Purchase } from '../preview/materialMock'
@@ -84,17 +84,21 @@ function PurchaseTab({ purchases }: { purchases: Purchase[] }) {
   const vendorNames = [...new Set(purchases.map(p => p.vendor))].sort(), materialNames = [...new Set(purchases.map(p => p.material))].sort()
   const sorted = [...purchases].filter(p => (!from || p.date >= from) && (!to || p.date <= to) && (!vendorF || p.vendor === vendorF) && (!materialF || p.material === materialF)).sort(byDateDesc)
   const active = [from, to, vendorF, materialF].filter(Boolean).length
+  const [showFilters, setShowFilters] = useState(false)
+  const chips = [from && `From ${fmtDate(from)}`, to && `To ${fmtDate(to)}`, vendorF && `Vendor: ${vendorF}`, materialF && `Material: ${materialF}`].filter(Boolean) as string[]
   const clear = () => { setFrom(''); setTo(''); setVendorF(''); setMaterialF('') }
   return <Stack gap="sm">
     <Group justify="space-between"><div><Text fw={700} size="sm">Purchases</Text><Text size="xs" c="dimmed">Latest first - {sorted.length} of {purchases.length} entries</Text></div>
-      <Button leftSection={<Plus size={14} />} onClick={() => setOpen(true)}>Purchase</Button></Group>
-    <Paper withBorder p="xs"><SimpleGrid cols={{ base: 2, md: 5 }} spacing="xs" style={{ alignItems: 'end' }}>
+      <Group gap="xs"><Button variant={active ? 'filled' : 'default'} leftSection={<Filter size={14} />} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>Filters{active ? ` (${active})` : ''}</Button>
+        <Button leftSection={<Plus size={14} />} onClick={() => setOpen(true)}>Purchase</Button></Group></Group>
+    {!showFilters && active > 0 && <Group gap={6}>{chips.map(c => <Badge key={c} variant="light" color="orange" size="md" tt="none">{c}</Badge>)}<Button size="compact-xs" variant="subtle" onClick={clear}>Clear filters</Button></Group>}
+    <Collapse expanded={showFilters}><Paper withBorder p="xs"><SimpleGrid cols={{ base: 2, md: 5 }} spacing="xs" style={{ alignItems: 'end' }}>
       <TextInput size="xs" type="date" label="Date from" value={from} onChange={e => setFrom(e.currentTarget.value)} />
       <TextInput size="xs" type="date" label="Date to" value={to} onChange={e => setTo(e.currentTarget.value)} />
       <NativeSelect size="xs" label="Vendor" value={vendorF} onChange={e => setVendorF(e.currentTarget.value)} data={[{ value: '', label: 'All vendors' }, ...vendorNames.map(v => ({ value: v, label: v }))]} />
       <NativeSelect size="xs" label="Material type" value={materialF} onChange={e => setMaterialF(e.currentTarget.value)} data={[{ value: '', label: 'All material types' }, ...materialNames.map(m => ({ value: m, label: m }))]} />
       <Button size="xs" variant="subtle" onClick={clear} disabled={!active}>Clear filters{active ? ` (${active})` : ''}</Button>
-    </SimpleGrid></Paper>
+    </SimpleGrid></Paper></Collapse>
     <Paper withBorder>
       <Table.ScrollContainer minWidth={820}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Date</Table.Th><Table.Th>Material type</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Rate</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">GST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
         <Table.Tbody>{sorted.length === 0 && <Table.Tr><Table.Td colSpan={8}><Text size="sm" c="dimmed" ta="center" py="sm">No purchases match these filters.</Text></Table.Td></Table.Tr>}{sorted.map(p => { const c = calc(p.qty, p.rate, p.gst); return <Table.Tr key={p.id}><Table.Td>{fmtDate(p.date)}</Table.Td><Table.Td fw={600}>{p.material}</Table.Td><Table.Td>{p.vendor}<Text size="xs" c="dimmed">{p.vendorMobile}</Text></Table.Td>
