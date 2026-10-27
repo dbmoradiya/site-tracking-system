@@ -1,7 +1,8 @@
 import { ActionIcon, Alert, Badge, Button, Group, Modal, NativeSelect, Paper, Stack, Table, Tabs, Text, TextInput, Textarea, Title, SimpleGrid, PasswordInput } from '@mantine/core'
-import { ChevronDown, ChevronUp, Layers3, Pencil, Plus, Save, Trash2, UsersRound, Wrench } from 'lucide-react'
+import { ChevronDown, ChevronUp, Layers3, Package, Store, Pencil, Plus, Save, Trash2, UsersRound, Wrench } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { api, post, put } from '../lib/api'
+import { MaterialTypesTab, VendorsTab } from '../preview/MaterialSetupTabs'
 import { Loading } from '../components/Loading'
 import { RolesSelect, titleCase, type BusinessRole } from '../components/RolesSelect'
 
@@ -11,21 +12,23 @@ type SiteType={id:number;name:string;description:string;stages:string|RawStage[]
 type Employee={id:number;name:string;mobile:string;roles:BusinessRole[];active:boolean;projects:string[]}
 type Team={id:number;name:string;contactName:string;mobile:string;notes:string;active:boolean;projects:string[]}
 type Setup={siteTypes:SiteType[];employees:Employee[];teams:Team[]}
-type Tab='types'|'employees'|'teams'
+type Tab='types'|'employees'|'teams'|'materialTypes'|'vendors'
 const stagesOf=(item:SiteType)=>typeof item.stages==='string'?JSON.parse(item.stages) as RawStage[]:item.stages
 
 export function SetupPage(){
   const [data,setData]=useState<Setup|null>(null);const [tab,setTab]=useState<Tab>('types');const [error,setError]=useState('')
-  const load=useCallback(()=>api<Setup>('/setup').then(setData).catch(e=>setError(e.message)),[]);useEffect(()=>{load()},[load])
+  const load=useCallback(()=>(import.meta.env.VITE_UI_PREVIEW?Promise.resolve({siteTypes:[],employees:[],teams:[]} as Setup):api<Setup>('/setup')).then(setData).catch(e=>setError(e.message)),[]);useEffect(()=>{load()},[load])
   if(!data)return <Loading label="Loading setup"/>
   return <Stack gap="sm" className="page-compact">
     <div><Text size="xs" fw={700} c="orange.8" tt="uppercase">Admin controls</Text><Title order={2}>Setup</Title><Text size="sm" c="dimmed">Open a row to review details. Editing starts from its detail popup.</Text></div>
     {error&&<Alert color="red" role="alert">{error}</Alert>}
     <Tabs value={tab} onChange={value=>setTab((value as Tab)||'types')} keepMounted={false}>
-      <Tabs.List aria-label="Setup sections"><Tabs.Tab value="types" leftSection={<Layers3 size={14}/>}>Site Types</Tabs.Tab><Tabs.Tab value="employees" leftSection={<UsersRound size={14}/>}>Employees</Tabs.Tab><Tabs.Tab value="teams" leftSection={<Wrench size={14}/>}>Teams</Tabs.Tab></Tabs.List>
+      <Tabs.List aria-label="Setup sections"><Tabs.Tab value="types" leftSection={<Layers3 size={14}/>}>Site Types</Tabs.Tab><Tabs.Tab value="employees" leftSection={<UsersRound size={14}/>}>Employees</Tabs.Tab><Tabs.Tab value="teams" leftSection={<Wrench size={14}/>}>Teams</Tabs.Tab><Tabs.Tab value="materialTypes" leftSection={<Package size={14}/>}>Material Types</Tabs.Tab><Tabs.Tab value="vendors" leftSection={<Store size={14}/>}>Vendors</Tabs.Tab></Tabs.List>
       <Tabs.Panel value="types" pt="sm"><SiteTypes items={data.siteTypes} onSaved={load}/></Tabs.Panel>
       <Tabs.Panel value="employees" pt="sm"><Employees items={data.employees} onSaved={load}/></Tabs.Panel>
       <Tabs.Panel value="teams" pt="sm"><Teams items={data.teams} onSaved={load}/></Tabs.Panel>
+    <Tabs.Panel value="materialTypes" pt="sm"><MaterialTypesTab/></Tabs.Panel>
+      <Tabs.Panel value="vendors" pt="sm"><VendorsTab/></Tabs.Panel>
     </Tabs>
   </Stack>
 }

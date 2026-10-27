@@ -1,6 +1,6 @@
 import { AppShell as MantineAppShell, Avatar, Burger, Group, Menu, NavLink as MantineNavLink, ScrollArea, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Bell, Building2, LayoutDashboard, KeyRound, LogOut, Settings } from 'lucide-react'
+import { Bell, Building2, LayoutDashboard, KeyRound, LogOut, Package, Settings } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -11,6 +11,7 @@ import { useState } from 'react'
 const navigation = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/projects', label: 'Projects', icon: Building2 },
+  { to: '/material', label: 'Material', icon: Package, adminOnly: true },
   { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/setup', label: 'Setup', icon: Settings, adminOnly: true },
 ]

@@ -23,6 +23,11 @@ const theme = createTheme({
   },
 })
 
+// Static UI preview only (VITE_UI_PREVIEW=1): skip login with a sample admin. Never set for real builds.
+if (import.meta.env.VITE_UI_PREVIEW) {
+  localStorage.setItem('sitetrack-user', JSON.stringify({ id: 0, employeeId: null, name: 'Preview Admin', mobile: '0000000000', roles: [new URLSearchParams(location.search).get('as') === 'supervisor' ? 'SUPERVISOR' : 'ADMIN'] }))
+}
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'))
 }

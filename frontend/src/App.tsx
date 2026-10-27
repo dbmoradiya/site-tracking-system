@@ -4,6 +4,7 @@ import { InstallPrompt } from './components/InstallPrompt'
 import { useAuth } from './lib/auth'
 import { hasRole } from './lib/api'
 import { DashboardPage } from './pages/DashboardPage'
+import { MaterialPage } from './pages/MaterialPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewProjectPage } from './pages/NewProjectPage'
 import { NewSitePage } from './pages/NewSitePage'
@@ -25,6 +26,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/material" element={hasRole(user,'ADMIN') ? <MaterialPage /> : <Navigate to="/" />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/projects/new" element={hasRole(user,'ADMIN') ? <NewProjectPage /> : <Navigate to="/projects" />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
