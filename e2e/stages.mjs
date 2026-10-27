@@ -1,0 +1,26 @@
+import {chromium} from 'playwright-core'
+const BASE=process.env.BASE_URL||'http://localhost:4173'
+const b=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,args:['--no-sandbox']})
+const ctx=await b.newContext({viewport:{width:1280,height:900},acceptDownloads:true});const p=await ctx.newPage();p.setDefaultTimeout(6000);const errs=[]
+p.on('pageerror',e=>errs.push(e.message));p.on('response',r=>{if(r.status()>=400)errs.push(r.status()+' '+r.url())})
+const sh=async n=>{await p.waitForTimeout(600);await p.screenshot({path:`e2e-out/e2e-st-${n}.png`})}
+const step=async(n,f)=>{try{await f();console.log('OK  ',n)}catch(e){console.log('FAIL',n,e.message.split('\n')[0]);console.log((await p.getByRole('button').allInnerTexts()).join(' | ').slice(0,500));await sh('fail-'+n.replace(/\W+/g,'_'))}}
+const login=async(m)=>{await p.goto(BASE+'/');await p.waitForTimeout(600);await p.evaluate(()=>{localStorage.clear();sessionStorage.clear()});await p.goto(BASE+'/');await p.waitForTimeout(800)
+await p.getByLabel('Mobile number').fill(m);await p.getByRole('textbox',{name:'Password'}).fill('SiteTrack123!');await p.getByRole('button',{name:'Sign in'}).click();await p.waitForTimeout(1200)}
+const body=async()=>p.locator('body').innerText()
+await login('+919000000009');await p.goto(BASE+'/sites/1');await p.waitForTimeout(2000)
+await step('assign supervisor',async()=>{await p.getByRole('button',{name:'Edit assignment for Design'}).click({timeout:2500}).catch(()=>{});const sel=p.getByLabel('Supervisor');const o=(await sel.locator('option').allInnerTexts()).find(x=>/Rakesh/.test(x));await sel.selectOption({label:o});await p.getByRole('button',{name:'Save',exact:true}).click();await p.waitForTimeout(1200);if(!/Rakesh/.test(await body()))throw new Error('not assigned')})
+await login('+919000000002');await p.goto(BASE+'/sites/1');await p.waitForTimeout(2000)
+await step('supervisor uploads evidence',async()=>{await p.getByRole('button',{name:'Add evidence'}).first().click();await p.waitForTimeout(400);await p.locator('input[type=file]').first().setInputFiles('fixtures/evidence.pdf');await p.getByRole('button',{name:'Upload evidence'}).click();await p.waitForTimeout(1500);if(!/1 evidence/.test(await body()))throw new Error('count');await sh('evidence-uploaded')})
+await step('supervisor submits for approval',async()=>{await p.getByRole('button',{name:'Submit for approval'}).first().click();await p.waitForTimeout(1500);if(!/REVIEW|review/.test(await body()))throw new Error('not in review')})
+await login('+919000000009');await p.goto(BASE+'/sites/1');await p.waitForTimeout(2000)
+await step('admin opens evidence file (bytes are the PDF)',async()=>{await p.getByRole('button',{name:/Evidence & history/}).first().click();await p.waitForTimeout(1000);await sh('history')
+  const [pop]=await Promise.all([ctx.waitForEvent('page',{timeout:6000}),p.getByText('evidence.pdf').first().click()]);await pop.waitForTimeout(2000);const url=pop.url();
+  const head=await pop.evaluate(async()=>{const r=await fetch(location.href);const b=new Uint8Array(await r.arrayBuffer());return String.fromCharCode(...b.slice(0,5))+' '+b.length}).catch(e=>'err '+e.message);console.log('popup',url.slice(0,30),head);if(!/^%PDF/.test(head))throw new Error('not a pdf: '+head);await pop.screenshot({path:'e2e-out/e2e-st-evidence-open.png'});await pop.close()})
+await step('request changes with note',async()=>{await p.getByRole('button',{name:'Request changes'}).first().click();await p.waitForTimeout(500);await p.getByRole('dialog').locator('textarea').fill('Drawing missing north arrow');await p.getByRole('dialog').getByRole('button',{name:/Request changes|Send|Submit/}).last().click();await p.waitForTimeout(1500);if(!/changes/i.test(await body()))throw new Error('no state')})
+await login('+919000000002');await p.goto(BASE+'/sites/1');await p.waitForTimeout(2000)
+await step('supervisor resubmits',async()=>{await p.getByRole('button',{name:'Add evidence'}).first().click();await p.waitForTimeout(400);await p.locator('input[type=file]').first().setInputFiles('fixtures/note.txt');await p.getByRole('button',{name:'Upload evidence'}).click();await p.waitForTimeout(1500);await p.getByRole('button',{name:'Submit for approval'}).first().click();await p.waitForTimeout(1500)})
+await login('+919000000009');await p.goto(BASE+'/sites/1');await p.waitForTimeout(2000)
+await step('admin approves, next stage unlocks',async()=>{const btn=p.getByRole('button',{name:/Approve|Complete/}).first();await btn.click();await p.waitForTimeout(1500);const t=await body();if(!/1 of 2 complete/.test(t))throw new Error('not complete: '+t.slice(0,300));await sh('approved')})
+await step('history shows audit',async()=>{await p.getByRole('button',{name:/Design/}).first().click();await p.waitForTimeout(600);await p.getByRole('button',{name:/Evidence & history/}).first().click();await p.waitForTimeout(1000);const t=await body();console.log(t.match(/Drawing missing north arrow/)?'note in history':'NO NOTE');console.log(t.slice(t.indexOf('Review history'),t.indexOf('Review history')+400));await p.locator('.stage-details__body').first().scrollIntoViewIfNeeded();await p.locator('.stage-details__body').first().screenshot({path:'e2e-out/e2e-st-design-review-history.png'})})
+console.log('errors',errs);await b.close()
