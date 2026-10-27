@@ -1,10 +1,10 @@
-import { Combobox, InputBase, useCombobox } from '@mantine/core'
+import { Combobox, InputBase, Text, useCombobox } from '@mantine/core'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
-type Props = { label: string; placeholder: string; options: string[]; value: string; onChange: (value: string, created: boolean) => void; required?: boolean; createLabel?: string }
+type Props = { label: string; placeholder: string; options: string[]; value: string; onChange: (value: string, created: boolean) => void; required?: boolean; createLabel?: string; hint?: string }
 
-export function CreatableSelect({ label, placeholder, options, value, onChange, required, createLabel = 'Add' }: Props) {
+export function CreatableSelect({ label, placeholder, options, value, onChange, required, createLabel = 'Add', hint }: Props) {
   const combobox = useCombobox({ onDropdownClose: () => combobox.resetSelectedOption() })
   const [search, setSearch] = useState(value)
   const q = search.trim()
@@ -15,7 +15,7 @@ export function CreatableSelect({ label, placeholder, options, value, onChange, 
     else { setSearch(val); onChange(val, false) }
     combobox.closeDropdown()
   }
-  return <Combobox store={combobox} withinPortal={false} onOptionSubmit={pick}>
+  return <div><Combobox store={combobox} withinPortal={false} onOptionSubmit={pick}>
     <Combobox.Target>
       <InputBase size="xs" label={label} required={required} placeholder={placeholder} value={search} rightSection={<Combobox.Chevron />} rightSectionPointerEvents="none"
         onChange={e => { setSearch(e.currentTarget.value); onChange(e.currentTarget.value, !options.some(o => o.toLowerCase() === e.currentTarget.value.trim().toLowerCase())); combobox.openDropdown(); combobox.updateSelectedOptionIndex() }}
@@ -29,4 +29,5 @@ export function CreatableSelect({ label, placeholder, options, value, onChange, 
       </Combobox.Options>
     </Combobox.Dropdown>
   </Combobox>
+  {hint && <Text size="xs" c="dimmed" mt={2}>{hint}</Text>}</div>
 }

@@ -165,9 +165,8 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
     <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs">
       <TextInput size="xs" type="date" label="Purchase date" required value={date} onChange={e => setDate(e.currentTarget.value)} />
       <TextInput size="xs" label="Bill number" value={bill} onChange={e => setBill(e.currentTarget.value)} placeholder="Vendor bill / invoice no." />
-      <CreatableSelect label="Vendor" required placeholder="Search or add vendor" options={vendors.map(v => v.name)} value={vendor} onChange={pickVendor} createLabel="Create vendor" />
-      <TextInput size="xs" label="Vendor mobile" required value={mobile} inputMode="numeric" maxLength={10} disabled={!!existingVendor} onChange={e => setMobile(e.currentTarget.value.replace(/\D/g, ''))} placeholder="10-digit mobile"
-        description={newVendor ? 'New vendor will be created' : existingVendor ? 'Filled from vendor' : undefined} error={mobile && mobile.length !== 10 ? 'Enter 10 digits' : undefined} />
+      <CreatableSelect label="Vendor" required placeholder="Search or add vendor" options={vendors.map(v => v.name)} value={vendor} onChange={pickVendor} createLabel="Create vendor" hint={newVendor ? 'New vendor will be created' : existingVendor ? 'Existing vendor - mobile filled from vendor' : undefined} />
+      <div>      <TextInput size="xs" label="Vendor mobile" required value={mobile} inputMode="numeric" maxLength={10} disabled={!!existingVendor} onChange={e => setMobile(e.currentTarget.value.replace(/\D/g, ''))} placeholder="10-digit mobile" error={mobile && mobile.length !== 10 ? 'Enter 10 digits' : undefined} /></div>
     </SimpleGrid>
     <div>
       <Group justify="space-between" mb={4}><Text fw={700} size="sm">Items ({rows.length})</Text><Button size="compact-sm" variant="light" leftSection={<Plus size={14} />} onClick={() => setRows(rs => [...rs, blankRow()])}>Add item</Button></Group>
@@ -175,8 +174,8 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
         const em = findMaterial(r.material), nm = !!r.material.trim() && !em
         return <Paper withBorder p="xs" key={r.key} aria-label={`Item ${i + 1}`}>
           <SimpleGrid cols={{ base: 2, sm: 6 }} spacing="xs" style={{ alignItems: 'start' }}>
-            <div style={{ gridColumn: 'span 2' }}><CreatableSelect label={`Item ${i + 1} - material type`} required placeholder="Search or add, e.g. Solar Panel" options={materialTypes.map(m => m.name)} value={r.material} onChange={v => pickMaterial(r.key, v)} createLabel="Create material type" /></div>
-            <NativeSelect size="xs" label="Unit" required value={r.uom} onChange={e => patch(r.key, { uom: e.currentTarget.value })} disabled={!!em} data={[{ value: '', label: 'Select' }, ...UOMS.map(u => ({ value: u, label: u }))]} description={nm ? 'New type' : em ? 'From type' : undefined} />
+            <div style={{ gridColumn: 'span 2' }}><CreatableSelect label={`Item ${i + 1} - material type`} required placeholder="Search or add, e.g. Solar Panel" options={materialTypes.map(m => m.name)} value={r.material} onChange={v => pickMaterial(r.key, v)} createLabel="Create material type" hint={nm ? 'New type' : em ? 'Existing type - unit comes from type' : undefined} /></div>
+            <div><NativeSelect size="xs" label="Unit" required value={r.uom} onChange={e => patch(r.key, { uom: e.currentTarget.value })} disabled={!!em} data={[{ value: '', label: 'Select' }, ...UOMS.map(u => ({ value: u, label: u }))]} /></div>
             <NumberInput size="xs" label="Quantity" required min={0} decimalScale={3} value={r.qty} onChange={v => patch(r.key, { qty: v })} placeholder="0" hideControls />
             <NumberInput size="xs" label="Rate (excl. GST)" required min={0} decimalScale={2} value={r.rate} onChange={v => patch(r.key, { rate: v })} placeholder="0.00" hideControls leftSection={'\u20B9'} />
             <NativeSelect size="xs" label="GST %" value={r.gst} onChange={e => patch(r.key, { gst: e.currentTarget.value })} data={GST_RATES.map(g => ({ value: String(g), label: `${g}%` }))} />

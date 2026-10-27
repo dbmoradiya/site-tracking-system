@@ -8,7 +8,7 @@ export type PurchaseVersion = Snapshot & { version: number; activeFrom: string; 
 export type Purchase = Snapshot & { id: number; purchaseId: string; activeFrom: string; versions: PurchaseVersion[] }
 export type Issue = { id: number; date: string; material: string; qty: number; project: string; site: string; issuedTo: string }
 
-export const UOMS = ['Bag', 'Kg', 'Ton', 'Nos', 'Meter', 'Sq.ft', 'Litre', 'Box']
+export const UOMS = ['Bag', 'Bundle', 'Box', 'Can', 'Carton', 'Cm', 'Coil', 'Cu.ft', 'Cu.m', 'Dozen', 'Drum', 'Feet', 'Gram', 'Inch', 'Kg', 'Litre', 'Meter', 'Ml', 'Mm', 'Nos', 'Packet', 'Pair', 'Pcs', 'Quintal', 'Roll', 'Running ft', 'Set', 'Sheet', 'Sq.ft', 'Sq.m', 'Ton']
 export const GST_RATES = [0, 5, 12, 18, 28]
 
 type Seed = Omit<Purchase, 'purchaseId' | 'activeFrom' | 'versions'>
