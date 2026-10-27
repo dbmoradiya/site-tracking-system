@@ -182,7 +182,7 @@ function SaleHistory({ s }: { s: Sale }) {
   </Stack>
 }
 
-export function SaleDialog({ id, onClose }: { id: number | null; onClose: () => void }) {
+export function SaleDialog({ id, onClose, readOnly = false }: { id: number | null; onClose: () => void; readOnly?: boolean }) {
   const { sales, vendors, company } = useMaterialStore()
   const s = sales.find(x => x.id === id)
   const v = s ? vendors.find(x => x.name === s.vendor) : undefined
@@ -204,13 +204,13 @@ export function SaleDialog({ id, onClose }: { id: number | null; onClose: () => 
         <div><Text size="xs" c="dimmed" mb={4}>Items ({s.items.length})</Text><ItemsTable items={s.items} /></div>
         <Group justify="space-between" align="center"><div><Text size="xs" c="dimmed">Challan</Text><Text size="sm" fw={600}>challan-{s.saleId}.pdf</Text><Text size="xs" c="dimmed">Sample made in the browser. The real build creates it on the backend.</Text></div>
           <Group gap="xs"><Button variant="default" leftSection={<FileText size={14} />} onClick={() => setChallan(true)}>View challan</Button><Button variant="default" leftSection={<Download size={14} />} onClick={download}>Download PDF</Button></Group></Group>
-        <Group justify="space-between" mt="xs"><Button color="red" variant="light" leftSection={<Trash2 size={14} />} onClick={() => setConfirm(true)}>Delete</Button>
-          <Group><Button variant="default" onClick={close}>Close</Button><Button leftSection={<Pencil size={14} />} onClick={() => setEditing(true)}>Edit</Button></Group></Group>
-        <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', paddingTop: 8 }}>
+        {readOnly ? <Group justify="space-between" mt="xs"><Text size="xs" c="dimmed">Read only - view access from the project or site page.</Text><Button variant="default" onClick={close}>Close</Button></Group> : <Group justify="space-between" mt="xs"><Button color="red" variant="light" leftSection={<Trash2 size={14} />} onClick={() => setConfirm(true)}>Delete</Button>
+          <Group><Button variant="default" onClick={close}>Close</Button><Button leftSection={<Pencil size={14} />} onClick={() => setEditing(true)}>Edit</Button></Group></Group>}
+        {!readOnly && <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', paddingTop: 8 }}>
           <Button variant="subtle" size="compact-sm" leftSection={<History size={14} />} rightSection={<ChevronDown size={14} style={{ transform: showHistory ? 'rotate(180deg)' : undefined }} />} onClick={() => setShowHistory(x => !x)} aria-expanded={showHistory}>
             Edit history ({s.versions.length} earlier {s.versions.length === 1 ? 'version' : 'versions'})</Button>
           <Collapse expanded={showHistory}><SaleHistory s={s} /></Collapse>
-        </div>
+        </div>}
       </Stack>)}
     </Modal>
     <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}` : 'Challan'} zIndex={400}>
@@ -242,19 +242,19 @@ export function MaterialSalesHistory({ material, onOpen }: { material: string; o
 }
 
 // ---------- Linked sales (project / site detail pages) ----------
-export function LinkedSales({ projectId, siteId }: { projectId?: number; siteId?: number }) {
+export function LinkedSales({ projectId, siteId, readOnly = false }: { projectId?: number; siteId?: number; readOnly?: boolean }) {
   const { sales } = useMaterialStore()
   const [open, setOpen] = useState(false), [openId, setOpenId] = useState<number | null>(null)
   const list = sales.filter(s => s.siteIds.some(i => siteId !== undefined ? i === siteId : siteById(i)?.projectId === projectId)).sort(byDateDesc)
   const pg = usePaged(list)
   return <Paper withBorder p="xs">
     <Button variant="subtle" size="compact-sm" leftSection={<FileText size={14} />} rightSection={<ChevronDown size={14} style={{ transform: open ? 'rotate(180deg)' : undefined }} />} onClick={() => setOpen(v => !v)} aria-expanded={open}>Linked sales ({list.length})</Button>
-    <Text size="xs" c="dimmed">UI preview - sample sales</Text>
+    <Text size="xs" c="dimmed">UI preview - sample sales{readOnly ? '. Read only: sales for this assignment only.' : ''}</Text>
     <Collapse expanded={open}>{list.length === 0 ? <Text size="sm" c="dimmed" py="xs">No sales linked yet.</Text> : <>
       <Table.ScrollContainer minWidth={560}><Table highlightOnHover fz="sm"><Table.Thead><Table.Tr><Table.Th>Sale ID</Table.Th><Table.Th>Type</Table.Th><Table.Th>Date</Table.Th><Table.Th>Items</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
         <Table.Tbody>{pg.rows.map(s => <Table.Tr key={s.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open sale ${s.saleId}`} onClick={() => setOpenId(s.id)} onKeyDown={e => e.key === 'Enter' && setOpenId(s.id)}>
           <Table.Td fw={600} c="orange.8">{s.saleId}</Table.Td><Table.Td><TypeBadge type={s.type} /></Table.Td><Table.Td>{fmtDate(s.date)}</Table.Td><Table.Td>{label(s)}</Table.Td><Table.Td>{s.vendor}</Table.Td><Table.Td ta="right" fw={600}>{inr(docTotals(s.items).total)}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>
       <Pager p={pg} label="sales" /></>}</Collapse>
-    <SaleDialog id={openId} onClose={() => setOpenId(null)} />
+    <SaleDialog id={openId} onClose={() => setOpenId(null)} readOnly={readOnly} />
   </Paper>
 }
