@@ -1,6 +1,6 @@
 // UI PREVIEW ONLY: in-memory store shared by Material and Setup pages. Resets on reload. No API or database.
 import { useSyncExternalStore } from 'react'
-import { seedIssues, seedPurchases, type Issue, type Purchase } from './materialMock'
+import { makePurchaseId, seedCounters, seedIssues, seedPurchases, type Issue, type Purchase } from './materialMock'
 
 export type MaterialType = { name: string; uom: string }
 export type Vendor = { name: string; mobile: string }
@@ -21,10 +21,19 @@ export const findMaterial = (name: string) => state.materialTypes.find(m => same
 export const findVendor = (name: string) => state.vendors.find(v => same(v.name, name))
 
 // A new material type or vendor typed in the purchase form is created automatically on save.
-export function addPurchase(p: Omit<Purchase, 'id'>) {
-  const materialTypes = findMaterial(p.material) ? state.materialTypes : [...state.materialTypes, { name: p.material, uom: p.uom }]
-  const vendors = findVendor(p.vendor) ? state.vendors : [...state.vendors, { name: p.vendor, mobile: p.vendorMobile }]
-  set({ ...state, materialTypes, vendors, purchases: [{ ...p, id: Date.now() }, ...state.purchases] })
+const counters = new Map(seedCounters) // never reuses a number for a date, even after delete (illustrative policy)
+const ensureRefs = (p: { material: string; uom: string; vendor: string; vendorMobile: string }) => ({
+  materialTypes: findMaterial(p.material) ? state.materialTypes : [...state.materialTypes, { name: p.material, uom: p.uom }],
+  vendors: findVendor(p.vendor) ? state.vendors : [...state.vendors, { name: p.vendor, mobile: p.vendorMobile }] })
+export const nextPurchaseId = (date: string) => makePurchaseId(date, (counters.get(date) ?? 0) + 1)
+export function updatePurchase(id: number, p: Omit<Purchase, 'id' | 'purchaseId'>) {
+  // Purchase ID never changes on edit, even if the date changes.
+  set({ ...state, ...ensureRefs(p), purchases: state.purchases.map(x => x.id === id ? { ...p, id, purchaseId: x.purchaseId } : x) })
+}
+export function deletePurchase(id: number) { set({ ...state, purchases: state.purchases.filter(x => x.id !== id) }) }
+export function addPurchase(p: Omit<Purchase, 'id' | 'purchaseId'>) {
+  const n = (counters.get(p.date) ?? 0) + 1; counters.set(p.date, n)
+  set({ ...state, ...ensureRefs(p), purchases: [{ ...p, id: Date.now(), purchaseId: makePurchaseId(p.date, n) }, ...state.purchases] })
 }
 export function editMaterialType(oldName: string, next: MaterialType) {
   set({ ...state,
