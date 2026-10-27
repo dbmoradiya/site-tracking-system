@@ -1,5 +1,6 @@
 // UI PREVIEW ONLY: sample projects and sites so the linked-sales sections can be shown. Not real data.
-const stage = (id: number, name: string, status: string, position: number) => ({ id, name, position, status, evidenceRequired: false, requiredRoles: [] as string[], assignments: [] as unknown[], evidenceCount: 0, canManage: false, canUpload: false })
+type Asg = { role: string; employeeId: number | null; employeeName: string | null }
+const stage = (id: number, name: string, status: string, position: number) => ({ id, name, position, status, evidenceRequired: false, requiredRoles: [] as string[], assignments: [] as Asg[], evidenceCount: 0, canManage: false, canUpload: false })
 const sites = [
   { id: 101, name: 'Block A', address: 'Sun City, Sector 5', targetDate: '2026-12-31', status: 'IN_PROGRESS', projectId: 1, projectName: 'Sun City Complex', siteType: 'Solar Rooftop' },
   { id: 102, name: 'Block B', address: 'Sun City, Sector 6', targetDate: '2027-01-31', status: 'IN_PROGRESS', projectId: 1, projectName: 'Sun City Complex', siteType: 'Solar Rooftop' },
@@ -14,7 +15,7 @@ const projects = [
 const me = () => { try { return JSON.parse(localStorage.getItem('sitetrack-user') || '{}') } catch { return {} } }
 const scoped = (projectId: number) => { const u = me(); if (!u.roles?.includes('COORDINATOR') || u.roles.includes('ADMIN')) return true; return projects.find(x => x.id === projectId)?.coordinatorId === u.employeeId }
 // Demo stages for Block A (preview only): shows every state. Actions below change this in-memory copy only.
-type DStage = ReturnType<typeof stage> & { assignments: { role: string; employeeId: number | null; employeeName: string | null }[] }
+type DStage = ReturnType<typeof stage>
 const A = (role: string, id: number | null, name: string | null) => ({ role, employeeId: id, employeeName: name })
 const demo = (): DStage[] => [
   { ...stage(11, 'Site survey', 'COMPLETED', 1), requiredRoles: ['SUPERVISOR'], assignments: [A('SUPERVISOR', 21, 'Ravi Patel')], evidenceCount: 2, evidenceRequired: true },
