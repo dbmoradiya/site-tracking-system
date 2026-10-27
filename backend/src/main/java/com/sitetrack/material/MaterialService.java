@@ -71,7 +71,7 @@ public class MaterialService {
 
     private void checkVendorFields(String mobile, String gst) {
         if (!mobile.matches("\\d{10}")) throw bad("Vendor mobile must be 10 digits");
-        if (!gst.isEmpty() && !GSTIN.matcher(gst).matches()) throw bad("GST number is not a valid 15-character GSTIN");
+        if (gst.length() > 15) throw bad("GST number can be at most 15 characters"); // wrong format is only a warning in the UI
     }
 
     // ---------- reference data ----------
@@ -142,7 +142,7 @@ public class MaterialService {
     public Map<String, Object> saveCompany(CompanyIn in) {
         String address = s(in.address()), gst = s(in.gst()).toUpperCase(), mobile = s(in.mobile());
         if (address.isEmpty()) throw bad("Company address is required");
-        if (!GSTIN.matcher(gst).matches()) throw bad("GST number is not a valid 15-character GSTIN");
+        if (gst.length() > 15) throw bad("GST number can be at most 15 characters"); // wrong format is only a warning in the UI
         if (!mobile.matches("\\d{10}")) throw bad("Mobile must be 10 digits");
         jdbc.sql("update company_profile set address=:a,gst=:g,mobile=:m,updated_at=now() where id=1").param("a", address).param("g", gst).param("m", mobile).update();
         return company();
@@ -385,7 +385,7 @@ public class MaterialService {
 
     // ---------- sales ----------
     private List<Long> checkSites(List<Long> siteIds) {
-        if (siteIds == null || siteIds.isEmpty()) throw bad("Select at least one site");
+        if (siteIds == null || siteIds.isEmpty()) return List.of(); // a sale without a site is allowed
         List<Long> ids = siteIds.stream().distinct().sorted().toList();
         long found = jdbc.sql("select count(*) from sites where id in (:ids)").param("ids", ids).query(Long.class).single();
         if (found != ids.size()) throw bad("A selected site does not exist");

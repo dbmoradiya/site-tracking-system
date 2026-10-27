@@ -168,7 +168,8 @@ class MaterialFlowTest {
         // vendor rename + validation
         long vid = ((Number) ((List<Map<String, Object>>) get(admin, "/material/bootstrap", Map.class).get("vendors")).get(0).get("id")).longValue();
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "123", "gst", "", "address", "")));
-        assertEquals(400, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "BADGST", "address", "")));
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "BADGST", "address", "")), "a wrongly formatted GST is saved (UI warns)");
+        assertEquals(400, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders", "mobile", "9825012345", "gst", "1234567890123456", "address", "")));
         assertEquals(200, status(HttpMethod.PUT, admin, "/material/vendors/" + vid, Map.of("name", "Ambika Traders Co", "mobile", "9825012345", "gst", "24BBBBB1111B1Z6", "address", "Vasna")));
         assertEquals("Ambika Traders Co", get(admin, "/material/purchases/" + id1, Map.class).get("vendor"));
     }
@@ -211,7 +212,7 @@ class MaterialFlowTest {
         // validations
         assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", saleBody("DEBIT", "Patel", List.of(siteA1), List.of(item("Cement OPC", "Bag", "1", "1", "5")))), "unknown vendor without details");
         Map<String, Object> nv = saleBody("DEBIT", "Patel Constructions", List.of(siteA1), List.of(item("Cement OPC", "Bag", "1", "1", "5"))); nv.put("newVendor", Map.of("name", "Patel Constructions", "mobile", "9898011122", "gst", "", "address", ""));
-        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", saleBody("DEBIT", "Ambika Traders Co", List.of(), List.of(item("Cement OPC", "Bag", "1", "1", "5")))), "needs a site");
+        // a sale without any site is allowed (user decision); it is admin-only visible (see end of this test)
         assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", saleBody("DEBIT", "Ambika Traders Co", List.of(siteA1), List.of(item("Never Bought", "Bag", "1", "1", "5")))), "existing materials only");
         assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", saleBody("SIDEWAYS", "Ambika Traders Co", List.of(siteA1), List.of(item("Cement OPC", "Bag", "1", "1", "5")))));
         assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", saleBody("DEBIT", "Ambika Traders Co", List.of(999999L), List.of(item("Cement OPC", "Bag", "1", "1", "5")))));
@@ -272,6 +273,13 @@ class MaterialFlowTest {
         assertEquals(404, status(HttpMethod.GET, admin, "/material/sales/" + idMulti + "/challan", null));
         assertEquals(0, before.subtract(BigDecimal.ONE).compareTo(stockMap().get("Cement OPC")));
         assertEquals(0, ((List<?>) get(kavita, "/projects/" + projA + "/sales", List.class).stream().filter(x -> ((Number) ((Map<?, ?>) x).get("id")).longValue() == idMulti).toList()).size());
+        Map<String, Object> ns = send(HttpMethod.POST, admin, "/material/sales", saleBody("DEBIT", "Ambika Traders Co", List.of(), List.of(item("Cement OPC", "Bag", "1", "1", "5"))));
+        long idNs = ((Number) ns.get("id")).longValue();
+        assertEquals(0, ((List<?>) ns.get("siteIds")).size());
+        assertEquals(200, status(HttpMethod.GET, admin, "/material/sales/" + idNs + "/challan", null));
+        assertEquals(404, status(HttpMethod.GET, kavita, "/material/sales/" + idNs + "/challan", null));
+        assertEquals(0, ((List<?>) get(kavita, "/projects/" + projA + "/sales", List.class).stream().filter(x -> ((Number) ((Map<?, ?>) x).get("id")).longValue() == idNs).toList()).size());
+        assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + idNs, null));
     }
 
     @Test @Order(5) @SuppressWarnings("unchecked")
@@ -280,7 +288,7 @@ class MaterialFlowTest {
         assertEquals(200, status(HttpMethod.PUT, admin, "/material/company", Map.of("name", "ignored", "address", "Plot 1, Ahmedabad", "gst", "24AAAAA0000A1Z5", "mobile", "9876543210")));
         Map<String, Object> co = (Map<String, Object>) get(admin, "/material/bootstrap", Map.class).get("company");
         assertEquals("Shreeji Enterprise", co.get("name")); assertEquals("Plot 1, Ahmedabad", co.get("address"));
-        assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "BAD", "mobile", "9876543210")));
+        assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "1234567890123456", "mobile", "9876543210")));
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "24AAAAA0000A1Z5", "mobile", "1")));
     }
 }

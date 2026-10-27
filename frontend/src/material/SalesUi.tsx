@@ -15,7 +15,7 @@ import { siteLabel, type Sale, type SaleSnap, type SaleType, type SaleVersion } 
 
 const today = () => new Date().toISOString().slice(0, 10)
 const byDateDesc = (a: Sale, b: Sale) => b.date.localeCompare(a.date) || b.id - a.id
-const GST_RE = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/ // tentative GSTIN format check
+const GST_RE = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/ // format mismatch only warns (user decision)
 const label = (s: Sale) => s.items.length === 1 ? s.items[0].material : `${s.items[0].material} +${s.items.length - 1} more`
 const sitesText = (ids: number[]) => ids.map(i => { const s = siteById(i); return s ? siteLabel(s) : `Site ${i}` })
 const sitesShort = (ids: number[]) => { const t = sitesText(ids); return t.length <= 1 ? t[0] ?? '-' : `${t[0]} +${t.length - 1} more` }
@@ -95,7 +95,7 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
   const grand = docTotals(rows.map(r => ({ material: r.material, uom: '', qty: Number(r.qty) || 0, rate: Number(r.rate) || 0, gst: Number(r.gst) })))
   const gstBad = newVendor && gst.trim() !== '' && !GST_RE.test(gst.trim().toUpperCase())
   const rowOk = (r: Row) => !!findMaterial(r.material) && Number(r.qty) > 0 && Number(r.rate) > 0
-  const valid = !!type && !!date && !!vendor.trim() && (!newVendor || /^\d{10}$/.test(mobile)) && !gstBad && siteIds.length > 0 && rows.length > 0 && rows.every(rowOk)
+  const valid = !!type && !!date && !!vendor.trim() && (!newVendor || /^\d{10}$/.test(mobile)) && rows.length > 0 && rows.every(rowOk)
   const [busy, setBusy] = useState(false)
   const save = async () => {
     const data: SaleSnap = { type: type as SaleType, date, vendor: vendor.trim(), siteIds: siteIds.map(Number), items: rows.map(r => ({ material: r.material, uom: findMaterial(r.material)!.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
@@ -121,10 +121,10 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
       <div />
       <CreatableSelect label="Vendor" required placeholder="Search or add vendor" options={vendors.map(v => v.name)} value={vendor} onChange={pickVendor} createLabel="Create vendor" hint={newVendor ? 'New vendor will be created' : ev ? 'Existing vendor - details filled from vendor' : undefined} />
       <TextInput size="xs" label="Vendor mobile" required={newVendor} value={showMobile} inputMode="numeric" maxLength={10} disabled={!!ev} onChange={e => setMobile(e.currentTarget.value.replace(/\D/g, ''))} placeholder="10-digit mobile" error={newVendor && mobile && mobile.length !== 10 ? 'Enter 10 digits' : undefined} />
-      <TextInput size="xs" label="Vendor GST number" value={showGst} disabled={!!ev} onChange={e => setGst(e.currentTarget.value.toUpperCase())} maxLength={15} placeholder="15-character GSTIN" error={gstBad ? 'GSTIN looks invalid (15 characters)' : undefined} />
+      <TextInput size="xs" label="Vendor GST number" value={showGst} disabled={!!ev} onChange={e => setGst(e.currentTarget.value.toUpperCase())} maxLength={15} placeholder="15-character GSTIN" description={gstBad ? <Text span size="xs" c="orange.8">Warning: this does not look like a valid 15-character GSTIN. It will still be saved.</Text> : undefined} />
       <TextInput size="xs" label="Vendor address" value={showAddr} disabled={!!ev} onChange={e => setAddress(e.currentTarget.value)} placeholder="Vendor address" />
     </SimpleGrid>
-    <MultiSelect size="xs" label="Sites" required searchable clearable placeholder={siteIds.length ? undefined : 'Select one or more sites'} value={siteIds} onChange={setSiteIds}
+    <MultiSelect size="xs" label="Sites (optional)" searchable clearable placeholder={siteIds.length ? undefined : 'Select sites (optional)'} value={siteIds} onChange={setSiteIds}
       data={sites.map(s => ({ value: String(s.id), label: siteLabel(s) }))} nothingFoundMessage="No such site" description="Shown as Site | Project. Sites are only linked to this sale; the item quantity reduces (or adds to) stock once." />
     <div>
       <Group justify="space-between" mb={4}><Text fw={700} size="sm">Items ({rows.length})</Text><Button size="compact-sm" variant="light" leftSection={<Plus size={14} />} onClick={() => setRows(rs => [...rs, blankRow()])}>Add item</Button></Group>

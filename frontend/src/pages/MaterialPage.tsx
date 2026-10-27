@@ -152,7 +152,7 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
   const items = rows.map(r => ({ r, c: calc(Number(r.qty) || 0, Number(r.rate) || 0, Number(r.gst)) }))
   const grand = docTotals(rows.map(r => ({ material: r.material, uom: r.uom, qty: Number(r.qty) || 0, rate: Number(r.rate) || 0, gst: Number(r.gst) })))
   const rowOk = (r: Row) => r.material.trim() && r.uom && Number(r.qty) > 0 && Number(r.rate) > 0
-  const valid = date && vendor.trim() && /^\d{10}$/.test(mobile) && !gstBad && rows.length > 0 && rows.every(rowOk)
+  const valid = date && vendor.trim() && /^\d{10}$/.test(mobile) && rows.length > 0 && rows.every(rowOk)
   const pickFile = (f: File | null) => {
     setFileError(''); if (!f) return
     if (!(f.type === 'application/pdf' || f.type.startsWith('image/'))) { setFileError('Only PDF or image files'); return }
@@ -177,7 +177,7 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
       <TextInput size="xs" label="Bill number" value={bill} onChange={e => setBill(e.currentTarget.value)} placeholder="Vendor bill / invoice no." />
       <CreatableSelect label="Vendor" required placeholder="Search or add vendor" options={vendors.map(v => v.name)} value={vendor} onChange={pickVendor} createLabel="Create vendor" hint={newVendor ? 'New vendor will be created' : existingVendor ? 'Existing vendor - mobile filled from vendor' : undefined} />
       <div>      <TextInput size="xs" label="Vendor mobile" required value={mobile} inputMode="numeric" maxLength={10} disabled={!!existingVendor} onChange={e => setMobile(e.currentTarget.value.replace(/\D/g, ''))} placeholder="10-digit mobile" error={mobile && mobile.length !== 10 ? 'Enter 10 digits' : undefined} /></div>
-      <TextInput size="xs" label="Vendor GST number" value={existingVendor ? existingVendor.gst : vGst} disabled={!!existingVendor} maxLength={15} onChange={e => setVGst(e.currentTarget.value.toUpperCase())} placeholder="15-character GSTIN" error={gstBad ? 'GSTIN looks invalid (15 characters)' : undefined} />
+      <TextInput size="xs" label="Vendor GST number" value={existingVendor ? existingVendor.gst : vGst} disabled={!!existingVendor} maxLength={15} onChange={e => setVGst(e.currentTarget.value.toUpperCase())} placeholder="15-character GSTIN" description={gstBad ? <Text span size="xs" c="orange.8">Warning: this does not look like a valid 15-character GSTIN. It will still be saved.</Text> : undefined} />
       <TextInput size="xs" label="Vendor address" value={existingVendor ? existingVendor.address : vAddr} disabled={!!existingVendor} onChange={e => setVAddr(e.currentTarget.value)} placeholder="Vendor address" />
     </SimpleGrid>
     <div>
