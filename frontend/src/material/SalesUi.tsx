@@ -183,7 +183,7 @@ function SaleHistory({ s }: { s: Sale }) {
 }
 
 export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number | null; onClose: () => void; readOnly?: boolean; sale?: Sale }) {
-  const { sales, vendors } = useMaterialStore()
+  const { sales, vendors } = useMaterialStore(readOnly)
   // Admin: the live store copy (fresh after edits). Read-only viewers: the server-scoped copy passed in.
   const s = readOnly ? sale : (sales.find(x => x.id === id) ?? sale)
   const vi = s?.vendorInfo ?? vendors.find(x => x.name === s?.vendor)
