@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Clock3, ExternalLink, FileCheck2, History, RefreshCcw, Users, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, Clock3, Hourglass, Lock, ExternalLink, FileCheck2, History, RefreshCcw, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Loading } from '../components/Loading'
@@ -23,12 +23,12 @@ export function SiteDetailPage(){
   const load=useCallback(()=>{setError('');return api<Site>(`/sites/${siteId}`).then(setSite).catch(e=>{setSite(null);setError(e.message)})},[siteId]);useEffect(()=>{setSite(null);load()},[load]);useEffect(()=>{if(site?.canManage)api<Setup>('/setup').then(setSetup).catch(e=>setError(e.message))},[site?.canManage])
   const review=async(stageId:number,action:'APPROVED'|'CHANGES_REQUESTED',note='')=>{try{await post(`/stages/${stageId}/review`,{action,note});setReviewStageId(null);await load()}catch(err){setError(err instanceof Error?err.message:'Review failed')}}
   const complete=async(stageId:number)=>{try{await post(`/stages/${stageId}/complete`);await load()}catch(err){setError(err instanceof Error?err.message:'Could not complete Stage')}}
-  useEffect(()=>{if(!site||!location.hash.startsWith('#stage-'))return;const stageId=Number(location.hash.slice(7));const index=site.stages.findIndex(stage=>stage.id===stageId);if(index<0)return;window.requestAnimationFrame(()=>{const target=document.querySelectorAll<HTMLElement>('.timeline-item')[index];target?.setAttribute('tabindex','-1');target?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});target?.focus({preventScroll:true})})},[location.hash,site])
+  useEffect(()=>{if(!site||!location.hash.startsWith('#stage-'))return;const stageId=Number(location.hash.slice(7));const index=site.stages.findIndex(stage=>stage.id===stageId);if(index<0)return;window.requestAnimationFrame(()=>{const target=document.querySelectorAll<HTMLElement>('.stg-item')[index];target?.setAttribute('tabindex','-1');target?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});target?.focus({preventScroll:true})})},[location.hash,site])
   if(!site)return error?<div className="page"><Alert color="red" role="alert" mb="xs">{error}</Alert><Button component={Link} to="/projects" variant="default">Back to Projects</Button></div>:<Loading label="Loading Site"/>
   const terminal=site.stages.filter(s=>['APPROVED','COMPLETED'].includes(s.status)).length;const progress=site.stages.length?terminal/site.stages.length*100:0
   return <div className="page"><Link className="back-link" to={`/projects/${site.projectId}`}><ArrowLeft/>{site.projectName}</Link><header className="detail-hero detail-hero--site"><div><div className="detail-hero__meta"><span>{site.siteType}</span><StatusBadge status={site.status}/></div><h1>{site.name}</h1><p>{site.address||'No Site address'} · Project Coordinator: {site.coordinator}{site.targetDate?` · Target: ${site.targetDate}`:''}</p>{hasRole(user,'ADMIN')&&<SiteAdminActions site={site} onSaved={load}/>}</div><div className="completion-ring" style={{'--progress':`${progress*3.6}deg`} as CSSProperties} aria-label={`${Math.round(progress)}% of Stages complete`}><strong>{Math.round(progress)}%</strong><small>complete</small></div></header>{error&&<Alert color="red" role="alert" mb="xs">{error}</Alert>}
     {!error&&(hasRole(user,'ADMIN')||(hasRole(user,'COORDINATOR')&&user?.employeeId===(site as {projectCoordinatorId?:number}).projectCoordinatorId))&&<LinkedSales siteId={site.id} readOnly={!hasRole(user,'ADMIN')}/>}
-    <section className="section-card"><div className="section-heading"><div><p className="eyebrow">Delivery path</p><h2>Stages</h2></div><span>{terminal} of {site.stages.length} complete</span></div><div className="timeline">{site.stages.map((stage,index)=><article className={`timeline-item timeline-item--${stage.status.toLowerCase()}`} key={stage.id}><div className="timeline-item__rail"><span>{['APPROVED','COMPLETED'].includes(stage.status)?<Check/>:index+1}</span>{index<site.stages.length-1&&<i/>}</div><div className="timeline-item__card"><div className="timeline-item__header"><div><h3>{stage.name}</h3><StatusBadge status={stage.status}/></div><span className="evidence-count"><FileCheck2/>{stage.evidenceCount} evidence</span></div><div className="stage-meta"><span><Users/>{stage.requiredRoles.length?stage.requiredRoles.map(titleCase).join(', '):'No required roles'}</span></div>{stage.requiredRoles.length>0&&<StageAssignments key={`${stage.id}-${stage.assignments.map(a=>a.employeeId).join('-')}`} site={site} stage={stage} setup={setup} onSaved={load}/>}{stage.canUpload&&<EvidenceAction stage={stage} onSaved={load}/>} {site.canManage&&stage.requiredRoles.length===0&&['READY','NOT_STARTED','IN_PROGRESS'].includes(stage.status)&&<div className="review-actions"><Button size="xs" color="green" leftSection={<Check size={14}/>} disabled={stage.evidenceCount===0} onClick={()=>complete(stage.id)}>Mark Complete</Button></div>} {site.canManage&&stage.status==='REVIEW_PENDING'&&<div className="review-actions"><Button size="xs" color="red" variant="light" leftSection={<RefreshCcw size={14}/>} onClick={()=>setReviewStageId(stage.id)}>Request changes</Button><Button size="xs" color="green" leftSection={<Check size={14}/>} onClick={()=>review(stage.id,'APPROVED')}>Approve Stage</Button></div>} {stage.status==='BLOCKED'&&<p className="stage-hint"><Clock3/>Waiting for its dependency to be completed.</p>}<StageDetails key={`${stage.id}-${stage.evidenceCount}-${stage.status}`} stage={stage}/></div></article>)}</div></section>
+    <StagesSection site={site} setup={setup} load={load} terminal={terminal} complete={complete} review={review} askChanges={setReviewStageId}/>
     {reviewStageId!==null&&<ChangesDialog onClose={()=>setReviewStageId(null)} onSubmit={note=>review(reviewStageId,'CHANGES_REQUESTED',note)}/>}
   </div>
 }
@@ -78,3 +78,60 @@ function SiteAdminActions({site,onSaved}:{site:Site;onSaved:()=>void}){
     </Modal>
   </>
 }
+
+const done=(s:Stage)=>['APPROVED','COMPLETED'].includes(s.status)
+const people=(s:Stage)=>s.assignments.filter(a=>a.employeeName).map(a=>a.employeeName as string)
+const missing=(s:Stage)=>s.requiredRoles.length>0&&s.assignments.length>0&&s.assignments.some(a=>!a.employeeName)
+function StageIcon({stage,n}:{stage:Stage;n:number}){
+  if(done(stage))return <span className="stg-dot stg-dot--done" aria-hidden="true"><Check/></span>
+  if(stage.status==='BLOCKED')return <span className="stg-dot stg-dot--blocked" aria-hidden="true"><Lock/></span>
+  if(stage.status==='REVIEW_PENDING')return <span className="stg-dot stg-dot--review" aria-hidden="true"><Hourglass/></span>
+  if(stage.status==='CHANGES_REQUESTED')return <span className="stg-dot stg-dot--changes" aria-hidden="true"><AlertTriangle/></span>
+  return <span className="stg-dot stg-dot--active" aria-hidden="true">{n}</span>
+}
+function StagesSection({site,setup,load,terminal,complete,review,askChanges}:{site:Site;setup:Setup|null;load:()=>Promise<unknown>|void;terminal:number;complete:(id:number)=>void;review:(id:number,a:'APPROVED'|'CHANGES_REQUESTED')=>void;askChanges:(id:number)=>void}){
+  const stages=site.stages;const location=useLocation()
+  const current=stages.find(s=>!done(s)&&s.status!=='BLOCKED')??stages.find(s=>!done(s))
+  const hashId=location.hash.startsWith('#stage-')?Number(location.hash.slice(7)):null
+  const [openIds,setOpenIds]=useState<number[]>(()=>[...(current?[current.id]:[]),...(hashId?[hashId]:[])])
+  const [filter,setFilter]=useState<'all'|'todo'|'done'>('all')
+  useEffect(()=>{if(current)setOpenIds(ids=>ids.includes(current.id)?ids:[...ids,current.id])},[current?.id,current?.status])
+  const prev=useRef<Record<number,string>>({})
+  useEffect(()=>{const just=stages.filter(s=>done(s)&&prev.current[s.id]&&!['APPROVED','COMPLETED'].includes(prev.current[s.id])).map(s=>s.id);prev.current=Object.fromEntries(stages.map(s=>[s.id,s.status]));if(just.length)setOpenIds(ids=>ids.filter(x=>!just.includes(x)))},[stages])
+  const toggle=(id:number)=>setOpenIds(ids=>ids.includes(id)?ids.filter(x=>x!==id):[...ids,id])
+  const reviewCount=stages.filter(s=>s.status==='REVIEW_PENDING').length,blocked=stages.filter(s=>s.status==='BLOCKED').length,active=stages.length-terminal-reviewCount-blocked
+  const shown=stages.map((s,i)=>({s,i})).filter(({s})=>filter==='all'||(filter==='done'?done(s):!done(s)))
+  const banner=!current?{tone:'ok',title:'All stages are complete',text:'Nothing is pending on this site.'}
+    :current.status==='REVIEW_PENDING'?{tone:'review',title:`${current.name} is waiting for review`,text:site.canManage?'Check the evidence, then approve or ask for changes.':'The reviewer has been asked to check the evidence.'}
+    :current.status==='CHANGES_REQUESTED'?{tone:'changes',title:`Changes requested on ${current.name}`,text:'Fix what was asked, add evidence if needed, and submit again.'}
+    :{tone:'next',title:`Next up: ${current.name}`,text:current.canUpload?(current.evidenceCount===0?'Add evidence to move this stage forward.':'Evidence added. Submit the stage for review.'):current.requiredRoles.length&&missing(current)?'Some roles have nobody assigned yet.':'Work is in progress on this stage.'}
+  return <section className="section-card stg">
+    <div className="section-heading"><div><p className="eyebrow">Delivery path</p><h2>Stages</h2></div><span>{terminal} of {stages.length} complete</span></div>
+    <div className="stg-bar" role="img" aria-label={`${terminal} of ${stages.length} stages complete`}>{stages.map(s=><i key={s.id} className={`stg-bar__seg stg-bar__seg--${done(s)?'done':s.status==='REVIEW_PENDING'?'review':s.status==='BLOCKED'?'blocked':'active'}`} title={`${s.name}: ${humanLabel(s.status)}`}/>)}</div>
+    <div className="stg-stats"><span><b>{terminal}</b> done</span><span><b>{active}</b> in progress</span><span><b>{reviewCount}</b> in review</span><span><b>{blocked}</b> waiting</span></div>
+    <div className={`stg-banner stg-banner--${banner.tone}`}><div><strong>{banner.title}</strong><p>{banner.text}</p></div>
+      {current&&<div className="stg-banner__actions">
+        {site.canManage&&current.status==='REVIEW_PENDING'&&<><Button size="xs" color="red" variant="light" onClick={()=>askChanges(current.id)}>Request changes</Button><Button size="xs" color="green" leftSection={<Check size={14}/>} onClick={()=>review(current.id,'APPROVED')}>Approve</Button></>}
+        {!(site.canManage&&current.status==='REVIEW_PENDING')&&<Button size="xs" variant="white" color="dark" rightSection={<ArrowRight size={14}/>} onClick={()=>{setOpenIds(ids=>ids.includes(current.id)?ids:[...ids,current.id]);document.getElementById(`stage-card-${current.id}`)?.scrollIntoView({behavior:'smooth',block:'center'})}}>Open stage</Button>}
+      </div>}</div>
+    <div className="stg-filter" role="tablist" aria-label="Filter stages">{([['all','All'],['todo','To do'],['done','Done']] as const).map(([k,label])=><button key={k} role="tab" aria-selected={filter===k} className={filter===k?'is-on':''} onClick={()=>setFilter(k)}>{label}</button>)}
+      <button className="stg-filter__more" onClick={()=>setOpenIds(openIds.length>=stages.length?[]:stages.map(s=>s.id))}>{openIds.length>=stages.length?'Collapse all':'Expand all'}</button></div>
+    <div className="stg-list">{shown.length===0&&<p className="stg-empty">No stages in this view.</p>}{shown.map(({s:stage,i:index})=>{const isOpen=openIds.includes(stage.id),names=people(stage)
+      return <article id={`stage-card-${stage.id}`} className={`stg-item stg-item--${stage.status.toLowerCase()}${current?.id===stage.id?' is-current':''}`} key={stage.id}>
+        <button className="stg-head" aria-expanded={isOpen} aria-controls={`stage-body-${stage.id}`} onClick={()=>toggle(stage.id)}>
+          <StageIcon stage={stage} n={index+1}/>
+          <span className="stg-head__main"><span className="stg-head__title"><strong>{stage.name}</strong><StatusBadge status={stage.status}/></span>
+            <span className="stg-head__sub">{stage.requiredRoles.length===0?<span>No roles needed</span>:names.length?<span><Users/>{names.join(', ')}</span>:<span className="stg-warn"><Users/>Nobody assigned</span>}{missing(stage)&&names.length>0&&<span className="stg-warn">Role missing</span>}<span><FileCheck2/>{stage.evidenceCount} evidence</span></span></span>
+          <ChevronDown className={`stg-chev${isOpen?' is-open':''}`}/></button>
+        {isOpen&&<div className="stg-body" id={`stage-body-${stage.id}`}>
+          {stage.status==='BLOCKED'&&<p className="stage-hint"><Clock3/>Waiting for the earlier stage to be completed.</p>}
+          {stage.requiredRoles.length>0&&<StageAssignments key={`${stage.id}-${stage.assignments.map(a=>a.employeeId).join('-')}`} site={site} stage={stage} setup={setup} onSaved={load}/>}
+          {stage.canUpload&&<EvidenceAction stage={stage} onSaved={load}/>}
+          {site.canManage&&stage.requiredRoles.length===0&&['READY','NOT_STARTED','IN_PROGRESS'].includes(stage.status)&&<div className="review-actions"><Button size="xs" color="green" leftSection={<Check size={14}/>} disabled={stage.evidenceCount===0} onClick={()=>complete(stage.id)}>Mark Complete</Button></div>}
+          {site.canManage&&stage.status==='REVIEW_PENDING'&&current?.id!==stage.id&&<div className="review-actions"><Button size="xs" color="red" variant="light" leftSection={<RefreshCcw size={14}/>} onClick={()=>askChanges(stage.id)}>Request changes</Button><Button size="xs" color="green" leftSection={<Check size={14}/>} onClick={()=>review(stage.id,'APPROVED')}>Approve Stage</Button></div>}
+          <StageDetails key={`${stage.id}-${stage.evidenceCount}-${stage.status}`} stage={stage}/>
+        </div>}
+      </article>})}</div>
+  </section>
+}
+function humanLabel(v:string){return titleCase(v)}

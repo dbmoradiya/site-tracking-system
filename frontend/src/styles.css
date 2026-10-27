@@ -598,3 +598,50 @@ input:not([class*="mantine"]):focus, select:not([class*="mantine"]):focus, texta
   .brand-lockup--mobile { display: inline-flex; margin: 0 auto 18px; padding: 8px 20px; background: transparent; }
   .brand-lockup--mobile .brand-lockup__logo { height: 96px; }
 }
+
+/* Site stages redesign (UI preview) */
+.stg-bar { display: flex; gap: 4px; margin: 4px 0 10px; }
+.stg-bar__seg { flex: 1; height: 8px; border-radius: 99px; background: var(--muted); }
+.stg-bar__seg--done { background: #16a34a; } .stg-bar__seg--active { background: #f97316; } .stg-bar__seg--review { background: #8b5cf6; } .stg-bar__seg--blocked { background: #cbd5e1; }
+.stg-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--slate); font-size: .82rem; margin-bottom: 14px; }
+.stg-stats b { color: var(--navy); }
+.stg-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--accent-soft); margin-bottom: 14px; }
+.stg-banner strong { display: block; }
+.stg-banner p { margin: 2px 0 0; color: var(--slate); font-size: .85rem; }
+.stg-banner--ok { background: var(--green-soft); border-color: #abefc6; }
+.stg-banner--review { background: #f5f3ff; border-color: #ddd6fe; }
+.stg-banner--changes { background: var(--red-soft); border-color: #fecdca; }
+.stg-banner__actions { display: flex; gap: 8px; flex-wrap: wrap; flex: 0 0 auto; }
+.stg-filter { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.stg-filter button { border: 1px solid var(--line); background: #fff; color: var(--slate); border-radius: 99px; padding: 6px 14px; font-size: .82rem; font-weight: 600; min-height: 34px; }
+.stg-filter button.is-on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.stg-filter .stg-filter__more { margin-left: auto; border: 0; background: none; color: var(--accent); }
+.stg-list { display: grid; gap: 10px; }
+.stg-empty { color: var(--slate); text-align: center; padding: 18px 0; margin: 0; }
+.stg-item { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; scroll-margin-top: 80px; }
+.stg-item.is-current { border-color: #fdba74; box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
+.stg-item--blocked { background: #fafbfc; }
+.stg-item:focus { outline: 3px solid rgba(234,88,12,.35); outline-offset: 3px; }
+.stg-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 0; background: none; text-align: left; color: inherit; min-height: 64px; }
+.stg-head__main { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.stg-head__title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; }
+.stg-head__title strong { font-size: 1rem; overflow-wrap: anywhere; }
+.stg-head__sub { display: flex; flex-wrap: wrap; gap: 3px 14px; color: var(--slate); font-size: .8rem; }
+.stg-head__sub > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+.stg-head__sub svg { width: 14px; height: 14px; }
+.stg-warn { color: var(--amber); font-weight: 600; }
+.stg-chev { transition: transform .2s ease; color: var(--slate); }
+.stg-chev.is-open { transform: rotate(180deg); }
+.stg-dot { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .85rem; flex: 0 0 auto; }
+.stg-dot svg { width: 18px; height: 18px; }
+.stg-dot--done { background: #16a34a; color: #fff; } .stg-dot--active { background: var(--accent-soft); color: var(--accent); border: 2px solid #fdba74; }
+.stg-dot--review { background: #ede9fe; color: #6d28d9; } .stg-dot--blocked { background: var(--muted); color: #64748b; } .stg-dot--changes { background: var(--red-soft); color: var(--red); }
+.stg-body { padding: 4px 16px 16px 64px; border-top: 1px solid var(--line); background: #fff; }
+.stg-body > :first-child { margin-top: 12px; }
+@media (max-width: 640px) {
+  .stg-banner { flex-direction: column; align-items: stretch; }
+  .stg-banner__actions .mantine-Button-root { flex: 1; }
+  .stg-head { padding: 12px; gap: 10px; }
+  .stg-body { padding: 4px 12px 14px; }
+  .stg-dot { width: 32px; height: 32px; }
+}
