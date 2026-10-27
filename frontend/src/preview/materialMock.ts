@@ -29,10 +29,15 @@ export const seedIssues: Issue[] = [
   { id: 7, date: '2026-10-13', material: 'Cement OPC 53', qty: 180, project: 'Green Valley Villas', site: 'Villa 9', issuedTo: 'Ramesh Patel (Supervisor)' },
 ]
 
+// GST entered is split equally into SGST and CGST (user request, preview only). Amounts rounded to paise;
+// if the GST paise are odd, CGST takes the extra paisa so SGST + CGST always equals the GST on the amount.
+const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
 export const calc = (qty: number, rate: number, gst: number) => {
-  const subtotal = qty * rate
-  const gstAmount = subtotal * gst / 100
-  return { subtotal, gstAmount, total: subtotal + gstAmount }
+  const subtotal = r2(qty * rate)
+  const gstAmount = r2(subtotal * gst / 100)
+  const sgst = r2(Math.floor(gstAmount * 100 / 2) / 100)
+  const cgst = r2(gstAmount - sgst)
+  return { subtotal, gstAmount, sgst, cgst, total: r2(subtotal + sgst + cgst) }
 }
 export const inr = (n: number) => '\u20B9' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 export const num = (n: number) => n.toLocaleString('en-IN')
