@@ -3,6 +3,7 @@ import { notifications } from '@mantine/notifications'
 import { ArrowDownToLine, ArrowUpFromLine, ChevronDown, FileText, Filter, History, Info, Package, Pencil, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { CreatableSelect } from '../preview/CreatableSelect'
+import { Pager, usePaged } from '../preview/Pager'
 import { ExportMenu } from '../preview/ExportMenu'
 import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Issue, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../preview/materialMock'
 import { addPurchase, deletePurchase, findMaterial, findVendor, nextPurchaseId, updatePurchase, useMaterialStore } from '../preview/materialStore'
@@ -48,15 +49,16 @@ function stockRows(purchases: Purchase[], issues: Issue[]) {
 function StockTab({ purchases, issues, onOpen }: { purchases: Purchase[]; issues: Issue[]; onOpen: (m: string) => void }) {
   const [q, setQ] = useState('')
   const rows = useMemo(() => stockRows(purchases, issues).filter(r => r.material.toLowerCase().includes(q.toLowerCase())), [purchases, issues, q])
+  const pg = usePaged(rows)
   return <Stack gap="xs">
     <Group gap="xs"><TextInput aria-label="Search material types" style={{ flex: '1 1 220px' }} size="xs" leftSection={<Search size={14} />} value={q} onChange={e => setQ(e.currentTarget.value)} placeholder="Search material types" /><Text size="xs" c="dimmed">{rows.length} material types</Text>
       <ExportMenu filename="current-stock" note={q ? 'as filtered by search' : 'all'} table={{ sheet: 'Current stock', headers: ['Material type', 'UOM', 'Purchased', 'Issued', 'Current stock', 'Last purchase'], rows: rows.map(r => [r.material, r.uom, r.bought, r.issued, r.stock, fmtDate(r.lastPurchase)]) }} /></Group>
     <Paper withBorder><Table.ScrollContainer minWidth={640}><Table highlightOnHover>
       <Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th ta="right">Purchased</Table.Th><Table.Th ta="right">Issued</Table.Th><Table.Th ta="right">Current stock</Table.Th><Table.Th>Last purchase</Table.Th></Table.Tr></Table.Thead>
-      <Table.Tbody>{rows.map(r => <Table.Tr key={r.material} style={{ cursor: 'pointer' }} tabIndex={0} onClick={() => onOpen(r.material)} onKeyDown={e => e.key === 'Enter' && onOpen(r.material)} aria-label={`Open ${r.material} detail`}>
+      <Table.Tbody>{pg.rows.map(r => <Table.Tr key={r.material} style={{ cursor: 'pointer' }} tabIndex={0} onClick={() => onOpen(r.material)} onKeyDown={e => e.key === 'Enter' && onOpen(r.material)} aria-label={`Open ${r.material} detail`}>
         <Table.Td fw={600}>{r.material}</Table.Td><Table.Td>{r.uom}</Table.Td><Table.Td ta="right">{num(r.bought)}</Table.Td><Table.Td ta="right">{num(r.issued)}</Table.Td>
         <Table.Td ta="right"><Badge color="gray" variant="light" size="md">{num(r.stock)} {r.uom}</Badge></Table.Td><Table.Td>{fmtDate(r.lastPurchase)}</Table.Td>
-      </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer></Paper>
+      </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={pg} label="material types" /></Paper>
     <Text size="xs" c="dimmed">Click a row to see purchase history (left) and issued history (right). Sample data.</Text>
   </Stack>
 }
@@ -65,6 +67,7 @@ function StockDetail({ material, purchases, issues: allIssues, onOpenPurchase }:
   // One row per purchase that contains this material; qty and total are for this material's line only.
   const bought = purchases.filter(p => p.items.some(l => l.material === material)).sort(byDateDesc).map(p => ({ p, lines: p.items.filter(l => l.material === material) }))
   const issued = allIssues.filter(i => i.material === material).sort(byDateDesc)
+  const bPg = usePaged(bought), iPg = usePaged(issued)
   const uom = bought[0]?.lines[0].uom ?? ''
   const lineQty = (ls: Line[]) => ls.reduce((s, l) => s + l.qty, 0), lineTotal = (ls: Line[]) => ls.reduce((s, l) => s + calc(l.qty, l.rate, l.gst).total, 0)
   const tb = bought.reduce((s, b) => s + lineQty(b.lines), 0), ti = issued.reduce((s, i) => s + i.qty, 0)
@@ -77,12 +80,13 @@ function StockDetail({ material, purchases, issues: allIssues, onOpenPurchase }:
     <SimpleGrid cols={{ base: 1, md: 2 }} spacing="sm" style={{ alignItems: 'start' }}>
       <Paper withBorder><Group gap={6} p="xs" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}><ArrowDownToLine size={14} aria-hidden="true" /><Text fw={700} size="sm">Purchase history</Text><div style={{ marginLeft: 'auto' }}><ExportMenu filename={`${material}-purchase-history`} table={{ sheet: 'Purchase history', headers: ['Purchase ID', 'Bill number', 'Date', 'Vendor', 'Vendor mobile', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Total'], rows: bought.flatMap(({ p, lines }) => lines.map(l => { const c = calc(l.qty, l.rate, l.gst); return [p.purchaseId, p.billNumber, fmtDate(p.date), p.vendor, p.vendorMobile, l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] })) }} /></div></Group>
         <Table.ScrollContainer minWidth={460}><Table><Table.Thead><Table.Tr><Table.Th>Purchase ID</Table.Th><Table.Th>Date</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Qty</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
-          <Table.Tbody>{bought.map(({ p, lines }) => <Table.Tr key={p.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open purchase ${p.purchaseId}`} onClick={() => onOpenPurchase(p.id)} onKeyDown={e => e.key === 'Enter' && onOpenPurchase(p.id)}><Table.Td fw={600} c="orange.8">{p.purchaseId}{p.items.length > 1 && <Text size="xs" c="dimmed" fw={400}>{p.items.length} items in purchase</Text>}</Table.Td><Table.Td>{fmtDate(p.date)}</Table.Td><Table.Td>{p.vendor}</Table.Td><Table.Td ta="right">{num(lineQty(lines))}</Table.Td><Table.Td ta="right">{inr(lineTotal(lines))}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>
+          <Table.Tbody>{bPg.rows.map(({ p, lines }) => <Table.Tr key={p.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open purchase ${p.purchaseId}`} onClick={() => onOpenPurchase(p.id)} onKeyDown={e => e.key === 'Enter' && onOpenPurchase(p.id)}><Table.Td fw={600} c="orange.8">{p.purchaseId}{p.items.length > 1 && <Text size="xs" c="dimmed" fw={400}>{p.items.length} items in purchase</Text>}</Table.Td><Table.Td>{fmtDate(p.date)}</Table.Td><Table.Td>{p.vendor}</Table.Td><Table.Td ta="right">{num(lineQty(lines))}</Table.Td><Table.Td ta="right">{inr(lineTotal(lines))}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={bPg} label="purchases" />
         <Text size="xs" c="dimmed" p="xs">Qty and total are for this material only, not the whole purchase.</Text></Paper>
       <Paper withBorder><Group gap={6} p="xs" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}><ArrowUpFromLine size={14} aria-hidden="true" /><Text fw={700} size="sm">Issued history</Text><div style={{ marginLeft: 'auto' }}><ExportMenu filename={`${material}-issued-history`} table={{ sheet: 'Issued history', headers: ['Date', 'Project', 'Site', 'Issued to', 'Qty', 'UOM'], rows: issued.map(i => [fmtDate(i.date), i.project, i.site, i.issuedTo, i.qty, uom]) }} /></div></Group>
         {issued.length === 0 ? <Text size="sm" c="dimmed" p="sm">Nothing issued yet.</Text> :
           <Table.ScrollContainer minWidth={380}><Table><Table.Thead><Table.Tr><Table.Th>Date</Table.Th><Table.Th>Project / Site</Table.Th><Table.Th>Issued to</Table.Th><Table.Th ta="right">Qty</Table.Th></Table.Tr></Table.Thead>
-            <Table.Tbody>{issued.map(i => <Table.Tr key={i.id}><Table.Td>{fmtDate(i.date)}</Table.Td><Table.Td>{i.project}<Text size="xs" c="dimmed">{i.site}</Text></Table.Td><Table.Td>{i.issuedTo}</Table.Td><Table.Td ta="right">{num(i.qty)}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>}
+            <Table.Tbody>{iPg.rows.map(i => <Table.Tr key={i.id}><Table.Td>{fmtDate(i.date)}</Table.Td><Table.Td>{i.project}<Text size="xs" c="dimmed">{i.site}</Text></Table.Td><Table.Td>{i.issuedTo}</Table.Td><Table.Td ta="right">{num(i.qty)}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>}
+        {issued.length > 0 && <Pager p={iPg} label="issues" />}
         <Text size="xs" c="dimmed" p="xs">Issue fields are placeholders. How material is issued (or sold) is not decided yet.</Text></Paper>
     </SimpleGrid>
   </Stack>
@@ -90,21 +94,24 @@ function StockDetail({ material, purchases, issues: allIssues, onOpenPurchase }:
 
 function PurchaseTab({ purchases, onOpen }: { purchases: Purchase[]; onOpen: (id: number) => void }) {
   const [open, setOpen] = useState(false)
-  const [from, setFrom] = useState(''), [to, setTo] = useState(''), [vendorF, setVendorF] = useState(''), [materialF, setMaterialF] = useState('')
+  const [from, setFrom] = useState(''), [to, setTo] = useState(''), [vendorF, setVendorF] = useState(''), [materialF, setMaterialF] = useState(''), [idF, setIdF] = useState(''), [billF, setBillF] = useState('')
   const vendorNames = [...new Set(purchases.map(p => p.vendor))].sort(), materialNames = [...new Set(purchases.flatMap(p => p.items.map(l => l.material)))].sort()
   // Material filter keeps every purchase that contains that material (whole purchase shown).
-  const sorted = [...purchases].filter(p => (!from || p.date >= from) && (!to || p.date <= to) && (!vendorF || p.vendor === vendorF) && (!materialF || p.items.some(l => l.material === materialF))).sort(byDateDesc)
-  const active = [from, to, vendorF, materialF].filter(Boolean).length
+  const sorted = [...purchases].filter(p => (!from || p.date >= from) && (!to || p.date <= to) && (!vendorF || p.vendor === vendorF) && (!materialF || p.items.some(l => l.material === materialF)) && (!idF.trim() || p.purchaseId.toLowerCase().includes(idF.trim().toLowerCase())) && (!billF.trim() || (p.billNumber || '').toLowerCase().includes(billF.trim().toLowerCase()))).sort(byDateDesc)
+  const pg = usePaged(sorted)
+  const active = [from, to, vendorF, materialF, idF.trim(), billF.trim()].filter(Boolean).length
   const [showFilters, setShowFilters] = useState(false)
-  const chips = [from && `From ${fmtDate(from)}`, to && `To ${fmtDate(to)}`, vendorF && `Vendor: ${vendorF}`, materialF && `Material: ${materialF}`].filter(Boolean) as string[]
-  const clear = () => { setFrom(''); setTo(''); setVendorF(''); setMaterialF('') }
+  const chips = [from && `From ${fmtDate(from)}`, to && `To ${fmtDate(to)}`, vendorF && `Vendor: ${vendorF}`, materialF && `Material: ${materialF}`, idF.trim() && `Purchase ID: ${idF.trim()}`, billF.trim() && `Bill no.: ${billF.trim()}`].filter(Boolean) as string[]
+  const clear = () => { setFrom(''); setTo(''); setVendorF(''); setMaterialF(''); setIdF(''); setBillF('') }
   const lineRows = sorted.flatMap(p => p.items.map(l => { const c = calc(l.qty, l.rate, l.gst); return [p.purchaseId, p.billNumber, fmtDate(p.date), p.vendor, p.vendorMobile, l.material, l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] }))
   return <Stack gap="sm">
     <Group justify="space-between"><div><Text fw={700} size="sm">Purchases</Text><Text size="xs" c="dimmed">Latest first - {sorted.length} of {purchases.length} purchases</Text></div>
       <Group gap="xs"><ExportMenu filename="purchases" note={`${sorted.length} purchases, one row per item line${active ? ', filtered only' : ''}`} table={{ sheet: 'Purchases', headers: ['Purchase ID', 'Bill number', 'Date', 'Vendor', 'Vendor mobile', 'Material type', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Line total'], rows: lineRows }} /><Button variant={active ? 'filled' : 'default'} leftSection={<Filter size={14} />} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>Filters{active ? ` (${active})` : ''}</Button>
         <Button leftSection={<Plus size={14} />} onClick={() => setOpen(true)}>Purchase</Button></Group></Group>
     {!showFilters && active > 0 && <Group gap={6}>{chips.map(c => <Badge key={c} variant="light" color="orange" size="md" tt="none">{c}</Badge>)}<Button size="compact-xs" variant="subtle" onClick={clear}>Clear filters</Button></Group>}
-    <Collapse expanded={showFilters}><Paper withBorder p="xs"><SimpleGrid cols={{ base: 2, md: 5 }} spacing="xs" style={{ alignItems: 'end' }}>
+    <Collapse expanded={showFilters}><Paper withBorder p="xs"><SimpleGrid cols={{ base: 2, md: 4 }} spacing="xs" style={{ alignItems: 'end' }}>
+      <TextInput size="xs" label="Purchase ID" placeholder="e.g. SE261022" value={idF} onChange={e => setIdF(e.currentTarget.value)} />
+      <TextInput size="xs" label="Bill number" placeholder="e.g. JS/2410" value={billF} onChange={e => setBillF(e.currentTarget.value)} />
       <TextInput size="xs" type="date" label="Date from" value={from} onChange={e => setFrom(e.currentTarget.value)} />
       <TextInput size="xs" type="date" label="Date to" value={to} onChange={e => setTo(e.currentTarget.value)} />
       <NativeSelect size="xs" label="Vendor" value={vendorF} onChange={e => setVendorF(e.currentTarget.value)} data={[{ value: '', label: 'All vendors' }, ...vendorNames.map(v => ({ value: v, label: v }))]} />
@@ -113,12 +120,12 @@ function PurchaseTab({ purchases, onOpen }: { purchases: Purchase[]; onOpen: (id
     </SimpleGrid></Paper></Collapse>
     <Paper withBorder>
       <Table.ScrollContainer minWidth={1000}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Purchase ID</Table.Th><Table.Th>Date</Table.Th><Table.Th>Items</Table.Th><Table.Th>Bill no.</Table.Th><Table.Th>Vendor</Table.Th><Table.Th ta="right">Amount</Table.Th><Table.Th ta="right">SGST</Table.Th><Table.Th ta="right">CGST</Table.Th><Table.Th ta="right">Total</Table.Th></Table.Tr></Table.Thead>
-        <Table.Tbody>{sorted.length === 0 && <Table.Tr><Table.Td colSpan={9}><Text size="sm" c="dimmed" ta="center" py="sm">No purchases match these filters.</Text></Table.Td></Table.Tr>}{sorted.map(p => { const t = docTotals(p.items); return <Table.Tr key={p.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open purchase ${p.purchaseId}`} onClick={() => onOpen(p.id)} onKeyDown={e => e.key === 'Enter' && onOpen(p.id)}>
+        <Table.Tbody>{sorted.length === 0 && <Table.Tr><Table.Td colSpan={9}><Text size="sm" c="dimmed" ta="center" py="sm">No purchases match these filters.</Text></Table.Td></Table.Tr>}{pg.rows.map(p => { const t = docTotals(p.items); return <Table.Tr key={p.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open purchase ${p.purchaseId}`} onClick={() => onOpen(p.id)} onKeyDown={e => e.key === 'Enter' && onOpen(p.id)}>
           <Table.Td fw={600} c="orange.8">{p.purchaseId}</Table.Td><Table.Td>{fmtDate(p.date)}</Table.Td>
           <Table.Td><Text size="sm" fw={600}>{itemsLabel(p)}</Text><Text size="xs" c="dimmed">{p.items.length} {p.items.length === 1 ? 'item' : 'items'}</Text></Table.Td>
           <Table.Td>{p.billNumber || <Text span c="dimmed">-</Text>}{p.invoice && <FileText size={12} style={{ marginLeft: 4, verticalAlign: 'middle' }} aria-label="Has invoice" />}</Table.Td>
           <Table.Td>{p.vendor}<Text size="xs" c="dimmed">{p.vendorMobile}</Text></Table.Td>
-          <Table.Td ta="right">{inr(t.subtotal)}</Table.Td><Table.Td ta="right">{inr(t.sgst)}</Table.Td><Table.Td ta="right">{inr(t.cgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.total)}</Table.Td></Table.Tr> })}</Table.Tbody></Table></Table.ScrollContainer></Paper>
+          <Table.Td ta="right">{inr(t.subtotal)}</Table.Td><Table.Td ta="right">{inr(t.sgst)}</Table.Td><Table.Td ta="right">{inr(t.cgst)}</Table.Td><Table.Td ta="right" fw={700}>{inr(t.total)}</Table.Td></Table.Tr> })}</Table.Tbody></Table></Table.ScrollContainer><Pager p={pg} label="purchases" /></Paper>
     <Modal opened={open} onClose={() => setOpen(false)} size="xl" title="Purchase material" scrollAreaComponent={ScrollArea.Autosize}><PurchaseForm onDone={() => setOpen(false)} /></Modal>
   </Stack>
 }
