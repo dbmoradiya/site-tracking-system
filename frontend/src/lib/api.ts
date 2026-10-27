@@ -5,6 +5,8 @@ export const hasRole = (user: User | null | undefined, role: Role) => Boolean(us
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  // UI preview build only: there is no backend, so skip network calls.
+  if (import.meta.env.VITE_UI_PREVIEW) return [] as T
   const token = localStorage.getItem('sitetrack-token')
   const headers = new Headers(options.headers)
   if (token) headers.set('Authorization', `Bearer ${token}`)

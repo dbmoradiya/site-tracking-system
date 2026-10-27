@@ -29,7 +29,8 @@ export function addPurchase(p: Omit<Purchase, 'id'>) {
 export function editMaterialType(oldName: string, next: MaterialType) {
   set({ ...state,
     materialTypes: state.materialTypes.map(m => m.name === oldName ? next : m),
-    purchases: state.purchases.map(p => p.material === oldName ? { ...p, material: next.name, uom: next.uom } : p),
+    // Rename only: historical purchases keep their own UOM and quantity, never reinterpreted.
+    purchases: state.purchases.map(p => p.material === oldName ? { ...p, material: next.name } : p),
     issues: state.issues.map(i => i.material === oldName ? { ...i, material: next.name } : i) })
 }
 export function editVendor(oldName: string, next: Vendor) {

@@ -10,7 +10,8 @@ export function MaterialTypesTab() {
   const { materialTypes, purchases } = useMaterialStore()
   const [sel, setSel] = useState<{ old: string; name: string; uom: string } | null>(null)
   const dupe = sel && sel.name.trim() && sel.name.trim().toLowerCase() !== sel.old.toLowerCase() && !!findMaterial(sel.name)
-  const save = () => { if (!sel) return; const next: MaterialType = { name: sel.name.trim(), uom: sel.uom }; sel.old ? editMaterialType(sel.old, next) : addMaterialType(next); notifications.show({ color: 'green', message: 'Saved in preview only' }); setSel(null) }
+  const used = !!sel?.old && purchases.some(p => p.material === sel.old)
+  const save = () => { if (!sel) return; const next: MaterialType = { name: sel.name.trim(), uom: used ? (findMaterial(sel.old)?.uom ?? sel.uom) : sel.uom }; sel.old ? editMaterialType(sel.old, next) : addMaterialType(next); notifications.show({ color: 'green', message: 'Saved in preview only' }); setSel(null) }
   return <Stack gap="xs">
     <Group justify="space-between"><div><Title order={4}>Material Types</Title><Text size="xs" c="dimmed">{materialTypes.length} types - added automatically from the Purchase form</Text></div>
       <Button leftSection={<Plus size={14} />} onClick={() => setSel({ old: '', name: '', uom: '' })}>Add Material Type</Button></Group>
@@ -19,7 +20,7 @@ export function MaterialTypesTab() {
         <Table.Td ta="right"><Button size="compact-xs" variant="subtle" leftSection={<Pencil size={12} />} aria-label={`Edit ${m.name}`} onClick={() => setSel({ old: m.name, name: m.name, uom: m.uom })}>Edit</Button></Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer></Paper>
     <Modal opened={!!sel} onClose={() => setSel(null)} title={sel?.old ? `Edit ${sel.old}` : 'Add Material Type'}>{sel && <Stack gap="sm">
       <TextInput size="xs" label="Material type" required value={sel.name} onChange={e => setSel({ ...sel, name: e.currentTarget.value })} error={dupe ? 'Already exists' : undefined} />
-      <NativeSelect size="xs" label="Unit of measurement" value={sel.uom} onChange={e => setSel({ ...sel, uom: e.currentTarget.value })} data={[{ value: '', label: 'Select unit' }, ...UOMS.map(u => ({ value: u, label: u }))]} />
+      <NativeSelect size="xs" label="Unit of measurement" value={sel.uom} onChange={e => setSel({ ...sel, uom: e.currentTarget.value })} disabled={used} description={used ? 'Locked: purchases already use this unit' : undefined} data={[{ value: '', label: 'Select unit' }, ...UOMS.map(u => ({ value: u, label: u }))]} />
       <Group justify="flex-end"><Button variant="default" onClick={() => setSel(null)}>Cancel</Button><Button leftSection={<Save size={14} />} disabled={!sel.name.trim() || !sel.uom || !!dupe} onClick={save}>Save changes</Button></Group></Stack>}</Modal>
   </Stack>
 }
