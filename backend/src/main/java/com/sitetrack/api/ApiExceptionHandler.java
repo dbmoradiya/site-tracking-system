@@ -67,6 +67,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<?> handleUnexpected(Exception ex) {
+        org.slf4j.LoggerFactory.getLogger(ApiExceptionHandler.class).error("Unhandled request error", ex);
         return ResponseEntity.internalServerError().body(error("An unexpected error occurred"));
     }
 
