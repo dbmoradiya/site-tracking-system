@@ -27,6 +27,8 @@ export const put = <T>(path: string, body: unknown) => api<T>(path, { method: 'P
 export const del = <T>(path: string) => api<T>(path, { method: 'DELETE' })
 
 export async function apiBlob(path: string) {
+  // UI preview build only: no backend, so return a sample image instead of downloading evidence.
+  if (import.meta.env.VITE_UI_PREVIEW) return new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#fff7ed" stroke="#fdba74"/><text x="40" y="80" font-size="28" font-family="Arial" font-weight="bold">Sample evidence photo</text><text x="40" y="125" font-size="18" font-family="Arial">Preview only. The real file comes from the backend.</text></svg>'], { type: 'image/svg+xml' })
   const token = localStorage.getItem('sitetrack-token')
   const response = await fetch(`${API_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
   if (!response.ok) throw new Error(`Could not open evidence (${response.status})`)
