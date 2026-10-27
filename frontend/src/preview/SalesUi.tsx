@@ -182,9 +182,12 @@ function SaleHistory({ s }: { s: Sale }) {
   </Stack>
 }
 
-export function SaleDialog({ id, onClose, readOnly = false }: { id: number | null; onClose: () => void; readOnly?: boolean }) {
+export function SaleDialog({ id, onClose, readOnly = false, scopeProjectId }: { id: number | null; onClose: () => void; readOnly?: boolean; scopeProjectId?: number }) {
   const { sales, vendors, company } = useMaterialStore()
-  const s = sales.find(x => x.id === id)
+  const raw = sales.find(x => x.id === id)
+  // Coordinator scope (preview): sites of other projects are removed from the popup, history and challan.
+  const s = useMemo(() => { if (!raw || scopeProjectId === undefined) return raw; const keep = (ids: number[]) => ids.filter(i => siteById(i)?.projectId === scopeProjectId); return { ...raw, siteIds: keep(raw.siteIds), versions: raw.versions.map(v => ({ ...v, siteIds: keep(v.siteIds) })) } }, [raw, scopeProjectId])
+  const hiddenSites = !!raw && !!s && raw.siteIds.length !== s.siteIds.length
   const v = s ? vendors.find(x => x.name === s.vendor) : undefined
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [challan, setChallan] = useState(false), [showHistory, setShowHistory] = useState(false)
   const close = () => { setEditing(false); setConfirm(false); setChallan(false); setShowHistory(false); onClose() }
@@ -199,18 +202,18 @@ export function SaleDialog({ id, onClose, readOnly = false }: { id: number | nul
           <Field label="Sale date">{fmtDate(s.date)}</Field><Field label="Vendor">{s.vendor}</Field>
           <Field label="Vendor mobile">{v?.mobile || '-'}</Field><Field label="Vendor GST number">{v?.gst || '-'}</Field>
           <Field label="Vendor address">{v?.address || '-'}</Field>
-          <Field label="Sites (Site | Project)"><Group gap={4}>{sitesText(s.siteIds).map(t => <Badge key={t} variant="light" color="gray" tt="none">{t}</Badge>)}</Group></Field>
+          <Field label="Sites (Site | Project)"><Group gap={4}>{sitesText(s.siteIds).map(t => <Badge key={t} variant="light" color="gray" tt="none">{t}</Badge>)}</Group>{hiddenSites && <Text size="xs" c="dimmed" fw={400}>Other sites on this sale are outside your assignment and are not shown.</Text>}</Field>
         </SimpleGrid>
         <div><Text size="xs" c="dimmed" mb={4}>Items ({s.items.length})</Text><ItemsTable items={s.items} /></div>
         <Group justify="space-between" align="center"><div><Text size="xs" c="dimmed">Challan</Text><Text size="sm" fw={600}>challan-{s.saleId}.pdf</Text><Text size="xs" c="dimmed">Sample made in the browser. The real build creates it on the backend.</Text></div>
           <Group gap="xs"><Button variant="default" leftSection={<FileText size={14} />} onClick={() => setChallan(true)}>View challan</Button><Button variant="default" leftSection={<Download size={14} />} onClick={download}>Download PDF</Button></Group></Group>
         {readOnly ? <Group justify="space-between" mt="xs"><Text size="xs" c="dimmed">Read only - view access from the project or site page.</Text><Button variant="default" onClick={close}>Close</Button></Group> : <Group justify="space-between" mt="xs"><Button color="red" variant="light" leftSection={<Trash2 size={14} />} onClick={() => setConfirm(true)}>Delete</Button>
           <Group><Button variant="default" onClick={close}>Close</Button><Button leftSection={<Pencil size={14} />} onClick={() => setEditing(true)}>Edit</Button></Group></Group>}
-        {!readOnly && <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', paddingTop: 8 }}>
+        <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', paddingTop: 8 }}>
           <Button variant="subtle" size="compact-sm" leftSection={<History size={14} />} rightSection={<ChevronDown size={14} style={{ transform: showHistory ? 'rotate(180deg)' : undefined }} />} onClick={() => setShowHistory(x => !x)} aria-expanded={showHistory}>
             Edit history ({s.versions.length} earlier {s.versions.length === 1 ? 'version' : 'versions'})</Button>
           <Collapse expanded={showHistory}><SaleHistory s={s} /></Collapse>
-        </div>}
+        </div>
       </Stack>)}
     </Modal>
     <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}` : 'Challan'} zIndex={400}>
@@ -255,6 +258,6 @@ export function LinkedSales({ projectId, siteId, readOnly = false }: { projectId
         <Table.Tbody>{pg.rows.map(s => <Table.Tr key={s.id} style={{ cursor: 'pointer' }} tabIndex={0} aria-label={`Open sale ${s.saleId}`} onClick={() => setOpenId(s.id)} onKeyDown={e => e.key === 'Enter' && setOpenId(s.id)}>
           <Table.Td fw={600} c="orange.8">{s.saleId}</Table.Td><Table.Td><TypeBadge type={s.type} /></Table.Td><Table.Td>{fmtDate(s.date)}</Table.Td><Table.Td>{label(s)}</Table.Td><Table.Td>{s.vendor}</Table.Td><Table.Td ta="right" fw={600}>{inr(docTotals(s.items).total)}</Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer>
       <Pager p={pg} label="sales" /></>}</Collapse>
-    <SaleDialog id={openId} onClose={() => setOpenId(null)} readOnly={readOnly} />
+    <SaleDialog id={openId} onClose={() => setOpenId(null)} readOnly={readOnly} scopeProjectId={readOnly ? (projectId ?? siteById(siteId ?? -1)?.projectId) : undefined} />
   </Paper>
 }
