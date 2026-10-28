@@ -60,11 +60,33 @@ final class ChallanPdf {
             String[] heads = {"Item", "HSN", "Qty", "Rate", "GST%", "Amount", "SGST", "CGST", "Total"};
             for (int i = 0; i < heads.length; i++) t.addCell(cell(heads[i], b9, i <= 1 ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT, true));
             BigDecimal sub = BigDecimal.ZERO, sg = BigDecimal.ZERO, cg = BigDecimal.ZERO, tot = BigDecimal.ZERO;
-            for (Map<String, Object> l : (List<Map<String, Object>>) sale.get("items")) {
+            List<Map<String, Object>> all = (List<Map<String, Object>>) sale.get("items");
+            int openGroup = 0; BigDecimal gsub = BigDecimal.ZERO, gsg = BigDecimal.ZERO, gcg = BigDecimal.ZERO, gtot = BigDecimal.ZERO; String gname = "";
+            for (int idx = 0; idx < all.size(); idx++) {
+                Map<String, Object> l = all.get(idx);
+                int gl = l.get("groupLine") == null ? 0 : ((Number) l.get("groupLine")).intValue();
+                if (openGroup != 0 && gl != openGroup) {
+                    groupTotal(t, gname, gsub, gsg, gcg, gtot, n9);
+                    openGroup = 0; gsub = gsg = gcg = gtot = BigDecimal.ZERO;
+                }
+                if (gl != 0 && openGroup == 0) {
+                    openGroup = gl; gname = String.valueOf(l.get("groupName"));
+                    StringBuilder parts = new StringBuilder();
+                    for (Map<String, Object> k : all) if (k.get("groupLine") != null && ((Number) k.get("groupLine")).intValue() == gl) {
+                        if (parts.length() > 0) parts.append(" + ");
+                        parts.append(plain(new BigDecimal(String.valueOf(k.get("groupPer"))))).append(' ').append(k.get("uom")).append(' ').append(k.get("material"));
+                    }
+                    PdfPCell h = new PdfPCell(new Phrase(gname + " x " + plain(new BigDecimal(String.valueOf(l.get("groupQty")))) + "    (1 " + gname + " = " + parts + ")", b9));
+                    h.setColspan(9); h.setPadding(3); h.setBackgroundColor(new Color(238, 238, 238)); h.setBorder(Rectangle.BOTTOM); h.setBorderWidth(0.3f); h.setBorderColor(new Color(200, 200, 200));
+                    t.addCell(h);
+                }
                 Item it = new Item((String) l.get("material"), (String) l.get("uom"), (BigDecimal) l.get("qty"), (BigDecimal) l.get("rate"), (BigDecimal) l.get("gst"));
                 Map<String, BigDecimal> c = MaterialService.calc(it);
                 sub = sub.add(c.get("subtotal")); sg = sg.add(c.get("sgst")); cg = cg.add(c.get("cgst")); tot = tot.add(c.get("total"));
-                t.addCell(cell(it.material(), b9, Element.ALIGN_LEFT, false));
+                if (gl != 0) { gsub = gsub.add(c.get("subtotal")); gsg = gsg.add(c.get("sgst")); gcg = gcg.add(c.get("cgst")); gtot = gtot.add(c.get("total")); }
+                PdfPCell nameCell = cell(it.material(), b9, Element.ALIGN_LEFT, false);
+                if (gl != 0) nameCell.setPaddingLeft(14);
+                t.addCell(nameCell);
                 t.addCell(cell(dash(l.get("hsn")), n9, Element.ALIGN_LEFT, false));
                 t.addCell(cell(plain(it.qty()) + " " + it.uom(), n9, Element.ALIGN_RIGHT, false));
                 t.addCell(cell(inr(it.rate()), n9, Element.ALIGN_RIGHT, false));
@@ -74,6 +96,7 @@ final class ChallanPdf {
                 t.addCell(cell(inr(c.get("cgst")), n9, Element.ALIGN_RIGHT, false));
                 t.addCell(cell(inr(c.get("total")), n9, Element.ALIGN_RIGHT, false));
             }
+            if (openGroup != 0) groupTotal(t, gname, gsub, gsg, gcg, gtot, n9);
             t.addCell(cell("All items", b9, Element.ALIGN_LEFT, true));
             for (String x : new String[]{"", "", "", ""}) t.addCell(cell(x, b9, Element.ALIGN_RIGHT, true));
             for (BigDecimal v : new BigDecimal[]{sub, sg, cg, tot}) t.addCell(cell(inr(v), b9, Element.ALIGN_RIGHT, true));
@@ -86,6 +109,12 @@ final class ChallanPdf {
             doc.close();
             return out.toByteArray();
         } catch (DocumentException e) { throw new IllegalStateException(e); }
+    }
+    static void groupTotal(PdfPTable t, String name, BigDecimal sub, BigDecimal sg, BigDecimal cg, BigDecimal tot, Font f) {
+        Font it = new Font(Font.HELVETICA, 9, Font.ITALIC);
+        t.addCell(cell(name + " subtotal", it, Element.ALIGN_LEFT, false));
+        for (int i = 0; i < 4; i++) t.addCell(cell("", f, Element.ALIGN_RIGHT, false));
+        for (BigDecimal v : new BigDecimal[]{sub, sg, cg, tot}) t.addCell(cell(inr(v), it, Element.ALIGN_RIGHT, false));
     }
     static String dash(Object o) { return o == null || o.toString().isBlank() ? "-" : o.toString(); }
     static Paragraph rule() { Paragraph p = new Paragraph(new Chunk(new com.lowagie.text.pdf.draw.LineSeparator(0.6f, 100, Color.BLACK, Element.ALIGN_CENTER, -2))); return p; }

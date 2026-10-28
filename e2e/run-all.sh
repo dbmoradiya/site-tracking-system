@@ -35,5 +35,7 @@ want e && { start; run stages node stages.mjs; }
 want f && { start; run api-scope python3 seed-sales.py; run coordinator-desktop node coordinator.mjs; run coordinator-mobile node coordinator.mjs mobile; }
 want g && { start; run hsn-desktop node hsn.mjs; }
 want h && { start; run hsn-mobile node hsn.mjs mobile; }
+want i && { start; run groups-desktop node groups.mjs; }
+want j && { start; run groups-mobile node groups.mjs mobile; }
 echo "TOTAL steps: $TOTAL  FAILED: $FAIL"
 exit $([ $FAIL -eq 0 ] && echo 0 || echo 1)

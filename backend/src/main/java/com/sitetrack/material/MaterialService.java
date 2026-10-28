@@ -54,6 +54,10 @@ public class MaterialService {
 
     private void validateItems(List<Item> items) {
         if (items == null || items.isEmpty()) throw bad("Add at least one item");
+        validateEach(items);
+    }
+
+    private void validateEach(List<Item> items) {
         for (Item l : items) {
             if (l == null || s(l.material()).isEmpty()) throw bad("Material name is required");
             if (s(l.uom()).isEmpty() || l.uom().length() > 32) throw bad("Unit is required");
@@ -212,6 +216,62 @@ public class MaterialService {
         return w;
     }
 
+    // ---------- material groups ----------
+    public List<Map<String, Object>> groups() {
+        Map<Long, List<Map<String, Object>>> items = new HashMap<>();
+        for (Map<String, Object> r : jdbc.sql("select gi.group_id,gi.material_type_id,m.name,m.uom,m.hsn,gi.qty from material_group_items gi join material_types m on m.id=gi.material_type_id order by gi.group_id,gi.position").query().listOfRows()) {
+            Map<String, Object> o = new LinkedHashMap<>(); o.put("materialId", r.get("material_type_id")); o.put("material", r.get("name")); o.put("uom", r.get("uom"));
+            o.put("hsn", r.get("hsn") == null ? "" : r.get("hsn")); o.put("qty", new BigDecimal(r.get("qty").toString()).stripTrailingZeros());
+            items.computeIfAbsent(((Number) r.get("group_id")).longValue(), k -> new ArrayList<>()).add(o);
+        }
+        return jdbc.sql("""
+                select g.id,g.name,g.archived_at,
+                 (select count(distinct si.sale_id) from sale_items si join sales s on s.id=si.sale_id where si.group_id=g.id and s.deleted_at is null) used
+                from material_groups g order by lower(g.name)""").query().listOfRows().stream().map(r -> {
+            long id = ((Number) r.get("id")).longValue();
+            Map<String, Object> o = new LinkedHashMap<>(); o.put("id", id); o.put("name", r.get("name")); o.put("archived", r.get("archived_at") != null);
+            o.put("usedCount", ((Number) r.get("used")).longValue()); o.put("items", items.getOrDefault(id, List.of())); return o; }).toList();
+    }
+
+    @Transactional
+    public Map<String, Object> saveGroup(Long id, GroupIn in) {
+        String name = s(in.name());
+        if (name.isEmpty() || name.length() > 180) throw bad("Group name is required");
+        List<GroupItemIn> its = in.items() == null ? List.of() : in.items();
+        if (its.isEmpty()) throw bad("Add at least one material to the group");
+        Map<Long, BigDecimal> members = new LinkedHashMap<>();
+        for (GroupItemIn it : its) {
+            if (it == null || s(it.material()).isEmpty()) throw bad("Material is required for each group row");
+            Long mid = jdbc.sql("select id from material_types where lower(name)=lower(:n)").param("n", s(it.material())).query(Long.class).optional().orElseThrow(() -> bad("Unknown material '" + it.material() + "'. Groups use existing material types"));
+            if (members.containsKey(mid)) throw bad("'" + it.material() + "' is already in this group");
+            BigDecimal q = it.qty();
+            if (q == null || q.signum() <= 0 || q.stripTrailingZeros().scale() > 3) throw bad("Quantity for '" + it.material() + "' must be greater than 0 (up to 3 decimals)");
+            if (q.compareTo(new BigDecimal("99999999")) > 0) throw bad("Quantity for '" + it.material() + "' is too large");
+            members.put(mid, q);
+        }
+        Long dupe = jdbc.sql("select id from material_groups where lower(name)=lower(:n)").param("n", name).query(Long.class).optional().orElse(null);
+        if (dupe != null && !dupe.equals(id)) throw new ApiException(409, "Group already exists");
+        if (id == null) id = jdbc.sql("insert into material_groups(name) values(:n) returning id").param("n", name).query(Long.class).single();
+        else {
+            int c = jdbc.sql("update material_groups set name=:n where id=:id").param("n", name).param("id", id).update();
+            if (c == 0) throw new ApiException(404, "Group not found");
+            jdbc.sql("delete from material_group_items where group_id=:id").param("id", id).update();
+        }
+        int pos = 0;
+        for (Map.Entry<Long, BigDecimal> e : members.entrySet())
+            jdbc.sql("insert into material_group_items(group_id,position,material_type_id,qty) values(:g,:p,:m,:q)").param("g", id).param("p", pos++).param("m", e.getKey()).param("q", e.getValue()).update();
+        long fid = id;
+        return groups().stream().filter(g -> ((Long) g.get("id")) == fid).findFirst().orElseThrow();
+    }
+
+    /** Groups are never deleted: archiving hides one from new sales; old sales and challans keep it. */
+    @Transactional
+    public Map<String, Object> archiveGroup(long id, boolean archived) {
+        int c = jdbc.sql("update material_groups set archived_at=case when :a then coalesce(archived_at,now()) else null end where id=:id").param("a", archived).param("id", id).update();
+        if (c == 0) throw new ApiException(404, "Group not found");
+        return groups().stream().filter(g -> ((Long) g.get("id")) == id).findFirst().orElseThrow();
+    }
+
     // ---------- purchases ----------
     private List<Map<String, Object>> itemsOut(List<Map<String, Object>> rows) { return rows; }
 
@@ -239,6 +299,11 @@ public class MaterialService {
         o.put("qty", new BigDecimal(raw.get("qty").toString()).stripTrailingZeros());
         o.put("rate", new BigDecimal(raw.get("rate").toString()).stripTrailingZeros());
         o.put("gst", new BigDecimal(raw.get("gst").toString()).stripTrailingZeros());
+        if (raw.get("group_line") != null) {
+            o.put("groupLine", ((Number) raw.get("group_line")).intValue()); o.put("groupId", ((Number) raw.get("group_id")).longValue());
+            o.put("groupName", raw.get("group_name"));
+            o.put("groupQty", new BigDecimal(raw.get("group_qty").toString()).stripTrailingZeros()); o.put("groupPer", new BigDecimal(raw.get("group_per").toString()).stripTrailingZeros());
+        }
         return o;
     }
 
@@ -251,6 +316,12 @@ public class MaterialService {
         return snap;
     }
 
+    private static String normGroupVal(Object o) {
+        if (o == null) return null;
+        if (o instanceof Number) return new BigDecimal(o.toString()).stripTrailingZeros().toPlainString();
+        return o.toString();
+    }
+
     private String canon(Map<String, Object> snap) {
         try {
             Map<String, Object> c = new LinkedHashMap<>(snap);
@@ -261,6 +332,7 @@ public class MaterialService {
                 x.put("q", new BigDecimal(i.get("qty").toString()).stripTrailingZeros().toPlainString());
                 x.put("r", new BigDecimal(i.get("rate").toString()).stripTrailingZeros().toPlainString());
                 x.put("g", new BigDecimal(i.get("gst").toString()).stripTrailingZeros().toPlainString());
+                for (String k : new String[]{"group_line", "group_id", "group_name", "group_qty", "group_per"}) x.put(k, normGroupVal(i.get(k)));
                 its.add(x);
             }
             c.put("items", its);
@@ -406,19 +478,81 @@ public class MaterialService {
         Map<String, Object> snap = new LinkedHashMap<>();
         snap.put("type", s.get("sale_type")); snap.put("date", s.get("sale_date").toString()); snap.put("vendorId", s.get("vendor_id"));
         snap.put("siteIds", jdbc.sql("select site_id from sale_sites where sale_id=:id order by site_id").param("id", id).query(Long.class).list());
-        snap.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst from sale_items where sale_id=:id order by position").param("id", id).query().listOfRows());
+        snap.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst,group_line,group_id,group_name,group_qty,group_per from sale_items where sale_id=:id order by position").param("id", id).query().listOfRows());
         return snap;
     }
 
-    private void writeSaleItems(long id, List<Item> items) {
+    /** One sale line after groups are expanded into child rows. */
+    record Line(Item item, Integer groupLine, Long groupId, String groupName, BigDecimal groupQty, BigDecimal per) {}
+
+    private void writeSaleItems(long id, List<Line> lines) {
         jdbc.sql("delete from sale_items where sale_id=:id").param("id", id).update();
         int pos = 0;
-        for (Item l : items) {
-            long m = ensureMaterial(l, false);
-            jdbc.sql("insert into sale_items(sale_id,position,material_type_id,uom,qty,rate,gst) values(:p,:pos,:m,:u,:q,:r,:g)")
-                    .param("p", id).param("pos", pos++).param("m", m).param("u", s(l.uom())).param("q", l.qty()).param("r", l.rate()).param("g", l.gst()).update();
+        for (Line ln : lines) {
+            Item l = ln.item();
+            long m = ensureMaterial(l, false); // the unit of the line must still be the material's unit
+            jdbc.sql("insert into sale_items(sale_id,position,material_type_id,uom,qty,rate,gst,group_line,group_id,group_name,group_qty,group_per) values(:p,:pos,:m,:u,:q,:r,:g,:gl,:gi,:gn,:gq,:gp)")
+                    .param("p", id).param("pos", pos++).param("m", m).param("u", s(l.uom())).param("q", l.qty()).param("r", l.rate()).param("g", l.gst())
+                    .param("gl", ln.groupLine()).param("gi", ln.groupId()).param("gn", ln.groupName()).param("gq", ln.groupQty()).param("gp", ln.per()).update();
         }
-        // unit of the line must still be the material's unit (checked in ensureMaterial)
+    }
+
+    /**
+     * Plain items first, then one block per group. A group line expands to its members: child qty = group qty x qty per group.
+     * A sale that already holds the group keeps the member list it was saved with (editing never rewrites old history);
+     * a group added now uses the current definition and must not be archived. Every member needs its own rate and GST.
+     */
+    private List<Line> buildLines(SaleIn in, Long existingSaleId) {
+        List<Item> plain = in.items() == null ? List.of() : in.items();
+        List<GroupLineIn> groups = in.groups() == null ? List.of() : in.groups();
+        if (plain.isEmpty() && groups.isEmpty()) throw bad("Add at least one item");
+        if (!plain.isEmpty()) validateEach(plain);
+        List<Line> out = new ArrayList<>();
+        for (Item l : plain) out.add(new Line(l, null, null, null, null, null));
+        Map<Long, String> names = materialNames();
+        int n = 0;
+        for (GroupLineIn g : groups) {
+            if (g == null || g.groupId() == null) throw bad("Group is required");
+            BigDecimal q = g.qty();
+            if (q == null || q.signum() <= 0 || q.stripTrailingZeros().scale() > 3) throw bad("Group quantity must be greater than 0 (up to 3 decimals)");
+            if (q.compareTo(new BigDecimal("99999999")) > 0) throw bad("Group quantity is too large");
+            String gname; List<Map<String, Object>> members = new ArrayList<>();
+            List<Map<String, Object>> kept = existingSaleId == null ? List.of() : jdbc.sql("select material_type_id,group_name,group_per from sale_items where sale_id=:s and group_id=:g and group_line=(select min(group_line) from sale_items where sale_id=:s and group_id=:g) order by position")
+                    .param("s", existingSaleId).param("g", g.groupId()).query().listOfRows();
+            if (!kept.isEmpty()) {
+                gname = (String) kept.get(0).get("group_name");
+                for (Map<String, Object> k : kept) members.add(Map.of("mid", ((Number) k.get("material_type_id")).longValue(), "per", new BigDecimal(k.get("group_per").toString())));
+            } else {
+                Map<String, Object> grp = jdbc.sql("select name,archived_at from material_groups where id=:g").param("g", g.groupId()).query().listOfRows().stream().findFirst()
+                        .orElseThrow(() -> bad("Unknown group"));
+                if (grp.get("archived_at") != null) throw bad("Group '" + grp.get("name") + "' is archived and cannot be added to a sale");
+                gname = (String) grp.get("name");
+                for (Map<String, Object> k : jdbc.sql("select material_type_id,qty from material_group_items where group_id=:g order by position").param("g", g.groupId()).query().listOfRows())
+                    members.add(Map.of("mid", ((Number) k.get("material_type_id")).longValue(), "per", new BigDecimal(k.get("qty").toString())));
+            }
+            Map<String, GroupChildIn> byName = new HashMap<>();
+            if (g.children() != null) for (GroupChildIn c : g.children()) {
+                if (c == null || s(c.material()).isEmpty()) throw bad("Group material is required");
+                if (byName.put(s(c.material()).toLowerCase(), c) != null) throw bad("Group material '" + c.material() + "' is repeated");
+            }
+            if (byName.size() != members.size()) throw bad("Group '" + gname + "' needs a price and GST for each of its materials");
+            n++;
+            List<Item> kids = new ArrayList<>();
+            for (Map<String, Object> m : members) {
+                long mid = (Long) m.get("mid"); BigDecimal per = (BigDecimal) m.get("per");
+                String mname = names.get(mid);
+                GroupChildIn c = byName.get(mname.toLowerCase());
+                if (c == null) throw bad("Price and GST for '" + mname + "' (group " + gname + ") are missing");
+                BigDecimal cq = q.multiply(per);
+                if (cq.stripTrailingZeros().scale() > 3) throw bad("Group quantity gives more than 3 decimals for '" + mname + "'");
+                String uom = jdbc.sql("select uom from material_types where id=:i").param("i", mid).query(String.class).single();
+                Item it = new Item(mname, uom, cq.stripTrailingZeros(), c.rate(), c.gst());
+                kids.add(it);
+                out.add(new Line(it, n, g.groupId(), gname, q.stripTrailingZeros(), per.stripTrailingZeros()));
+            }
+            validateEach(kids);
+        }
+        return out;
     }
 
     private void writeSaleSites(long id, List<Long> siteIds) {
@@ -432,14 +566,15 @@ public class MaterialService {
     public Map<String, Object> createSale(SaleIn in, AppPrincipal user) {
         String type = s(in.type());
         if (!type.equals("DEBIT") && !type.equals("CREDIT")) throw bad("Choose Debit or Credit");
-        LocalDate d = date(in.date()); validateItems(in.items());
+        LocalDate d = date(in.date());
+        List<Line> lines = buildLines(in, null);
         List<Long> sites = checkSites(in.siteIds());
         VendorIn nv = in.newVendor();
         long vendor = ensureVendor(in.vendor(), nv == null ? null : nv.mobile(), nv == null ? null : nv.gst(), nv == null ? null : nv.address(), nv != null);
         String code = nextCode("S", "SES", d);
         long id = jdbc.sql("insert into sales(sale_code,sale_type,sale_date,vendor_id,created_by,updated_by) values(:c,:t,:d,:v,:u,:u) returning id")
                 .param("c", code).param("t", type).param("d", d).param("v", vendor).param("u", user.id()).query(Long.class).single();
-        writeSaleItems(id, in.items()); writeSaleSites(id, sites);
+        writeSaleItems(id, lines); writeSaleSites(id, sites);
         storeChallan(id, "CREATED", user.id());
         Map<String, Object> out = new LinkedHashMap<>(saleFull(id, null));
         out.put("warnings", shortfalls(materialsOfSale(id)));
@@ -452,15 +587,18 @@ public class MaterialService {
                 .orElseThrow(() -> new ApiException(404, "Sale not found"));
         String type = s(in.type());
         if (!type.equals("DEBIT") && !type.equals("CREDIT")) throw bad("Choose Debit or Credit");
-        LocalDate d = date(in.date()); validateItems(in.items());
+        LocalDate d = date(in.date());
+        List<Line> lines = buildLines(in, id);
         List<Long> sites = checkSites(in.siteIds());
         VendorIn nv = in.newVendor();
         long vendor = ensureVendor(in.vendor(), nv == null ? null : nv.mobile(), nv == null ? null : nv.gst(), nv == null ? null : nv.address(), nv != null);
         Map<String, Object> before = saleSnapshot(id);
         Set<Long> mats = materialsOfSale(id);
         List<Map<String, Object>> its = new ArrayList<>();
-        for (Item l : in.items()) {
-            Map<String, Object> i = new LinkedHashMap<>(); i.put("material_type_id", ensureMaterial(l, false)); i.put("uom", s(l.uom())); i.put("qty", l.qty()); i.put("rate", l.rate()); i.put("gst", l.gst()); its.add(i);
+        for (Line ln : lines) {
+            Item l = ln.item();
+            Map<String, Object> i = new LinkedHashMap<>(); i.put("material_type_id", ensureMaterial(l, false)); i.put("uom", s(l.uom())); i.put("qty", l.qty()); i.put("rate", l.rate()); i.put("gst", l.gst());
+            i.put("group_line", ln.groupLine()); i.put("group_id", ln.groupId()); i.put("group_name", ln.groupName()); i.put("group_qty", ln.groupQty()); i.put("group_per", ln.per()); its.add(i);
         }
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("type", type); after.put("date", d.toString()); after.put("vendorId", vendor); after.put("siteIds", sites); after.put("items", its);
@@ -470,7 +608,7 @@ public class MaterialService {
                     .param("id", id).param("v", ver).param("f", cur.get("active_from")).param("s", toJson(before)).update();
             jdbc.sql("update sales set sale_type=:t,sale_date=:d,vendor_id=:v,active_from=date_trunc('second',now()),updated_by=:u where id=:id")
                     .param("t", type).param("d", d).param("v", vendor).param("u", user.id()).param("id", id).update();
-            writeSaleItems(id, in.items()); writeSaleSites(id, sites);
+            writeSaleItems(id, lines); writeSaleSites(id, sites);
             storeChallan(id, "EDITED", user.id());
             mats.addAll(materialsOfSale(id));
         }
@@ -519,7 +657,7 @@ public class MaterialService {
             o.put("id", id); o.put("saleId", r.get("sale_code")); o.put("type", r.get("sale_type")); o.put("date", r.get("sale_date").toString());
             o.put("vendor", v.get("name")); o.put("vendorInfo", Map.of("mobile", v.get("mobile"), "gst", v.get("gst"), "address", v.get("address"))); o.put("siteIds", vis); o.put("sites", siteRefs(vis, sites));
             o.put("activeFrom", iso(r.get("active_from")));
-            o.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst from sale_items where sale_id=:id order by position").param("id", id).query().listOfRows()
+            o.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst,group_line,group_id,group_name,group_qty,group_per from sale_items where sale_id=:id order by position").param("id", id).query().listOfRows()
                     .stream().map(i -> itemOut(i, names, hsn)).toList());
             List<Map<String, Object>> vers = new ArrayList<>();
             for (Map<String, Object> vr : jdbc.sql("select version,active_from,active_to,snapshot::text snap from sale_versions where sale_id=:id order by version desc").param("id", id).query().listOfRows()) {
