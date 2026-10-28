@@ -53,7 +53,7 @@ function GroupsSection() {
   }
   const openEdit = (g: MaterialGroup) => setD({ id: g.id, name: g.name, rows: g.items.map(i => ({ key: ++gkey, material: i.material, qty: i.qty })) })
   return <Stack gap="xs" mt="md" aria-label="Material groups">
-    <Group justify="space-between"><div><Title order={4}>Material groups</Title><Text size="xs" c="dimmed">{groups.filter(g => !g.archived).length} groups - a group is a set of materials sold together (1 ACDB = 4 MCB + 1 Box). Stock is always kept on the materials.</Text></div>
+    <Group justify="space-between"><div><Title order={4}>Material groups</Title><Text size="xs" c="dimmed">{groups.filter(g => !g.archived).length} {groups.filter(g => !g.archived).length === 1 ? "group" : "groups"} - a group is a set of materials sold together (1 ACDB = 4 MCB + 1 Box). Stock is always kept on the materials.</Text></div>
       <Button leftSection={<Plus size={14} />} onClick={() => setD({ name: '', rows: [{ key: ++gkey, material: '', qty: '' }] })}>Add group</Button></Group>
     <Paper withBorder><Table.ScrollContainer minWidth={520}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Group</Table.Th><Table.Th>Contains (per 1 group)</Table.Th><Table.Th ta="right">Sales</Table.Th><Table.Th ta="right" w={170}>Actions</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{groups.length === 0 && <Table.Tr><Table.Td colSpan={4}><Text size="sm" c="dimmed" ta="center" py="sm">No groups yet. Add one to sell several materials together.</Text></Table.Td></Table.Tr>}

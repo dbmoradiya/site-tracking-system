@@ -22,7 +22,7 @@ export function ItemsTable({ items }: { items: Line[] }) {
   const narrow = useMediaQuery('(max-width: 40em)')
   if (narrow) return <Stack gap={6} style={{ minWidth: 0 }}>
     {blocksOf(items).map((b, bi) => <Stack gap={6} key={bi} data-group={b.head ? b.head.groupName : undefined} style={b.head ? { borderLeft: '3px solid var(--mantine-color-blue-5)', paddingLeft: 6 } : undefined}>
-      {b.head && <Group gap={6} wrap="nowrap" align="flex-start"><Badge size="xs" variant="light" tt="none">Group</Badge><Text size="sm" fw={700} style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{groupHead(b)}</Text></Group>}
+      {b.head && <Group gap={6} wrap="nowrap" align="flex-start"><Badge size="xs" variant="light" tt="none" style={{ flexShrink: 0, overflow: "visible" }}>Group</Badge><Text size="sm" fw={700} style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{groupHead(b)}</Text></Group>}
       {b.lines.map((l, i) => { const c = calc(l.qty, l.rate, l.gst); return <Paper withBorder p="xs" key={i}>
       <Group justify="space-between" wrap="nowrap" align="flex-start"><Text size="sm" fw={700} style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{l.material}</Text><Text size="sm" fw={600} style={{ whiteSpace: 'nowrap' }}>{num(l.qty)} {l.uom}</Text></Group>
       <SimpleGrid cols={2} spacing={20} verticalSpacing={2} mt={4}>

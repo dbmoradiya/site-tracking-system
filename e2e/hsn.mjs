@@ -19,7 +19,7 @@ await step('add material type with HSN (Setup)',async()=>{await tab('Material Ty
   if((await p.locator('body').innerText()).includes('HSN is usually'))throw new Error('warning shown for a valid HSN')
   await sh('add-dialog');await d.getByRole('button',{name:/Save/}).click();await p.waitForTimeout(1200)
   const m=(await types()).find(x=>x.name==='Cement PPC');if(!m||m.hsn!=='2523')throw new Error('not saved: '+JSON.stringify(m))
-  if(!(await p.locator('tbody').innerText()).includes('2523'))throw new Error('HSN not in table');await sh('types-table')})
+  if(!(await p.locator('tbody').first().innerText()).includes('2523'))throw new Error('HSN not in table');await sh('types-table')})
 await step('odd HSN warns and still saves; edit then restore',async()=>{await p.getByRole('button',{name:'Edit Cement PPC'}).click();await p.waitForTimeout(400)
   const d=p.getByRole('dialog');await d.getByLabel(/HSN code/).fill('ABC');if(!(await p.locator('body').innerText()).includes('It will still be saved'))throw new Error('no warning');await sh('warning')
   await d.getByRole('button',{name:/Save/}).click();await p.waitForTimeout(1200);let m=(await types()).find(x=>x.name==='Cement PPC');if(m.hsn!=='ABC')throw new Error('odd HSN not saved')
