@@ -47,10 +47,10 @@ export function SalesTab({ onOpen }: { onOpen: (id: number) => void }) {
   const chips = [f.id.trim() && `Sale ID: ${f.id.trim()}`, f.type && (f.type === 'DEBIT' ? 'Debit - Out' : 'Credit - In'), f.from && `From ${fmtDate(f.from)}`, f.to && `To ${fmtDate(f.to)}`, f.vendor && `Vendor: ${f.vendor}`, f.material && `Material: ${f.material}`,
     f.site && `Site: ${siteById(Number(f.site))?.name}`, f.project && `Project: ${projects.find(p => String(p[0]) === f.project)?.[1]}`].filter(Boolean) as string[]
   const clear = () => setF({ id: '', from: '', to: '', type: '', vendor: '', material: '', site: '', project: '' })
-  const lineRows = sorted.flatMap(s => s.items.map(l => { const c = calc(l.qty, l.rate, l.gst); return [s.saleId, s.type === 'DEBIT' ? 'Debit - Out' : 'Credit - In', fmtDate(s.date), s.vendor, sitesText(s.siteIds).join('; '), l.material, l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] }))
+  const lineRows = sorted.flatMap(s => s.items.map(l => { const c = calc(l.qty, l.rate, l.gst); return [s.saleId, s.type === 'DEBIT' ? 'Debit - Out' : 'Credit - In', fmtDate(s.date), s.vendor, sitesText(s.siteIds).join('; '), l.material, l.groupName ? `${l.groupName} x ${l.groupQty}` : '', l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] }))
   return <Stack gap="xs">
     <Group justify="space-between" align="flex-end"><div><Text fw={700}>Sales</Text><Text size="xs" c="dimmed">Latest first - {sorted.length} of {sales.length} sales</Text></div>
-      <Group gap="xs"><ExportMenu filename="sales" note={`${sorted.length} sales, one row per item line${active ? ', filtered only' : ''}`} table={{ sheet: 'Sales', headers: ['Sale ID', 'Type', 'Date', 'Vendor', 'Sites', 'Material type', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Line total'], rows: lineRows }} />
+      <Group gap="xs"><ExportMenu filename="sales" note={`${sorted.length} sales, one row per item line${active ? ', filtered only' : ''}`} table={{ sheet: 'Sales', headers: ['Sale ID', 'Type', 'Date', 'Vendor', 'Sites', 'Material type', 'Group', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Line total'], rows: lineRows }} />
         <Button size="xs" variant={active ? 'filled' : 'default'} leftSection={<Filter size={14} />} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>Filters{active ? ` (${active})` : ''}</Button>
         <Button size="xs" leftSection={<Plus size={14} />} onClick={() => setFormOpen(true)}>Sale</Button></Group></Group>
     {!showFilters && active > 0 && <Group gap={6}>{chips.map(c => <Badge key={c} variant="light" color="orange" size="md" tt="none">{c}</Badge>)}<Button size="compact-xs" variant="subtle" onClick={clear}>Clear filters</Button></Group>}
@@ -77,28 +77,45 @@ export function SalesTab({ onOpen }: { onOpen: (id: number) => void }) {
 
 // ---------- Sale form ----------
 type Row = { key: number; material: string; qty: number | string; rate: number | string; gst: string }
+// A group line: the group quantity drives each child quantity (group qty x qty per group). Each child has its own price and GST.
+type GKid = { material: string; uom: string; per: number; rate: number | string; gst: string }
+type GRow = { key: number; groupId: number; name: string; qty: number | string; kids: GKid[] }
+const r3 = (n: number) => Math.round(n * 1000) / 1000
+const kidQty = (g: GRow, k: GKid) => r3((Number(g.qty) || 0) * k.per)
+const kidQtyOk = (g: GRow, k: GKid) => Math.abs((Number(g.qty) || 0) * k.per * 1000 - Math.round((Number(g.qty) || 0) * k.per * 1000)) < 1e-6
+const groupRowsOf = (items: Line[]): GRow[] => { const m = new Map<number, GRow>(); for (const l of items) if (l.groupLine) { const g = m.get(l.groupLine) ?? { key: ++rowKey, groupId: l.groupId!, name: l.groupName!, qty: l.groupQty!, kids: [] }; g.kids.push({ material: l.material, uom: l.uom, per: l.groupPer!, rate: l.rate, gst: String(l.gst) }); m.set(l.groupLine, g) } return [...m.values()] }
 let rowKey = 0
 const blankRow = (): Row => ({ key: ++rowKey, material: '', qty: '', rate: '', gst: '18' })
 
 function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale }) {
-  const { materialTypes, vendors, purchases, sales, sites } = useMaterialStore()
+  const { materialTypes, vendors, purchases, sales, sites, groups } = useMaterialStore()
   const [type, setType] = useState<SaleType | ''>(existing?.type ?? '')
   const [date, setDate] = useState(existing?.date ?? today()), [vendor, setVendor] = useState(existing?.vendor ?? '')
   const [mobile, setMobile] = useState(''), [gst, setGst] = useState(''), [address, setAddress] = useState('')
   const [siteIds, setSiteIds] = useState<string[]>(existing?.siteIds.map(String) ?? [])
-  const [rows, setRows] = useState<Row[]>(() => existing ? existing.items.map(l => ({ key: ++rowKey, material: l.material, qty: l.qty, rate: l.rate, gst: String(l.gst) })) : [blankRow()])
+  const [groupRows, setGroupRows] = useState<GRow[]>(() => existing ? groupRowsOf(existing.items) : [])
+  const [rows, setRows] = useState<Row[]>(() => existing ? (existing.items.some(l => !l.groupLine) || !existing.items.some(l => l.groupLine) ? existing.items.filter(l => !l.groupLine).map(l => ({ key: ++rowKey, material: l.material, qty: l.qty, rate: l.rate, gst: String(l.gst) })) : []) : [blankRow()])
+  const [pickGroup, setPickGroup] = useState(false)
+  const patchGroup = (key: number, d: Partial<GRow>) => setGroupRows(gs => gs.map(g => g.key === key ? { ...g, ...d } : g))
+  const patchKid = (key: number, mat: string, d: Partial<GKid>) => setGroupRows(gs => gs.map(g => g.key === key ? { ...g, kids: g.kids.map(k => k.material === mat ? { ...k, ...d } : k) } : g))
+  const addGroupRow = (id: string | null) => {
+    const g = groups.find(x => String(x.id) === id); if (!g) return
+    setGroupRows(gs => [...gs, { key: ++rowKey, groupId: g.id, name: g.name, qty: '', kids: g.items.map(i => ({ material: i.material, uom: i.uom, per: i.qty, rate: '', gst: '18' })) }])
+    setRows(rs => rs.length === 1 && !rs[0].material && !rs[0].qty && !rs[0].rate ? [] : rs); setPickGroup(false)
+  }
   const ev = findVendor(vendor), newVendor = !!vendor.trim() && !ev
   const pickVendor = (v: string) => { setVendor(v); const m = findVendor(v); setMobile(m ? m.mobile : ''); setGst(m ? m.gst : ''); setAddress(m ? m.address : '') }
   const patch = (key: number, d: Partial<Row>) => setRows(rs => rs.map(r => r.key === key ? { ...r, ...d } : r))
   const showMobile = ev ? ev.mobile : mobile, showGst = ev ? ev.gst : gst, showAddr = ev ? ev.address : address
   const items = rows.map(r => ({ r, c: calc(Number(r.qty) || 0, Number(r.rate) || 0, Number(r.gst)), m: findMaterial(r.material) }))
-  const grand = docTotals(rows.map(r => ({ material: r.material, uom: '', qty: Number(r.qty) || 0, rate: Number(r.rate) || 0, gst: Number(r.gst) })))
+  const grand = docTotals([...rows.map(r => ({ material: r.material, uom: '', qty: Number(r.qty) || 0, rate: Number(r.rate) || 0, gst: Number(r.gst) })), ...groupRows.flatMap(g => g.kids.map(k => ({ material: k.material, uom: k.uom, qty: kidQty(g, k), rate: Number(k.rate) || 0, gst: Number(k.gst) })))])
   const gstBad = newVendor && gst.trim() !== '' && !GST_RE.test(gst.trim().toUpperCase())
   const rowOk = (r: Row) => !!findMaterial(r.material) && Number(r.qty) > 0 && Number(r.rate) > 0
-  const valid = !!type && !!date && !!vendor.trim() && (!newVendor || /^\d{10}$/.test(mobile)) && rows.length > 0 && rows.every(rowOk)
+  const groupOk = (g: GRow) => Number(g.qty) > 0 && g.kids.every(k => Number(k.rate) > 0 && kidQtyOk(g, k))
+  const valid = !!type && !!date && !!vendor.trim() && (!newVendor || /^\d{10}$/.test(mobile)) && (rows.length > 0 || groupRows.length > 0) && rows.every(rowOk) && groupRows.every(groupOk)
   const [busy, setBusy] = useState(false)
   const save = async () => {
-    const data: SaleSnap = { type: type as SaleType, date, vendor: vendor.trim(), siteIds: siteIds.map(Number), items: rows.map(r => ({ material: r.material, uom: findMaterial(r.material)!.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
+    const data: SaleSnap = { type: type as SaleType, date, vendor: vendor.trim(), siteIds: siteIds.map(Number), items: rows.map(r => ({ material: r.material, uom: findMaterial(r.material)!.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })), groups: groupRows.map(g => ({ groupId: g.groupId, qty: Number(g.qty), children: g.kids.map(k => ({ material: k.material, rate: Number(k.rate), gst: Number(k.gst) })) })) }
     const nv: Vendor | undefined = newVendor ? { name: vendor.trim(), mobile, gst: gst.trim().toUpperCase(), address: address.trim() } : undefined
     setBusy(true)
     try {
@@ -127,7 +144,9 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
     <MultiSelect size="xs" label="Sites (optional)" searchable clearable placeholder={siteIds.length ? undefined : 'Select sites (optional)'} value={siteIds} onChange={setSiteIds}
       data={sites.map(s => ({ value: String(s.id), label: siteLabel(s) }))} nothingFoundMessage="No such site" description="Shown as Site | Project. Sites are only linked to this sale; the item quantity reduces (or adds to) stock once." />
     <div>
-      <Group justify="space-between" mb={4}><Text fw={700} size="sm">Items ({rows.length})</Text><Button size="compact-sm" variant="light" leftSection={<Plus size={14} />} onClick={() => setRows(rs => [...rs, blankRow()])}>Add item</Button></Group>
+      <Group justify="space-between" mb={4}><Text fw={700} size="sm">Items ({rows.length + groupRows.length})</Text><Group gap="xs"><Button size="compact-sm" variant="light" leftSection={<Plus size={14} />} onClick={() => setRows(rs => [...rs, blankRow()])}>Add item</Button>
+        <Button size="compact-sm" variant="light" color="blue" leftSection={<Plus size={14} />} onClick={() => setPickGroup(v => !v)} aria-expanded={pickGroup}>Add group</Button></Group></Group>
+      {pickGroup && <Select size="xs" mb={6} label="Group" searchable placeholder={groups.some(g => !g.archived) ? 'Select a group to add' : 'No groups available. Create one in Setup > Material Types'} data={groups.filter(g => !g.archived).map(g => ({ value: String(g.id), label: `${g.name} (${g.items.map(i => `${i.qty} ${i.material}`).join(' + ')})` }))} value={null} onChange={addGroupRow} nothingFoundMessage="No such group" />}
       <Stack gap="xs">{items.map(({ r, c, m }, i) => {
         const avail = m ? stockOf(m.name, purchases, sales, existing?.id) : null
         const over = type === 'DEBIT' && avail !== null && Number(r.qty) > avail
@@ -141,9 +160,23 @@ function SaleForm({ onDone, existing }: { onDone: () => void; existing?: Sale })
             <NativeSelect size="xs" label="GST %" value={r.gst} onChange={e => patch(r.key, { gst: e.currentTarget.value })} data={GST_RATES.map(g => ({ value: String(g), label: `${g}%` }))} />
           </SimpleGrid>
           <Group justify="space-between" mt={6}><Text size="xs" c="dimmed">Amount {inr(c.subtotal)} + SGST {inr(c.sgst)} ({Number(r.gst) / 2}%) + CGST {inr(c.cgst)} ({Number(r.gst) / 2}%) = <b>{inr(c.total)}</b></Text>
-            <Button size="compact-xs" variant="subtle" color="red" leftSection={<Trash2 size={12} />} disabled={rows.length === 1} onClick={() => setRows(rs => rs.filter(x => x.key !== r.key))} aria-label={`Remove item ${i + 1}`}>Remove</Button></Group>
-        </Paper> })}</Stack>
-      {type === 'DEBIT' && items.some(({ r, m }) => m && Number(r.qty) > stockOf(m.name, purchases, sales, existing?.id)) && <Text size="xs" c="orange.8" mt={4}>Some quantities are above current stock. The preview only warns; whether to block this is not decided yet.</Text>}
+            <Button size="compact-xs" variant="subtle" color="red" leftSection={<Trash2 size={12} />} disabled={rows.length === 1 && groupRows.length === 0} onClick={() => setRows(rs => rs.filter(x => x.key !== r.key))} aria-label={`Remove item ${i + 1}`}>Remove</Button></Group>
+        </Paper> })}
+        {groupRows.map((g, gi) => { const gn = groupRows.filter(x => x.groupId === g.groupId).length > 1 ? `${g.name} #${groupRows.slice(0, gi + 1).filter(x => x.groupId === g.groupId).length}` : g.name; const gt = docTotals(g.kids.map(k => ({ material: k.material, uom: k.uom, qty: kidQty(g, k), rate: Number(k.rate) || 0, gst: Number(k.gst) })))
+          return <Paper withBorder p="xs" key={g.key} aria-label={`Group ${gn}`} style={{ borderColor: 'var(--mantine-color-blue-4)', background: 'var(--mantine-color-blue-0)' }}>
+            <Group justify="space-between" align="flex-end" wrap="wrap"><Group gap="xs" align="flex-end"><Badge variant="light" tt="none" mb={4}>Group</Badge><Text fw={700} mb={3}>{gn}</Text>
+              <NumberInput size="xs" label={`Group quantity - ${gn}`} required min={0} decimalScale={3} hideControls w={150} placeholder="0" value={g.qty} onChange={v => patchGroup(g.key, { qty: v })} error={Number(g.qty) > 0 && g.kids.some(k => !kidQtyOk(g, k)) ? 'Gives more than 3 decimals' : undefined} /></Group>
+              <Button size="compact-xs" variant="subtle" color="red" leftSection={<Trash2 size={12} />} onClick={() => setGroupRows(gs => gs.filter(x => x.key !== g.key))} aria-label={`Remove group ${gn}`}>Remove group</Button></Group>
+            <Stack gap={6} mt={6}>{g.kids.map(k => { const q = kidQty(g, k), c = calc(q, Number(k.rate) || 0, Number(k.gst)); const avail = stockOf(k.material, purchases, sales, existing?.id)
+              return <Paper withBorder p="xs" key={k.material} bg="white" aria-label={`${gn} - ${k.material}`}>
+                <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs" style={{ alignItems: 'start' }}>
+                  <div style={{ gridColumn: 'span 2' }}><Text size="xs" c="dimmed">Material</Text><Text size="sm" fw={600}>{k.material}</Text><Text size="xs" c="dimmed">Quantity {num(q)} {k.uom} ({num(k.per)} x {num(Number(g.qty) || 0)}) - stock now {num(avail)}</Text></div>
+                  <NumberInput size="xs" label={`${gn} - ${k.material} price (excl. GST)`} required min={0} decimalScale={2} hideControls leftSection={'\u20B9'} placeholder="0.00" value={k.rate} onChange={v => patchKid(g.key, k.material, { rate: v })} />
+                  <NativeSelect size="xs" label={`${gn} - ${k.material} GST %`} value={k.gst} onChange={e => patchKid(g.key, k.material, { gst: e.currentTarget.value })} data={GST_RATES.map(x => ({ value: String(x), label: `${x}%` }))} /></SimpleGrid>
+                <Text size="xs" c="dimmed" mt={4}>Amount {inr(c.subtotal)} + SGST {inr(c.sgst)} + CGST {inr(c.cgst)} = <b>{inr(c.total)}</b></Text>
+                {type === 'DEBIT' && q > avail && <Text size="xs" c="orange.8">More than current stock</Text>}</Paper> })}</Stack>
+            <Text size="xs" fw={700} mt={6}>{gn} subtotal: {inr(gt.total)}</Text></Paper> })}</Stack>
+      {type === 'DEBIT' && (items.some(({ r, m }) => m && Number(r.qty) > stockOf(m.name, purchases, sales, existing?.id)) || groupRows.some(g => g.kids.some(k => kidQty(g, k) > stockOf(k.material, purchases, sales, existing?.id)))) && <Text size="xs" c="orange.8" mt={4}>Some quantities are above current stock. The preview only warns; whether to block this is not decided yet.</Text>}
     </div>
     <Paper withBorder p="xs" bg="gray.0"><Group justify="space-between" wrap="wrap">
       <div><Text size="xs" c="dimmed">Amount (all items)</Text><Text fw={600}>{inr(grand.subtotal)}</Text></div><div><Text size="xs" c="dimmed">SGST</Text><Text fw={600}>{inr(grand.sgst)}</Text></div><div><Text size="xs" c="dimmed">CGST</Text><Text fw={600}>{inr(grand.cgst)}</Text></div><div><Text size="xs" c="dimmed">Grand total (amount + SGST + CGST)</Text><Text fw={700} size="lg" c="orange.8">{inr(grand.total)}</Text></div></Group></Paper>

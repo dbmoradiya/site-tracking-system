@@ -38,12 +38,22 @@ public class MaterialController {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("materialTypes", svc.materialTypes()); m.put("vendors", svc.vendors()); m.put("company", svc.company());
         m.put("purchases", svc.purchases(null)); m.put("sales", svc.sales(null, null, false, null, null));
-        m.put("stock", svc.stock()); m.put("sites", svc.allSites()); return m;
+        m.put("groups", svc.groups()); m.put("stock", svc.stock()); m.put("sites", svc.allSites()); return m;
     }
     @PostMapping("/material/types") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> addType(@RequestBody MaterialTypeIn in) { return svc.saveMaterialType(null, in); }
     @PutMapping("/material/types/{id}") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> editType(@PathVariable long id, @RequestBody MaterialTypeIn in) { return svc.saveMaterialType(id, in); }
+    @GetMapping("/material/groups") @PreAuthorize("hasRole('ADMIN')")
+    public List<Map<String, Object>> groups() { return svc.groups(); }
+    @PostMapping("/material/groups") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> addGroup(@RequestBody GroupIn in) { return svc.saveGroup(null, in); }
+    @PutMapping("/material/groups/{id}") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> editGroup(@PathVariable long id, @RequestBody GroupIn in) { return svc.saveGroup(id, in); }
+    @PostMapping("/material/groups/{id}/archive") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> archiveGroup(@PathVariable long id) { return svc.archiveGroup(id, true); }
+    @PostMapping("/material/groups/{id}/restore") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> restoreGroup(@PathVariable long id) { return svc.archiveGroup(id, false); }
     @PostMapping("/material/vendors") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> addVendor(@RequestBody VendorIn in) { return svc.saveVendor(null, in); }
     @PutMapping("/material/vendors/{id}") @PreAuthorize("hasRole('ADMIN')")

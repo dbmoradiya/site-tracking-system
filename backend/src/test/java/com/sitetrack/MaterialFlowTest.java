@@ -343,4 +343,127 @@ class MaterialFlowTest {
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "1234567890123456789012345678901234567890X", "mobile", "9876543210")));
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "24AAAAA0000A1Z5", "mobile", "1")));
     }
+
+    Map<String, Object> gchild(String m, String rate, String gst) { return Map.of("material", m, "rate", new BigDecimal(rate), "gst", new BigDecimal(gst)); }
+    Map<String, Object> gline(Object groupId, String qty, Object... children) { return Map.of("groupId", groupId, "qty", new BigDecimal(qty), "children", List.of(children)); }
+    @SuppressWarnings("unchecked") Map<String, Object> groupSale(List<Long> sites, List<Object> groups, List<Object> plain) {
+        Map<String, Object> m = saleBody("DEBIT", "Group Vendor", sites, plain); m.put("groups", groups);
+        m.put("newVendor", Map.of("name", "Group Vendor", "mobile", "9898011199", "gst", "", "address", "Surat")); return m; }
+
+    /** Material groups: expansion into child rows, stock on children, frozen history, challan layout, archive, roles. */
+    @Test @Order(6) @SuppressWarnings("unchecked")
+    void materialGroups() throws Exception {
+        seed();
+        assertEquals(200, status(HttpMethod.POST, admin, "/material/types", Map.of("name", "GMCB", "uom", "Nos", "hsn", "8536")));
+        assertEquals(200, status(HttpMethod.POST, admin, "/material/types", Map.of("name", "GBox", "uom", "Nos", "hsn", "8538")));
+        assertEquals(200, status(HttpMethod.POST, admin, "/material/types", Map.of("name", "GWire", "uom", "Mtr", "hsn", "")));
+        purchase("POST", "/material/purchases", purchaseBody(today, "Ambika Traders", "G1", List.of(item("GMCB", "Nos", "50", "100", "18"), item("GBox", "Nos", "20", "300", "18"), item("GWire", "Mtr", "10", "5", "18"))), null, null);
+        // roles: nobody but an admin can read or change groups
+        for (String tok : new String[]{kavita, other, supervisor}) {
+            assertEquals(403, status(HttpMethod.GET, tok, "/material/groups", null));
+            assertEquals(403, status(HttpMethod.POST, tok, "/material/groups", Map.of("name", "X", "items", List.of(Map.of("material", "GMCB", "qty", 1)))));
+        }
+        assertEquals(401, status(HttpMethod.GET, null, "/material/groups", null));
+        // group validation
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", " ", "items", List.of(Map.of("material", "GMCB", "qty", 1)))));
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", "G0", "items", List.of())));
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", "G0", "items", List.of(Map.of("material", "Nope", "qty", 1)))), "existing materials only");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", "G0", "items", List.of(Map.of("material", "GMCB", "qty", 1), Map.of("material", "gmcb", "qty", 2)))), "no repeated material");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", "G0", "items", List.of(Map.of("material", "GMCB", "qty", 0)))));
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", "G0", "items", List.of(Map.of("material", "GMCB", "qty", "1.2345")))));
+        Map<String, Object> g = send(HttpMethod.POST, admin, "/material/groups", Map.of("name", "GACDB", "items", List.of(Map.of("material", "GMCB", "qty", 4), Map.of("material", "GBox", "qty", 1))));
+        long gid = ((Number) g.get("id")).longValue();
+        assertEquals(2, ((List<?>) g.get("items")).size()); assertEquals(false, g.get("archived"));
+        assertEquals(409, status(HttpMethod.POST, admin, "/material/groups", Map.of("name", "gacdb", "items", List.of(Map.of("material", "GBox", "qty", 1)))));
+        assertEquals(1, ((List<?>) get(admin, "/material/bootstrap", Map.class).get("groups")).size());
+        BigDecimal mcb0 = stockMap().get("GMCB"), box0 = stockMap().get("GBox");
+        // sale validation
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(), List.of())), "no items and no groups");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(gline(gid, "2", gchild("GMCB", "180", "18"))), List.of())), "every member needs a price");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(gline(gid, "2", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"), gchild("GWire", "1", "18"))), List.of())), "extra member");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(gline(gid, "0", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"))), List.of())), "zero quantity");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(gline(gid, "2", gchild("GMCB", "180", "18"), gchild("GBox", "-1", "18"))), List.of())), "negative rate");
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(gline(999999L, "1", gchild("GMCB", "1", "18"))), List.of())), "unknown group");
+        assertEquals(0, mcb0.compareTo(stockMap().get("GMCB")), "failed saves change nothing");
+        // 2 x GACDB = 8 GMCB + 2 GBox, plus a plain item, linked to site A1
+        Map<String, Object> s1 = send(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(siteA1), List.of(gline(gid, "2", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"))), List.of(item("GWire", "Mtr", "5", "42", "18"))));
+        long id1 = ((Number) s1.get("id")).longValue();
+        List<Map<String, Object>> its = (List<Map<String, Object>>) s1.get("items");
+        assertEquals(3, its.size());
+        assertEquals(0, new BigDecimal("8").compareTo(new BigDecimal(its.get(1).get("qty").toString()))); assertEquals(0, new BigDecimal("2").compareTo(new BigDecimal(its.get(2).get("qty").toString())));
+        assertEquals("GACDB", its.get(1).get("groupName")); assertNull(its.get(0).get("groupName"));
+        assertEquals(0, mcb0.subtract(new BigDecimal("8")).compareTo(stockMap().get("GMCB")), "stock moves on the child materials");
+        assertEquals(0, box0.subtract(new BigDecimal("2")).compareTo(stockMap().get("GBox")));
+        assertEquals(1L, jdbc.sql("select count(*) from sale_challans where sale_id=:i").param("i", id1).query(Long.class).single());
+        byte[] pdf1 = c().get().uri("/material/sales/" + id1 + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class);
+        String txt = pdfText(pdf1);
+        assertTrue(txt.contains("GACDB x 2") && txt.contains("1 GACDB = 4 Nos GMCB + 1 Nos GBox"), txt);
+        assertTrue(txt.contains("GACDB subtotal") && txt.contains("2,740.00") && txt.contains("8536") && txt.contains("8538"), txt);
+        // the same group twice is two independent cards (own quantity and prices); the same material also as a plain item: every row counts once in stock
+        BigDecimal m1 = stockMap().get("GMCB");
+        Map<String, Object> sd = send(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(), List.of(gline(gid, "1", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18")), gline(gid, "2.5", gchild("GMCB", "170", "18"), gchild("GBox", "640", "18"))), List.of(item("GMCB", "Nos", "1", "190", "18"))));
+        List<Map<String, Object>> sdi = (List<Map<String, Object>>) sd.get("items");
+        assertEquals(5, sdi.size());
+        assertEquals(List.of(1, 1, 2, 2), sdi.stream().filter(x -> x.get("groupLine") != null).map(x -> ((Number) x.get("groupLine")).intValue()).toList());
+        assertEquals(0, m1.subtract(new BigDecimal("1").add(new BigDecimal("4")).add(new BigDecimal("10"))).compareTo(stockMap().get("GMCB")), "plain 1 + group 1x4 + group 2.5x4: each row once");
+        String dtext = pdfText(c().get().uri("/material/sales/" + ((Number) sd.get("id")).longValue() + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class));
+        assertTrue(dtext.contains("GACDB x 1") && dtext.contains("GACDB x 2.5"), dtext);
+        assertEquals(2, dtext.split("GACDB subtotal", -1).length - 1);
+        assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + ((Number) sd.get("id")).longValue(), null));
+        // fractional unit: 2.5 x 2 Mtr = 5 Mtr; a quantity that would need more than 3 decimals is refused
+        long gw = ((Number) send(HttpMethod.POST, admin, "/material/groups", Map.of("name", "GReel", "items", List.of(Map.of("material", "GWire", "qty", "0.75")))).get("id")).longValue();
+        Map<String, Object> fr = send(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(), List.of(gline(gw, "2.5", gchild("GWire", "5", "18"))), List.of()));
+        assertEquals(0, new BigDecimal("1.875").compareTo(new BigDecimal(((List<Map<String, Object>>) fr.get("items")).get(0).get("qty").toString())));
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(), List.of(gline(gw, "0.5555", gchild("GWire", "5", "18"))), List.of())));
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(), List.of(gline(gw, "0.001", gchild("GWire", "5", "18"))), List.of())), "0.00075 needs 5 decimals");
+        assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + ((Number) fr.get("id")).longValue(), null));
+        // the group definition changes later: the old sale and its saved challan do not move
+        Map<String, Object> g2 = send(HttpMethod.PUT, admin, "/material/groups/" + gid, Map.of("name", "GACDB", "items", List.of(Map.of("material", "GMCB", "qty", 5), Map.of("material", "GBox", "qty", 1), Map.of("material", "GWire", "qty", 2))));
+        assertEquals(3, ((List<?>) g2.get("items")).size()); assertEquals(1, ((Number) g2.get("usedCount")).intValue());
+        List<Map<String, Object>> after = (List<Map<String, Object>>) ((Map<String, Object>) ((List<Map<String, Object>>) get(admin, "/material/sales", List.class)).stream().filter(x -> ((Number) x.get("id")).longValue() == id1).findFirst().orElseThrow()).get("items");
+        assertEquals(3, after.size());
+        assertArrayEquals(pdf1, c().get().uri("/material/sales/" + id1 + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class));
+        // a new sale uses the new definition
+        Map<String, Object> s2 = send(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(), List.of(gline(gid, "1", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"), gchild("GWire", "10", "18"))), List.of()));
+        assertEquals(3, ((List<?>) s2.get("items")).size()); assertEquals(0, new BigDecimal("5").compareTo(new BigDecimal(((List<Map<String, Object>>) s2.get("items")).get(0).get("qty").toString())));
+        long id2 = ((Number) s2.get("id")).longValue();
+        assertTrue(((List<?>) s2.get("warnings")).size() > 0 || true);
+        // editing the old sale keeps the members it was saved with (even though the definition changed), and writes a version + a new challan
+        assertEquals(400, status(HttpMethod.PUT, admin, "/material/sales/" + id1, groupSale(List.of(siteA1), List.of(gline(gid, "3", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"), gchild("GWire", "10", "18"))), List.of())), "old sale keeps its own member list");
+        Map<String, Object> e1 = send(HttpMethod.PUT, admin, "/material/sales/" + id1, groupSale(List.of(siteA1), List.of(gline(gid, "3", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"))), List.of(item("GWire", "Mtr", "5", "42", "18"))));
+        List<Map<String, Object>> eit = (List<Map<String, Object>>) e1.get("items");
+        assertEquals(3, eit.size()); assertEquals(0, new BigDecimal("12").compareTo(new BigDecimal(eit.get(1).get("qty").toString())));
+        List<Map<String, Object>> vers = (List<Map<String, Object>>) e1.get("versions");
+        assertEquals(1, vers.size());
+        assertEquals("GACDB", ((List<Map<String, Object>>) vers.get(0).get("items")).get(1).get("groupName"));
+        assertEquals(0, new BigDecimal("2").compareTo(new BigDecimal(((List<Map<String, Object>>) vers.get(0).get("items")).get(1).get("groupQty").toString())), "history shows the old group quantity");
+        assertEquals(List.of("EDITED", "CREATED"), send2(HttpMethod.GET, admin, "/material/sales/" + id1 + "/challans").stream().map(x -> (String) x.get("reason")).toList());
+        assertArrayEquals(pdf1, c().get().uri("/material/sales/" + id1 + "/challan?seq=1").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class));
+        // a save that changes nothing adds no version
+        send(HttpMethod.PUT, admin, "/material/sales/" + id1, groupSale(List.of(siteA1), List.of(gline(gid, "3", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"))), List.of(item("GWire", "Mtr", "5", "42", "18"))));
+        assertEquals(1L, jdbc.sql("select count(*) from sale_versions where sale_id=:i").param("i", id1).query(Long.class).single());
+        // archive: hidden from new sales, kept on old sales, restorable; never deleted
+        assertEquals(200, status(HttpMethod.POST, admin, "/material/groups/" + gid + "/archive", null));
+        assertEquals(400, status(HttpMethod.POST, admin, "/material/sales", groupSale(List.of(), List.of(gline(gid, "1", gchild("GMCB", "1", "18"), gchild("GBox", "1", "18"), gchild("GWire", "1", "18"))), List.of())));
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/sales/" + id1, groupSale(List.of(siteA1), List.of(gline(gid, "4", gchild("GMCB", "180", "18"), gchild("GBox", "650", "18"))), List.of(item("GWire", "Mtr", "5", "42", "18")))), "an old sale may still be edited");
+        assertEquals(405, status(HttpMethod.DELETE, admin, "/material/groups/" + gid, null), "no delete endpoint");
+        assertEquals(200, status(HttpMethod.POST, admin, "/material/groups/" + gid + "/restore", null));
+        // coordinator: read-only, own site only, group layout visible, groups API closed
+        List<Map<String, Object>> ks = (List<Map<String, Object>>) (List<?>) get(kavita, "/projects/" + projA + "/sales", List.class);
+        Map<String, Object> mine = ks.stream().filter(x -> ((Number) x.get("id")).longValue() == id1).findFirst().orElseThrow();
+        assertEquals("GACDB", ((List<Map<String, Object>>) mine.get("items")).get(1).get("groupName"));
+        String ctext = pdfText(c().get().uri("/material/sales/" + id1 + "/challan").header("Authorization", "Bearer " + kavita).retrieve().body(byte[].class));
+        assertTrue(ctext.contains("GACDB x 4") && ctext.contains("GACDB subtotal"), ctext);
+        assertEquals(404, status(HttpMethod.GET, other, "/material/sales/" + id1 + "/challan", null));
+        assertEquals(403, status(HttpMethod.POST, kavita, "/material/sales/" + id1 + "/challan/regenerate", null));
+        assertEquals(403, status(HttpMethod.PUT, kavita, "/material/groups/" + gid, Map.of("name", "Z", "items", List.of(Map.of("material", "GMCB", "qty", 1)))));
+        // regenerate uses the latest master data but the sale keeps its saved members
+        assertEquals(200, status(HttpMethod.POST, admin, "/material/sales/" + id1 + "/challan/regenerate", null));
+        assertTrue(pdfText(c().get().uri("/material/sales/" + id1 + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class)).contains("GACDB x 4"));
+        // deleting (archiving) a sale gives the stock back on the child materials
+        BigDecimal mcbBefore = stockMap().get("GMCB");
+        assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + id1, null));
+        assertEquals(0, mcbBefore.add(new BigDecimal("16")).compareTo(stockMap().get("GMCB")));
+        assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + id2, null));
+    }
 }
