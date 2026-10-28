@@ -45,10 +45,10 @@ export function InstallPrompt() {
     setInstallEvent(null)
   }
 
-  return <aside className="install-prompt" aria-label="Install Shreeji Enterprise">
+  return <aside className="install-prompt" aria-label="Install Shreeji Energy">
     <img src="/icon-192.png" alt="" width="48" height="48" />
     <div className="install-prompt__copy">
-      <strong>Install Shreeji Enterprise</strong>
+      <strong>Install Shreeji Energy</strong>
       <span>Add the app to your home screen for quicker access.</span>
     </div>
     <button className="button button--primary" type="button" onClick={install}>

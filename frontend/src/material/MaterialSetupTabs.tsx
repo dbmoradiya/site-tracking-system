@@ -2,12 +2,12 @@ import { Badge, Button, Group, Modal, NativeSelect, NumberInput, Paper, Select, 
 import { notifications } from '@mantine/notifications'
 import { Archive, ArchiveRestore, Pencil, Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { UOMS } from './types'
+import { UOMS, num } from './types'
 import { addGroup, addMaterialType, addVendor, archiveGroup, editGroup, editMaterialType, editVendor, findMaterial, findVendor, setCompany, useMaterialStore, type MaterialGroup, type MaterialType, type Vendor } from './materialStore'
 
 // Setup tabs for Material types, Vendors and Company. Material types created in the Purchase form appear here.
 export function MaterialTypesTab() {
-  const { materialTypes, purchases } = useMaterialStore()
+  const { materialTypes, purchases, sales } = useMaterialStore()
   const [sel, setSel] = useState<{ old: string; name: string; uom: string; hsn: string } | null>(null)
   const dupe = sel && sel.name.trim() && sel.name.trim().toLowerCase() !== sel.old.toLowerCase() && !!findMaterial(sel.name)
   const used = !!sel?.old && (findMaterial(sel.old)?.usedCount ?? 0) > 0
@@ -15,8 +15,11 @@ export function MaterialTypesTab() {
   return <Stack gap="xs">
     <Group justify="space-between"><div><Title order={4}>Material Types</Title><Text size="xs" c="dimmed">{materialTypes.length} types - added automatically from the Purchase form</Text></div>
       <Button leftSection={<Plus size={14} />} onClick={() => setSel({ old: '', name: '', uom: '', hsn: '' })}>Add Material Type</Button></Group>
-    <Paper withBorder><Table.ScrollContainer minWidth={520}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th>HSN code</Table.Th><Table.Th ta="right">Purchases</Table.Th><Table.Th ta="right" w={80}>Edit</Table.Th></Table.Tr></Table.Thead>
+    <Paper withBorder><Table.ScrollContainer minWidth={760}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th>HSN code</Table.Th><Table.Th ta="right">Purchases</Table.Th><Table.Th ta="right">Purchased qty</Table.Th><Table.Th ta="right">Sales</Table.Th><Table.Th ta="right">Sold qty</Table.Th><Table.Th ta="right" w={80}>Edit</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{materialTypes.map(m => <Table.Tr key={m.name}><Table.Td fw={600}>{m.name}</Table.Td><Table.Td>{m.uom}</Table.Td><Table.Td>{m.hsn || '-'}</Table.Td><Table.Td ta="right">{purchases.filter(p => p.items.some(l => l.material === m.name)).length}</Table.Td>
+        <Table.Td ta="right">{num(purchases.reduce((t, p) => t + p.items.filter(l => l.material === m.name).reduce((q, l) => q + l.qty, 0), 0))} {m.uom}</Table.Td>
+        <Table.Td ta="right">{sales.filter(x => x.type === 'DEBIT' && x.items.some(l => l.material === m.name)).length}</Table.Td>
+        <Table.Td ta="right">{num(sales.filter(x => x.type === 'DEBIT').reduce((t, x) => t + x.items.filter(l => l.material === m.name).reduce((q, l) => q + l.qty, 0), 0))} {m.uom}</Table.Td>
         <Table.Td ta="right"><Button size="compact-xs" variant="subtle" leftSection={<Pencil size={12} />} aria-label={`Edit ${m.name}`} onClick={() => setSel({ old: m.name, name: m.name, uom: m.uom, hsn: m.hsn ?? '' })}>Edit</Button></Table.Td></Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer></Paper>
     <Modal opened={!!sel} onClose={() => setSel(null)} title={sel?.old ? `Edit ${sel.old}` : 'Add Material Type'}>{sel && <Stack gap="sm">
       <TextInput size="xs" label="Material type" required value={sel.name} onChange={e => setSel({ ...sel, name: e.currentTarget.value })} error={dupe ? 'Already exists' : undefined} />
@@ -97,7 +100,7 @@ export function VendorsTab() {
   </Stack>
 }
 
-// Company Setup: Shreeji Enterprise address, GST number and mobile. These print on the challan.
+// Company Setup: Shreeji Energy address, GST number and mobile. These print on the challan.
 export function CompanyTab() {
   const { company } = useMaterialStore()
   const [edit, setEdit] = useState(false), [d, setD] = useState(company)

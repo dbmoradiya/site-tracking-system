@@ -8,7 +8,7 @@ Each run builds the frontend, starts the backend on a throwaway embedded databas
 dev users, runs the scripts and prints `OK` / `FAIL` per step plus a `TOTAL` line.
 Screenshots and PDFs go to `e2e/e2e-out/`.
 
-Run only some groups (letters match the `want` lines in run-all.sh; i = material groups on desktop,
+Run only some groups (letters match the `want` lines in run-all.sh; i = material groups on desktop, k/l = sale-only stock and Setup totals,
 j = material groups on mobile, others cover admin, setup, stages, coordinator and HSN):
 
     ONLY="i j" CHROME_PATH=/usr/bin/google-chrome bash e2e/run-all.sh

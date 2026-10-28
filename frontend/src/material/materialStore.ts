@@ -9,7 +9,7 @@ export type MaterialGroup = { id: number; name: string; archived: boolean; usedC
 export type Vendor = { id?: number; name: string; mobile: string; gst: string; address: string }
 type State = { loaded: boolean; error: string; materialTypes: MaterialType[]; groups: MaterialGroup[]; vendors: Vendor[]; purchases: Purchase[]; sales: Sale[]; company: Company; sites: SiteRef[] }
 
-const emptyCompany: Company = { name: 'Shreeji Enterprise', address: '', gst: '', mobile: '' }
+const emptyCompany: Company = { name: 'Shreeji Energy', address: '', gst: '', mobile: '' }
 let state: State = { loaded: false, error: '', materialTypes: [], groups: [], vendors: [], purchases: [], sales: [], company: emptyCompany, sites: [] }
 let loading = false
 const listeners = new Set<() => void>()

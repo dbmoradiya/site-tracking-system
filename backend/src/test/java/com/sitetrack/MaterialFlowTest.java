@@ -339,7 +339,7 @@ class MaterialFlowTest {
         seed();
         assertEquals(200, status(HttpMethod.PUT, admin, "/material/company", Map.of("name", "ignored", "address", "Plot 1, Ahmedabad", "gst", "24AAAAA0000A1Z5", "mobile", "9876543210")));
         Map<String, Object> co = (Map<String, Object>) get(admin, "/material/bootstrap", Map.class).get("company");
-        assertEquals("Shreeji Enterprise", co.get("name")); assertEquals("Plot 1, Ahmedabad", co.get("address"));
+        assertEquals("Shreeji Energy", co.get("name")); assertEquals("Plot 1, Ahmedabad", co.get("address"));
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "1234567890123456789012345678901234567890X", "mobile", "9876543210")));
         assertEquals(400, status(HttpMethod.PUT, admin, "/material/company", Map.of("address", "x", "gst", "24AAAAA0000A1Z5", "mobile", "1")));
     }

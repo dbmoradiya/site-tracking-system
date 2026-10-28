@@ -51,7 +51,12 @@ function stockRows(purchases: Purchase[], sales: Sale[]) {
     const r = map.get(l.material) ?? { material: l.material, uom: l.uom, bought: 0, debit: 0, credit: 0, lastPurchase: p.date }
     r.bought += l.qty; if (p.date > r.lastPurchase) r.lastPurchase = p.date; map.set(l.material, r)
   }
-  for (const x of sales) for (const l of x.items) { const r = map.get(l.material); if (r) { if (x.type === 'DEBIT') r.debit += l.qty; else r.credit += l.qty } }
+  // A material used in a sale without any purchase still gets a row (its stock goes negative on a debit).
+  for (const x of sales) for (const l of x.items) {
+    const r = map.get(l.material) ?? { material: l.material, uom: l.uom, bought: 0, debit: 0, credit: 0, lastPurchase: '' }
+    if (x.type === 'DEBIT') r.debit += l.qty; else r.credit += l.qty
+    map.set(l.material, r)
+  }
   return [...map.values()].map(r => ({ ...r, stock: r.bought - r.debit + r.credit })).sort((a, b) => a.material.localeCompare(b.material))
 }
 function StockTab({ purchases, sales, onOpen }: { purchases: Purchase[]; sales: Sale[]; onOpen: (m: string) => void }) {
@@ -60,12 +65,12 @@ function StockTab({ purchases, sales, onOpen }: { purchases: Purchase[]; sales: 
   const pg = usePaged(rows)
   return <Stack gap="xs">
     <Group gap="xs"><TextInput aria-label="Search material types" style={{ flex: '1 1 220px' }} size="xs" leftSection={<Search size={14} />} value={q} onChange={e => setQ(e.currentTarget.value)} placeholder="Search material types" /><Text size="xs" c="dimmed">{rows.length} material types</Text>
-      <ExportMenu filename="current-stock" note={q ? 'as filtered by search' : 'all'} table={{ sheet: 'Current stock', headers: ['Material type', 'UOM', 'Purchased', 'Debit (out)', 'Credit (in)', 'Current stock', 'Last purchase'], rows: rows.map(r => [r.material, r.uom, r.bought, r.debit, r.credit, r.stock, fmtDate(r.lastPurchase)]) }} /></Group>
+      <ExportMenu filename="current-stock" note={q ? 'as filtered by search' : 'all'} table={{ sheet: 'Current stock', headers: ['Material type', 'UOM', 'Purchased', 'Debit (out)', 'Credit (in)', 'Current stock', 'Last purchase'], rows: rows.map(r => [r.material, r.uom, r.bought, r.debit, r.credit, r.stock, (r.lastPurchase ? fmtDate(r.lastPurchase) : "-")]) }} /></Group>
     <Paper withBorder><Table.ScrollContainer minWidth={640}><Table highlightOnHover>
       <Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th ta="right">Purchased</Table.Th><Table.Th ta="right">Debit (out)</Table.Th><Table.Th ta="right">Credit (in)</Table.Th><Table.Th ta="right">Current stock</Table.Th><Table.Th>Last purchase</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{pg.rows.map(r => <Table.Tr key={r.material} style={{ cursor: 'pointer' }} tabIndex={0} onClick={() => onOpen(r.material)} onKeyDown={e => e.key === 'Enter' && onOpen(r.material)} aria-label={`Open ${r.material} detail`}>
         <Table.Td fw={600}>{r.material}</Table.Td><Table.Td>{r.uom}</Table.Td><Table.Td ta="right">{num(r.bought)}</Table.Td><Table.Td ta="right">{num(r.debit)}</Table.Td><Table.Td ta="right">{num(r.credit)}</Table.Td>
-        <Table.Td ta="right"><Badge color="gray" variant="light" size="md">{num(r.stock)} {r.uom}</Badge></Table.Td><Table.Td>{fmtDate(r.lastPurchase)}</Table.Td>
+        <Table.Td ta="right"><Badge color={r.stock < 0 ? 'red' : 'gray'} variant="light" size="md">{num(r.stock)} {r.uom}</Badge></Table.Td><Table.Td>{(r.lastPurchase ? fmtDate(r.lastPurchase) : "-")}</Table.Td>
       </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={pg} label="material types" /></Paper>
     <Text size="xs" c="dimmed">Click a row to see purchase history (left) and sales history (right).</Text>
   </Stack>
@@ -77,7 +82,7 @@ function StockDetail({ material, purchases, onOpenPurchase, onOpenSale }: { mate
   const bought = purchases.filter(p => p.items.some(l => l.material === material)).sort(byDateDesc).map(p => ({ p, lines: p.items.filter(l => l.material === material) }))
   const bPg = usePaged(bought)
   const sl = sales.flatMap(x => x.items.filter(l => l.material === material).map(l => ({ type: x.type, qty: l.qty })))
-  const uom = bought[0]?.lines[0].uom ?? ''
+  const uom = bought[0]?.lines[0].uom ?? sales.flatMap(x => x.items).find(l => l.material === material)?.uom ?? ''
   const lineQty = (ls: Line[]) => ls.reduce((s, l) => s + l.qty, 0), lineTotal = (ls: Line[]) => ls.reduce((s, l) => s + calc(l.qty, l.rate, l.gst).total, 0)
   const tb = bought.reduce((s, b) => s + lineQty(b.lines), 0), td = sl.filter(x => x.type === 'DEBIT').reduce((a, x) => a + x.qty, 0), tc = sl.filter(x => x.type === 'CREDIT').reduce((a, x) => a + x.qty, 0)
   return <Stack gap="sm">
@@ -85,7 +90,7 @@ function StockDetail({ material, purchases, onOpenPurchase, onOpenSale }: { mate
       <Paper withBorder p="xs"><Text size="xs" c="dimmed">Purchased</Text><Text fw={700}>{num(tb)} {uom}</Text></Paper>
       <Paper withBorder p="xs"><Text size="xs" c="dimmed">Debit (out)</Text><Text fw={700} c="red.8">{num(td)} {uom}</Text></Paper>
       <Paper withBorder p="xs"><Text size="xs" c="dimmed">Credit (in)</Text><Text fw={700} c="green.8">{num(tc)} {uom}</Text></Paper>
-      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Current stock</Text><Text fw={700} c="green.8">{num(tb - td + tc)} {uom}</Text></Paper>
+      <Paper withBorder p="xs"><Text size="xs" c="dimmed">Current stock</Text><Text fw={700} c={tb - td + tc < 0 ? 'red.8' : 'green.8'}>{num(tb - td + tc)} {uom}</Text></Paper>
     </SimpleGrid>
     <SimpleGrid cols={1} spacing="sm">
       <Paper withBorder><Group gap={6} p="xs" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}><ArrowDownToLine size={14} aria-hidden="true" /><Text fw={700} size="sm">Purchase history</Text><div style={{ marginLeft: 'auto' }}><ExportMenu filename={`${material}-purchase-history`} table={{ sheet: 'Purchase history', headers: ['Purchase ID', 'Bill number', 'Date', 'Vendor', 'Vendor mobile', 'Qty', 'UOM', 'Rate', 'GST % (total)', 'Amount', 'SGST', 'CGST', 'Total'], rows: bought.flatMap(({ p, lines }) => lines.map(l => { const c = calc(l.qty, l.rate, l.gst); return [p.purchaseId, p.billNumber, fmtDate(p.date), p.vendor, p.vendorMobile, l.qty, l.uom, l.rate, l.gst, c.subtotal, c.sgst, c.cgst, c.total] })) }} /></div></Group>
