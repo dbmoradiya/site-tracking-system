@@ -80,6 +80,15 @@ await step('archive group (confirm): hidden from new sale, restore brings it bac
   if(!(await p.getByPlaceholder(/No groups available/).count()))throw new Error('archived group still offered');await sh('archived-not-offered');await p.keyboard.press('Escape');await p.waitForTimeout(300)
   await tab('Material Types');await p.getByRole('button',{name:'Restore group ACDB'}).click();await p.waitForTimeout(400);await p.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();await p.waitForTimeout(1200)
   if((await boot()).groups[0].archived)throw new Error('not restored')})
+await step('duplicate group cards: two ACDB cards + plain GMCB row, totals per row, HSN in popup and challan',async()=>{
+  const ch=[{material:'GMCB',rate:100,gst:18},{material:'GBox',rate:200,gst:18}]
+  const r=await call('POST','/material/sales',{type:'DEBIT',date:'2026-10-28',vendor:'Grp Supplier',siteIds:[],items:[{material:'GMCB',uom:'Nos',qty:3,rate:100,gst:18}],groups:[{groupId:gid,qty:1,children:ch},{groupId:gid,qty:2,children:ch}]})
+  if(r.status!==200)throw new Error('dup sale '+r.status+JSON.stringify(r.json));const its=r.json.items;const g=n=>its.filter(i=>i.material===n).reduce((a,i)=>a+num(i.qty),0)
+  if(its.length!==5||g('GMCB')!==18||g('GBox')!==3)throw new Error('rows '+its.length+' GMCB '+g('GMCB')+' GBox '+g('GBox'))
+  await openSale(r.json.saleId);const t=await p.getByRole('dialog').innerText()
+  if(!/ACDB x 1/.test(t)||!/ACDB x 2/.test(t)||(t.match(/ACDB subtotal/g)||[]).length!==2)throw new Error('popup: '+t.slice(0,500))
+  await sh('duplicate-cards-popup');const x=(await pdfOf(r.json.id)).text
+  if(!/ACDB x 1/.test(x)||!/ACDB x 2/.test(x)||(x.match(/8536/g)||[]).length<3||(x.match(/8538/g)||[]).length<2)throw new Error('pdf: '+x.slice(0,700))})
 await step('coordinator: sees group layout read-only on own site; no Material menu or groups API',async()=>{
   const c=await (await b.newContext(ctxOpts)).newPage();c.setDefaultTimeout(8000)
   await c.goto(BASE+'/');await c.waitForTimeout(800);await c.getByLabel('Mobile number').fill('+919000000001');await c.getByRole('textbox',{name:'Password'}).fill('SiteTrack123!');await c.getByRole('button',{name:'Sign in'}).click();await c.waitForTimeout(1500)
