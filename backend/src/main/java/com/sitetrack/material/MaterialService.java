@@ -77,30 +77,32 @@ public class MaterialService {
     // ---------- reference data ----------
     public List<Map<String, Object>> materialTypes() {
         return jdbc.sql("""
-                select m.id,m.name,m.uom,
+                select m.id,m.name,m.uom,m.hsn,
                  (select count(*) from purchase_items pi join purchases p on p.id=pi.purchase_id where pi.material_type_id=m.id and p.deleted_at is null)
                 +(select count(*) from sale_items si join sales sa on sa.id=si.sale_id where si.material_type_id=m.id and sa.deleted_at is null) used
                 from material_types m order by lower(m.name)""").query((rs, n) -> {
             Map<String, Object> r = new LinkedHashMap<>(); r.put("id", rs.getLong("id")); r.put("name", rs.getString("name"));
-            r.put("uom", rs.getString("uom")); r.put("usedCount", rs.getLong("used")); return r; }).list();
+            r.put("uom", rs.getString("uom")); r.put("hsn", rs.getString("hsn") == null ? "" : rs.getString("hsn")); r.put("usedCount", rs.getLong("used")); return r; }).list();
     }
 
     @Transactional
     public Map<String, Object> saveMaterialType(Long id, MaterialTypeIn in) {
-        String name = s(in.name()), uom = s(in.uom());
+        String name = s(in.name()), uom = s(in.uom()), hsn = s(in.hsn());
+        boolean keepHsn = in.hsn() == null; // an older client that does not send HSN must not wipe it
+        if (hsn.length() > 16) throw bad("HSN code can be at most 16 characters"); // format is only a warning in the UI
         if (name.isEmpty() || name.length() > 180) throw bad("Material type name is required");
         if (uom.isEmpty() || uom.length() > 32) throw bad("Unit is required");
         Long dupe = jdbc.sql("select id from material_types where lower(name)=lower(:n)").param("n", name).query(Long.class).optional().orElse(null);
         if (id == null) {
             if (dupe != null) throw new ApiException(409, "Material type already exists");
-            id = jdbc.sql("insert into material_types(name,uom) values(:n,:u) returning id").param("n", name).param("u", uom).query(Long.class).single();
+            id = jdbc.sql("insert into material_types(name,uom,hsn) values(:n,:u,:h) returning id").param("n", name).param("u", uom).param("h", hsn).query(Long.class).single();
         } else {
             final Long finalId = id;
             Map<String, Object> cur = jdbc.sql("select name,uom from material_types where id=:id").param("id", id).query().singleRow();
             if (dupe != null && !dupe.equals(id)) throw new ApiException(409, "Material type already exists");
             boolean used = materialTypes().stream().anyMatch(m -> ((Long) m.get("id")).equals(finalId) && ((Long) m.get("usedCount")) > 0);
             if (used && !cur.get("uom").equals(uom)) throw new ApiException(409, "Unit is locked because purchases or sales already use this material");
-            jdbc.sql("update material_types set name=:n,uom=:u where id=:id").param("n", name).param("u", uom).param("id", id).update();
+            jdbc.sql("update material_types set name=:n,uom=:u,hsn=case when :k then hsn else :h end where id=:id").param("n", name).param("u", uom).param("k", keepHsn).param("h", hsn).param("id", id).update();
         }
         long fid = id;
         return materialTypes().stream().filter(m -> ((Long) m.get("id")) == fid).findFirst().orElseThrow();
@@ -183,12 +185,12 @@ public class MaterialService {
     // ---------- stock ----------
     public List<Map<String, Object>> stock() {
         return jdbc.sql("""
-                select m.id,m.name,m.uom,
+                select m.id,m.name,m.uom,m.hsn,
                  coalesce((select sum(pi.qty) from purchase_items pi join purchases p on p.id=pi.purchase_id where pi.material_type_id=m.id and p.deleted_at is null),0) purchased,
                  coalesce((select sum(si.qty) from sale_items si join sales s on s.id=si.sale_id where si.material_type_id=m.id and s.sale_type='DEBIT' and s.deleted_at is null),0) debit,
                  coalesce((select sum(si.qty) from sale_items si join sales s on s.id=si.sale_id where si.material_type_id=m.id and s.sale_type='CREDIT' and s.deleted_at is null),0) credit
                 from material_types m order by lower(m.name)""").query((rs, n) -> {
-            Map<String, Object> r = new LinkedHashMap<>(); r.put("id", rs.getLong("id")); r.put("material", rs.getString("name")); r.put("uom", rs.getString("uom"));
+            Map<String, Object> r = new LinkedHashMap<>(); r.put("id", rs.getLong("id")); r.put("material", rs.getString("name")); r.put("uom", rs.getString("uom")); r.put("hsn", rs.getString("hsn") == null ? "" : rs.getString("hsn"));
             BigDecimal p = rs.getBigDecimal("purchased"), d = rs.getBigDecimal("debit"), c = rs.getBigDecimal("credit");
             r.put("purchased", p.stripTrailingZeros()); r.put("issued", d.stripTrailingZeros()); r.put("returned", c.stripTrailingZeros());
             r.put("stock", p.subtract(d).add(c).stripTrailingZeros()); return r; }).list();
@@ -223,10 +225,17 @@ public class MaterialService {
         return m;
     }
 
-    private Map<String, Object> itemOut(Map<String, Object> raw, Map<Long, String> names) {
+    private Map<Long, String> materialHsn() {
+        Map<Long, String> m = new HashMap<>();
+        jdbc.sql("select id,hsn from material_types").query((rs, n) -> { m.put(rs.getLong(1), rs.getString(2) == null ? "" : rs.getString(2)); return 0; }).list();
+        return m;
+    }
+
+    private Map<String, Object> itemOut(Map<String, Object> raw, Map<Long, String> names, Map<Long, String> hsn) {
         Map<String, Object> o = new LinkedHashMap<>();
         o.put("material", names.get(((Number) raw.get("material_type_id")).longValue()));
         o.put("uom", raw.get("uom"));
+        o.put("hsn", hsn.getOrDefault(((Number) raw.get("material_type_id")).longValue(), ""));
         o.put("qty", new BigDecimal(raw.get("qty").toString()).stripTrailingZeros());
         o.put("rate", new BigDecimal(raw.get("rate").toString()).stripTrailingZeros());
         o.put("gst", new BigDecimal(raw.get("gst").toString()).stripTrailingZeros());
@@ -264,7 +273,7 @@ public class MaterialService {
     private Map<String, Object> fromJson(String s) { try { return json.readValue(s, new TypeReference<Map<String, Object>>() {}); } catch (Exception e) { throw new IllegalStateException(e); } }
 
     public List<Map<String, Object>> purchases(Long onlyId) {
-        Map<Long, String> names = materialNames(); Map<Long, Map<String, Object>> vendors = vendorMap();
+        Map<Long, String> names = materialNames(); Map<Long, String> hsn = materialHsn(); Map<Long, Map<String, Object>> vendors = vendorMap();
         List<Map<String, Object>> rows = jdbc.sql("""
                 select id,purchase_code,purchase_date,vendor_id,bill_number,invoice_name,invoice_type,active_from from purchases
                 where deleted_at is null and (:only::bigint is null or id=:only) order by purchase_date desc,id desc""")
@@ -280,7 +289,7 @@ public class MaterialService {
             if (r.get("invoice_name") != null) o.put("invoice", Map.of("name", r.get("invoice_name"), "type", r.get("invoice_type"), "url", "/material/purchases/" + id + "/invoice"));
             o.put("activeFrom", iso(r.get("active_from")));
             o.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst from purchase_items where purchase_id=:id order by position").param("id", id).query().listOfRows()
-                    .stream().map(i -> itemOut(i, names)).toList());
+                    .stream().map(i -> itemOut(i, names, hsn)).toList());
             List<Map<String, Object>> vers = new ArrayList<>();
             for (Map<String, Object> vr : jdbc.sql("select version,active_from,active_to,snapshot::text snap from purchase_versions where purchase_id=:id order by version desc").param("id", id).query().listOfRows()) {
                 Map<String, Object> sn = fromJson((String) vr.get("snap")); Map<String, Object> vv = vendors.get(((Number) sn.get("vendorId")).longValue());
@@ -289,7 +298,7 @@ public class MaterialService {
                 x.put("version", ver); x.put("activeFrom", iso(vr.get("active_from"))); x.put("activeTo", iso(vr.get("active_to")));
                 x.put("date", sn.get("date")); x.put("vendor", vv.get("name")); x.put("vendorMobile", vv.get("mobile")); x.put("billNumber", sn.get("billNumber"));
                 if (sn.get("invoiceName") != null) x.put("invoice", Map.of("name", sn.get("invoiceName"), "type", sn.get("invoiceType"), "url", "/material/purchases/" + id + "/versions/" + ver + "/invoice"));
-                x.put("items", ((List<Map<String, Object>>) sn.get("items")).stream().map(i -> itemOut(i, names)).toList());
+                x.put("items", ((List<Map<String, Object>>) sn.get("items")).stream().map(i -> itemOut(i, names, hsn)).toList());
                 vers.add(x);
             }
             o.put("versions", vers);
@@ -481,7 +490,7 @@ public class MaterialService {
      * coordinated by that employee; the whole document (items, totals) stays visible per the disclosed behaviour.
      */
     public List<Map<String, Object>> sales(Long onlyId, Long coordinatorEmployeeId, boolean scoped, Long projectId, Long siteId) {
-        Map<Long, String> names = materialNames(); Map<Long, Map<String, Object>> vendors = vendorMap();
+        Map<Long, String> names = materialNames(); Map<Long, String> hsn = materialHsn(); Map<Long, Map<String, Object>> vendors = vendorMap();
         Map<Long, Map<String, Object>> sites = new HashMap<>();
         jdbc.sql("""
                 select s.id,s.name,s.project_id,p.name project_name,p.coordinator_id from sites s join projects p on p.id=s.project_id""").query().listOfRows()
@@ -509,7 +518,7 @@ public class MaterialService {
             o.put("vendor", v.get("name")); o.put("vendorInfo", Map.of("mobile", v.get("mobile"), "gst", v.get("gst"), "address", v.get("address"))); o.put("siteIds", vis); o.put("sites", siteRefs(vis, sites));
             o.put("activeFrom", iso(r.get("active_from")));
             o.put("items", jdbc.sql("select material_type_id,uom,qty,rate,gst from sale_items where sale_id=:id order by position").param("id", id).query().listOfRows()
-                    .stream().map(i -> itemOut(i, names)).toList());
+                    .stream().map(i -> itemOut(i, names, hsn)).toList());
             List<Map<String, Object>> vers = new ArrayList<>();
             for (Map<String, Object> vr : jdbc.sql("select version,active_from,active_to,snapshot::text snap from sale_versions where sale_id=:id order by version desc").param("id", id).query().listOfRows()) {
                 Map<String, Object> sn = fromJson((String) vr.get("snap"));
@@ -518,7 +527,7 @@ public class MaterialService {
                 x.put("version", vr.get("version")); x.put("activeFrom", iso(vr.get("active_from"))); x.put("activeTo", iso(vr.get("active_to")));
                 x.put("type", sn.get("type")); x.put("date", sn.get("date")); x.put("vendor", vendors.get(((Number) sn.get("vendorId")).longValue()).get("name"));
                 x.put("siteIds", vs); x.put("sites", siteRefs(vs, sites));
-                x.put("items", ((List<Map<String, Object>>) sn.get("items")).stream().map(i -> itemOut(i, names)).toList());
+                x.put("items", ((List<Map<String, Object>>) sn.get("items")).stream().map(i -> itemOut(i, names, hsn)).toList());
                 vers.add(x);
             }
             o.put("versions", vers);

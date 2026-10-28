@@ -4,7 +4,7 @@ import { api } from '../lib/api'
 import type { Company, Sale, SaleSnap, SiteRef } from './sales'
 import type { Purchase, Snapshot } from './types'
 
-export type MaterialType = { id?: number; name: string; uom: string; usedCount?: number }
+export type MaterialType = { id?: number; name: string; uom: string; hsn?: string; usedCount?: number }
 export type Vendor = { id?: number; name: string; mobile: string; gst: string; address: string }
 type State = { loaded: boolean; error: string; materialTypes: MaterialType[]; vendors: Vendor[]; purchases: Purchase[]; sales: Sale[]; company: Company; sites: SiteRef[] }
 
@@ -63,10 +63,10 @@ export async function updateSale(id: number, x: SaleSnap, nv?: Vendor) {
 export async function deleteSale(id: number) {
   const r = await api<{ warnings: string[] }>(`/material/sales/${id}`, { method: 'DELETE' }); await loadMaterial(); return r.warnings
 }
-export async function addMaterialType(m: MaterialType) { await api('/material/types', { method: 'POST', body: JSON.stringify({ name: m.name, uom: m.uom }) }); await loadMaterial() }
+export async function addMaterialType(m: MaterialType) { await api('/material/types', { method: 'POST', body: JSON.stringify({ name: m.name, uom: m.uom, hsn: m.hsn ?? '' }) }); await loadMaterial() }
 export async function editMaterialType(oldName: string, m: MaterialType) {
   const cur = findMaterial(oldName); if (!cur?.id) throw new Error('Material type not found')
-  await api(`/material/types/${cur.id}`, { method: 'PUT', body: JSON.stringify({ name: m.name, uom: m.uom }) }); await loadMaterial()
+  await api(`/material/types/${cur.id}`, { method: 'PUT', body: JSON.stringify({ name: m.name, uom: m.uom, hsn: m.hsn ?? '' }) }); await loadMaterial()
 }
 export async function addVendor(v: Vendor) { await api('/material/vendors', { method: 'POST', body: JSON.stringify(v) }); await loadMaterial() }
 export async function editVendor(oldName: string, v: Vendor) {

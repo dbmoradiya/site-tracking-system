@@ -162,6 +162,14 @@ class MaterialFlowTest {
         assertEquals(409, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "Cement OPC", "uom", "Kg")), "duplicate name (case-insensitive)");
         assertEquals(409, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar", "uom", "Ton")), "unit locked once used");
         assertEquals(200, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg")));
+        // HSN: optional, saved on the material type, kept when a client omits it, bounded at 16 characters
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg", "hsn", "7214")));
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg")));
+        assertEquals("7214", ((List<Map<String, Object>>) get(admin, "/material/bootstrap", Map.class).get("materialTypes")).stream().filter(m -> ((Number) m.get("id")).longValue() == matId).findFirst().orElseThrow().get("hsn"), "HSN kept when omitted");
+        assertEquals(400, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg", "hsn", "12345678901234567")), "HSN over 16 chars");
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg", "hsn", "ABC")), "odd HSN format still saves");
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg", "hsn", "")), "HSN can be cleared");
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/types/" + matId, Map.of("name", "TMT Bar 12mm", "uom", "Kg", "hsn", "7214")));
         Map<String, Object> after = get(admin, "/material/purchases/" + id1, Map.class);
         assertTrue(((List<Map<String, Object>>) after.get("items")).stream().anyMatch(i -> "TMT Bar 12mm".equals(i.get("material"))));
         assertTrue(((List<Map<String, Object>>) ((List<Map<String, Object>>) after.get("versions")).get(0).get("items")).stream().anyMatch(i -> "TMT Bar 12mm".equals(i.get("material"))));

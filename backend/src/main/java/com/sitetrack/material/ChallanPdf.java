@@ -55,16 +55,17 @@ final class ChallanPdf {
             for (Map<String, Object> s : (List<Map<String, Object>>) sale.get("sites")) doc.add(new Paragraph(s.get("name") + " | " + s.get("projectName"), n9));
             Paragraph gap = new Paragraph(" ", new Font(Font.HELVETICA, 4)); doc.add(gap); doc.add(rule());
 
-            PdfPTable t = new PdfPTable(new float[]{27, 13, 11, 7, 14, 10, 10, 14});
+            PdfPTable t = new PdfPTable(new float[]{24, 10, 12, 10, 7, 13, 9, 9, 13});
             t.setWidthPercentage(100); t.setSpacingBefore(6); t.setHeaderRows(1); t.setSplitRows(false);
-            String[] heads = {"Item", "Qty", "Rate", "GST%", "Amount", "SGST", "CGST", "Total"};
-            for (int i = 0; i < heads.length; i++) t.addCell(cell(heads[i], b9, i == 0 ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT, true));
+            String[] heads = {"Item", "HSN", "Qty", "Rate", "GST%", "Amount", "SGST", "CGST", "Total"};
+            for (int i = 0; i < heads.length; i++) t.addCell(cell(heads[i], b9, i <= 1 ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT, true));
             BigDecimal sub = BigDecimal.ZERO, sg = BigDecimal.ZERO, cg = BigDecimal.ZERO, tot = BigDecimal.ZERO;
             for (Map<String, Object> l : (List<Map<String, Object>>) sale.get("items")) {
                 Item it = new Item((String) l.get("material"), (String) l.get("uom"), (BigDecimal) l.get("qty"), (BigDecimal) l.get("rate"), (BigDecimal) l.get("gst"));
                 Map<String, BigDecimal> c = MaterialService.calc(it);
                 sub = sub.add(c.get("subtotal")); sg = sg.add(c.get("sgst")); cg = cg.add(c.get("cgst")); tot = tot.add(c.get("total"));
                 t.addCell(cell(it.material(), b9, Element.ALIGN_LEFT, false));
+                t.addCell(cell(dash(l.get("hsn")), n9, Element.ALIGN_LEFT, false));
                 t.addCell(cell(plain(it.qty()) + " " + it.uom(), n9, Element.ALIGN_RIGHT, false));
                 t.addCell(cell(inr(it.rate()), n9, Element.ALIGN_RIGHT, false));
                 t.addCell(cell(plain(it.gst()), n9, Element.ALIGN_RIGHT, false));
@@ -74,7 +75,7 @@ final class ChallanPdf {
                 t.addCell(cell(inr(c.get("total")), n9, Element.ALIGN_RIGHT, false));
             }
             t.addCell(cell("All items", b9, Element.ALIGN_LEFT, true));
-            for (String x : new String[]{"", "", ""}) t.addCell(cell(x, b9, Element.ALIGN_RIGHT, true));
+            for (String x : new String[]{"", "", "", ""}) t.addCell(cell(x, b9, Element.ALIGN_RIGHT, true));
             for (BigDecimal v : new BigDecimal[]{sub, sg, cg, tot}) t.addCell(cell(inr(v), b9, Element.ALIGN_RIGHT, true));
             doc.add(t);
             Paragraph g = new Paragraph("Grand total (amount + SGST + CGST): Rs. " + inr(tot), b11); g.setSpacingBefore(10); doc.add(g);
