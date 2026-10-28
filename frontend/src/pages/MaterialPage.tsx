@@ -9,7 +9,7 @@ import { InvoiceViewer, ItemsTable } from '../material/DocViews'
 import { Pager, usePaged } from '../material/Pager'
 import { ExportMenu } from '../material/ExportMenu'
 import { GST_RATES, UOMS, calc, docTotals, fmtDate, inr, num, type Invoice, type Line, type Purchase, type PurchaseVersion, type Snapshot } from '../material/types'
-import { addPurchase, deletePurchase, findMaterial, findVendor, updatePurchase, useMaterialStore } from '../material/materialStore'
+import { addMaterialType, addPurchase, deletePurchase, findMaterial, findVendor, updatePurchase, useMaterialStore } from '../material/materialStore'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const byDateDesc = <T extends { date: string; id: number }>(a: T, b: T) => b.date.localeCompare(a.date) || b.id - a.id
@@ -140,14 +140,14 @@ function PurchaseTab({ purchases, onOpen }: { purchases: Purchase[]; onOpen: (id
   </Stack>
 }
 
-type Row = { key: number; material: string; uom: string; qty: number | string; rate: number | string; gst: string }
+type Row = { key: number; material: string; uom: string; hsn: string; qty: number | string; rate: number | string; gst: string }
 let rowKey = 0
-const blankRow = (): Row => ({ key: ++rowKey, material: '', uom: '', qty: '', rate: '', gst: '18' })
+const blankRow = (): Row => ({ key: ++rowKey, material: '', uom: '', hsn: '', qty: '', rate: '', gst: '18' })
 
 function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Purchase }) {
   const { materialTypes, vendors } = useMaterialStore()
   const [date, setDate] = useState(existing?.date ?? today()), [vendor, setVendor] = useState(existing?.vendor ?? ''), [mobile, setMobile] = useState(existing?.vendorMobile ?? ''), [vGst, setVGst] = useState(''), [vAddr, setVAddr] = useState('')
-  const [rows, setRows] = useState<Row[]>(() => existing ? existing.items.map(l => ({ key: ++rowKey, material: l.material, uom: l.uom, qty: l.qty, rate: l.rate, gst: String(l.gst) })) : [blankRow()])
+  const [rows, setRows] = useState<Row[]>(() => existing ? existing.items.map(l => ({ key: ++rowKey, material: l.material, uom: l.uom, hsn: '', qty: l.qty, rate: l.rate, gst: String(l.gst) })) : [blankRow()])
   const [bill, setBill] = useState(existing?.billNumber ?? ''), [invoice, setInvoice] = useState<Invoice | undefined>(existing?.invoice), [fileError, setFileError] = useState('')
   const existingVendor = findVendor(vendor), newVendor = !!vendor.trim() && !existingVendor
   const pickVendor = (v: string) => { setVendor(v); const m = findVendor(v); setMobile(m ? m.mobile : ''); setVGst(m ? m.gst : ''); setVAddr(m ? m.address : '') }
@@ -169,6 +169,12 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
     const data: Snapshot = { date, vendor: vendor.trim(), vendorMobile: mobile, ...(newVendor ? { vendorGst: vGst.trim().toUpperCase(), vendorAddress: vAddr.trim() } : {}), billNumber: bill.trim(), invoice, items: rows.map(r => ({ material: r.material.trim(), uom: r.uom, qty: Number(r.qty), rate: Number(r.rate), gst: Number(r.gst) })) }
     setBusy(true)
     try {
+      for (const r of rows) {
+        if (!findMaterial(r.material) && r.hsn.trim()) {
+          try { await addMaterialType({ name: r.material.trim(), uom: r.uom, hsn: r.hsn.trim() }) }
+          catch (e) { if (!(e as Error).message.includes('already exists')) throw e }
+        }
+      }
       if (existing) await updatePurchase(existing.id, data); else await addPurchase(data)
       notifications.show({ color: 'green', title: existing ? `${existing.purchaseId} updated` : 'Purchase saved', message: 'Saved.' })
       onDone()
@@ -196,6 +202,8 @@ function PurchaseForm({ onDone, existing }: { onDone: () => void; existing?: Pur
             <NumberInput size="xs" label="Quantity" required min={0} decimalScale={3} value={r.qty} onChange={v => patch(r.key, { qty: v })} placeholder="0" hideControls />
             <NumberInput size="xs" label="Rate (excl. GST)" required min={0} decimalScale={2} value={r.rate} onChange={v => patch(r.key, { rate: v })} placeholder="0.00" hideControls leftSection={'\u20B9'} />
             <NativeSelect size="xs" label="GST %" value={r.gst} onChange={e => patch(r.key, { gst: e.currentTarget.value })} data={GST_RATES.map(g => ({ value: String(g), label: `${g}%` }))} />
+            {nm && <div style={{ gridColumn: 'span 2' }}><TextInput size="xs" label="HSN code (optional)" placeholder="e.g. 2523" maxLength={16} value={r.hsn} onChange={e => patch(r.key, { hsn: e.currentTarget.value })} />
+              {r.hsn.trim() && !/^(\d{4}|\d{6}|\d{8})$/.test(r.hsn.trim()) && <Text size="xs" c="orange.8" mt={2}>HSN is usually 4, 6 or 8 digits. It will still be saved.</Text>}</div>}
           </SimpleGrid>
           <Group justify="space-between" mt={6}><Text size="xs" c="dimmed">Amount {inr(c.subtotal)} + SGST {inr(c.sgst)} ({Number(r.gst) / 2}%) + CGST {inr(c.cgst)} ({Number(r.gst) / 2}%) = <b>{inr(c.total)}</b></Text>
             <Button size="compact-xs" variant="subtle" color="red" leftSection={<Trash2 size={12} />} disabled={rows.length === 1} onClick={() => setRows(rs => rs.filter(x => x.key !== r.key))} aria-label={`Remove item ${i + 1}`}>Remove</Button></Group>
