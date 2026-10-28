@@ -40,6 +40,10 @@ await step('search narrows the list and the pager follows the filtered total',as
   if(await bodyRows()!==9)throw new Error('rows '+(await bodyRows()))
   await p.getByLabel('Search projects').fill('PG11');await p.waitForTimeout(600)
   const t2=await p.locator('body').innerText();if(!/Showing 1-1 of 1 projects/.test(t2))throw new Error('pager single');await sh('filtered')})
+await step('pager bar readable when scrolled into view',async()=>{await projects()
+  const pg=p.getByText(/Showing 1-10 of 14 projects/);await pg.scrollIntoViewIfNeeded();await p.waitForTimeout(400)
+  if(!await p.getByLabel('Rows per page').isVisible())throw new Error('rows-per-page not visible')
+  if(!await p.getByRole('button',{name:'2',exact:true}).isVisible())throw new Error('page 2 button not visible');await sh('pager')})
 await step('Sites list inside a project stays unpaginated (no pager, no rows-per-page)',async()=>{
   await p.getByLabel('Search projects').fill('Sun City');await p.waitForTimeout(600)
   await p.getByRole('link',{name:'Sun City Complex'}).click();await p.waitForTimeout(1200)
