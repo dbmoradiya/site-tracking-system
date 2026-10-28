@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '../components/EmptyState'
 import { Loading } from '../components/Loading'
 import { StatusBadge } from '../components/StatusBadge'
+import { Pager, usePaged } from '../material/Pager'
 import { api, hasRole } from '../lib/api'
 import { useAuth } from '../lib/auth'
 
@@ -23,6 +24,7 @@ export function ProjectsPage(){
     const search=`${p.name} ${p.customerName} ${p.address}`.toLowerCase().includes(query.toLowerCase())
     return search&&(!filters.location||p.address.toLowerCase().includes(filters.location.toLowerCase()))&&(!filters.dateFrom||(!!p.targetDate&&p.targetDate>=filters.dateFrom))&&(!filters.dateTo||(!!p.targetDate&&p.targetDate<=filters.dateTo))&&(!filters.role||p.assignments.some(item=>item.role===filters.role))&&(!filters.assignee||p.assignments.some(item=>item.name===filters.assignee&&(!filters.role||item.role===filters.role)))&&(!filters.coordinator||p.coordinators.includes(filters.coordinator))&&(!filters.status||p.status===filters.status)&&(!filters.action||(filters.action==='required'?p.actionRequired>0:p.actionRequired===0))
   })||[],[items,query,filters])
+  const pg=usePaged(filtered,10)
   const change=(key:keyof Filters,value:string)=>{setFilters({...filters,[key]:value,...(key==='role'?{assignee:''}:{})});if(key==='status'){const next=new URLSearchParams(searchParams);if(value)next.set('status',value);else next.delete('status');setSearchParams(next)}}
   const clearFilters=()=>{setFilters(emptyFilters);const next=new URLSearchParams(searchParams);next.delete('status');setSearchParams(next)}
   if(!items)return <Loading label="Loading projects"/>
@@ -46,14 +48,14 @@ export function ProjectsPage(){
     {filtered.length===0?<EmptyState title="No projects found" description="Change or clear filters to see more Projects."/>:
     <Paper withBorder><Table.ScrollContainer minWidth={640}><Table verticalSpacing={6} horizontalSpacing="sm" highlightOnHover fz="sm">
       <Table.Thead><Table.Tr><Table.Th>Project</Table.Th><Table.Th>Customer</Table.Th><Table.Th>Sites</Table.Th><Table.Th>Target</Table.Th><Table.Th>Status</Table.Th><Table.Th>Actions</Table.Th></Table.Tr></Table.Thead>
-      <Table.Tbody>{filtered.map(p=><Table.Tr key={p.id}>
+      <Table.Tbody>{pg.rows.map(p=><Table.Tr key={p.id}>
         <Table.Td><Anchor component={Link} to={`/projects/${p.id}`} fw={600} size="sm">{p.name}</Anchor><Text size="xs" c="dimmed" lineClamp={1}>{p.address||'No location'}</Text></Table.Td>
         <Table.Td>{p.customerName}</Table.Td>
         <Table.Td>{p.completedSites}/{p.siteCount}</Table.Td>
         <Table.Td>{p.targetDate||'Not set'}</Table.Td>
         <Table.Td><StatusBadge status={p.status}/></Table.Td>
         <Table.Td>{p.actionRequired>0?<Badge color="red" variant="filled" size="sm">{p.actionRequired}</Badge>:<Text size="xs" c="dimmed">None</Text>}</Table.Td>
-      </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer></Paper>}
+      </Table.Tr>)}</Table.Tbody></Table></Table.ScrollContainer><Pager p={pg} label="projects" /></Paper>}
   </Stack>
 }
 

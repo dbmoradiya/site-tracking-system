@@ -39,5 +39,7 @@ want i && { start; run groups-desktop node groups.mjs; }
 want j && { start; run groups-mobile node groups.mjs mobile; }
 want k && { start; run stock-desktop node stock.mjs; }
 want l && { start; run stock-mobile node stock.mjs mobile; }
+want m && { start; run projects-pagination-desktop node projects-pagination.mjs; }
+want n && { start; run projects-pagination-mobile node projects-pagination.mjs mobile; }
 echo "TOTAL steps: $TOTAL  FAILED: $FAIL"
 exit $([ $FAIL -eq 0 ] && echo 0 || echo 1)
