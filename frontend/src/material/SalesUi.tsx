@@ -1,7 +1,7 @@
 // Sales (debit / credit) screens: admin Sales tab, sale dialog, history, and read-only linked sales on project and site pages.
 import { Accordion, Badge, Button, Collapse, Group, Modal, MultiSelect, NativeSelect, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { ChevronDown, Download, FileText, Filter, History, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, Download, FileText, Filter, History, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { CreatableSelect } from './CreatableSelect'
 import { ExportMenu } from './ExportMenu'
@@ -182,6 +182,10 @@ function SaleHistory({ s }: { s: Sale }) {
   </Stack>
 }
 
+type ChallanRow = { seq: number; reason: string; createdAt: string }
+const CHALLAN_WHY: Record<string, string> = { CREATED: 'saved with the sale', EDITED: 'made after an edit', REGENERATED: 'regenerated', BACKFILL: 'made on upgrade from the details at that time (no earlier file existed)' }
+const fmtWhen = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
 export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number | null; onClose: () => void; readOnly?: boolean; sale?: Sale }) {
   const { sales, vendors } = useMaterialStore(readOnly)
   // Admin: the live store copy (fresh after edits). Read-only viewers: the server-scoped copy passed in.
@@ -190,16 +194,25 @@ export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number
   const v = vi ? { mobile: vi.mobile, gst: vi.gst, address: vi.address } : undefined
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [challan, setChallan] = useState(false), [showHistory, setShowHistory] = useState(false)
   const [blob, setBlob] = useState<Blob | null>(null), [challanErr, setChallanErr] = useState('')
-  const close = () => { setEditing(false); setConfirm(false); setChallan(false); setShowHistory(false); setBlob(null); onClose() }
+  const [hist, setHist] = useState<ChallanRow[]>([]), [seq, setSeq] = useState<number | null>(null), [rev, setRev] = useState(0), [regen, setRegen] = useState(false), [showChallans, setShowChallans] = useState(false)
+  const close = () => { setSeq(null); setRegen(false); setShowChallans(false); setEditing(false); setConfirm(false); setChallan(false); setShowHistory(false); setBlob(null); onClose() }
   const sid = s?.id
+  useEffect(() => {
+    if (readOnly || sid === undefined) return
+    let dead = false
+    api<ChallanRow[]>(`/material/sales/${sid}/challans`).then(h => { if (!dead) setHist(h) }).catch(() => { if (!dead) setHist([]) })
+    return () => { dead = true }
+  }, [readOnly, sid, s?.activeFrom, rev])
+  const challanPath = (id: number) => `/material/sales/${id}/challan${seq ? `?seq=${seq}` : ''}`
   useEffect(() => {
     if (!challan || sid === undefined) return
     let dead = false; setBlob(null); setChallanErr('')
-    apiBlob(`/material/sales/${sid}/challan`).then(b => { if (!dead) setBlob(b) }).catch(e => { if (!dead) setChallanErr((e as Error).message) })
+    apiBlob(challanPath(sid)).then(b => { if (!dead) setBlob(b) }).catch(e => { if (!dead) setChallanErr((e as Error).message) })
     return () => { dead = true }
-  }, [challan, sid, s?.activeFrom])
+  }, [challan, sid, s?.activeFrom, seq, rev])
+  const regenerate = async () => { if (!s) return; try { await api(`/material/sales/${s.id}/challan/regenerate`, { method: 'POST' }); setRegen(false); setSeq(null); setRev(r => r + 1); notifications.show({ color: 'green', title: 'Challan regenerated', message: 'The previous challan is kept in the challan history.' }) } catch (e) { notifications.show({ color: 'red', title: 'Could not regenerate challan', message: (e as Error).message }) } }
   const openTab = () => { if (!blob) return; const u = URL.createObjectURL(blob); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60000) }
-  const download = async () => { if (!s) return; try { const b = blob ?? await apiBlob(`/material/sales/${s.id}/challan`); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `challan-${s.saleId}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000) } catch (e) { notifications.show({ color: 'red', title: 'Could not download challan', message: (e as Error).message }) } }
+  const download = async () => { if (!s) return; try { const b = blob ?? await apiBlob(challanPath(s.id)); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `challan-${s.saleId}${seq ? `-v${seq}` : ''}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000) } catch (e) { notifications.show({ color: 'red', title: 'Could not download challan', message: (e as Error).message }) } }
   const del = async () => { if (!s) return; try { const w = await deleteSale(s.id); notifications.show({ color: 'red', title: `${s.saleId} deleted`, message: 'Removed from lists and stock. History is kept.' }); if (w.length) notifications.show({ color: 'yellow', title: 'Stock warning', message: w.join('. '), autoClose: 8000 }); close() } catch (e) { notifications.show({ color: 'red', title: 'Could not delete', message: (e as Error).message }) } }
   return <>
     <Modal opened={!!s} onClose={close} closeOnEscape={!challan && !confirm} size="xl" title={s ? <Text fw={700}>{editing ? `Edit sale ${s.saleId}` : `Sale ${s.saleId}`}</Text> : ''}>
@@ -212,8 +225,12 @@ export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number
           <Field label="Sites (Site | Project)"><Group gap={4}>{s.sites.map(siteLabel).map(t => <Badge key={t} variant="light" color="gray" tt="none">{t}</Badge>)}</Group>{readOnly && <Text size="xs" c="dimmed" fw={400}>Only sites of your own projects are listed.</Text>}</Field>
         </SimpleGrid>
         <div><Text size="xs" c="dimmed" mb={4}>Items ({s.items.length})</Text><ItemsTable items={s.items} /></div>
-        <Group justify="space-between" align="center"><div><Text size="xs" c="dimmed">Challan</Text><Text size="sm" fw={600}>challan-{s.saleId}.pdf</Text></div>
-          <Group gap="xs"><Button variant="default" leftSection={<FileText size={14} />} onClick={() => setChallan(true)}>View challan</Button><Button variant="default" leftSection={<Download size={14} />} onClick={download}>Download PDF</Button></Group></Group>
+        <Group justify="space-between" align="center"><div><Text size="xs" c="dimmed">Challan</Text><Text size="sm" fw={600}>challan-{s.saleId}.pdf</Text>{hist[0] && <Text size="xs" c="dimmed">Saved {fmtWhen(hist[0].createdAt)} - {CHALLAN_WHY[hist[0].reason] ?? hist[0].reason}</Text>}</div>
+          <Group gap="xs"><Button variant="default" leftSection={<FileText size={14} />} onClick={() => { setSeq(null); setChallan(true) }}>View challan</Button><Button variant="default" leftSection={<Download size={14} />} onClick={() => { setSeq(null); void download() }}>Download PDF</Button>
+            {!readOnly && <Button variant="default" leftSection={<RefreshCw size={14} />} onClick={() => setRegen(true)}>Regenerate challan</Button>}</Group></Group>
+        {!readOnly && hist.length > 1 && <div><Button variant="subtle" size="compact-sm" leftSection={<History size={14} />} rightSection={<ChevronDown size={14} style={{ transform: showChallans ? 'rotate(180deg)' : undefined }} />} onClick={() => setShowChallans(x => !x)} aria-expanded={showChallans}>Challan history ({hist.length} saved)</Button>
+          <Collapse expanded={showChallans}><Stack gap={4} mt={4}>{hist.map((h, i) => <Group key={h.seq} justify="space-between" wrap="nowrap" style={{ borderBottom: '1px solid var(--mantine-color-gray-2)', paddingBottom: 4 }}><Text size="xs">Challan {h.seq}{i === 0 ? ' (current)' : ''} - {CHALLAN_WHY[h.reason] ?? h.reason}, {fmtWhen(h.createdAt)}</Text>
+            <Button size="compact-xs" variant="default" onClick={() => { setSeq(i === 0 ? null : h.seq); setChallan(true) }}>View</Button></Group>)}</Stack></Collapse></div>}
         {readOnly ? <Group justify="space-between" mt="xs"><Text size="xs" c="dimmed">Read only - view access from the project or site page.</Text><Button variant="default" onClick={close}>Close</Button></Group> : <Group justify="space-between" mt="xs"><Button color="red" variant="light" leftSection={<Trash2 size={14} />} onClick={() => setConfirm(true)}>Delete</Button>
           <Group><Button variant="default" onClick={close}>Close</Button><Button leftSection={<Pencil size={14} />} onClick={() => setEditing(true)}>Edit</Button></Group></Group>}
         <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', paddingTop: 8 }}>
@@ -223,9 +240,13 @@ export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number
         </div>
       </Stack>)}
     </Modal>
-    <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}` : 'Challan'} zIndex={400}>
+    <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}${seq ? ` (older, challan ${seq})` : ''}` : 'Challan'} zIndex={400}>
       {s && (challanErr ? <Text size="sm" c="red">{challanErr}</Text> : blob ? <div><ChallanViewer blob={blob} />
-        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Created by the server from the saved sale.</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div> : <Text size="sm" c="dimmed">Loading challan...</Text>)}
+        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Saved challan: the same file every time. It changes only when the sale is edited or an admin regenerates it.</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div> : <Text size="sm" c="dimmed">Loading challan...</Text>)}
+    </Modal>
+    <Modal opened={regen && !!s} onClose={() => setRegen(false)} title="Regenerate challan?" zIndex={400} size="sm">
+      <Stack gap="sm"><Text size="sm">A new challan is made from the latest sale, vendor, company and material details (including HSN). The current challan stays in the challan history.</Text>
+        <Group justify="flex-end"><Button variant="default" onClick={() => setRegen(false)}>Cancel</Button><Button leftSection={<RefreshCw size={14} />} onClick={regenerate}>Regenerate challan</Button></Group></Stack>
     </Modal>
     <Modal opened={confirm && !!s} onClose={() => setConfirm(false)} title="Delete this sale?" zIndex={400} size="sm">
       {s && <Stack gap="sm"><Text size="sm">Delete sale <b>{s.saleId}</b> ({label(s)}, {s.items.length} {s.items.length === 1 ? 'item' : 'items'}, {s.vendor})? Current stock will {s.type === 'DEBIT' ? 'increase (the material comes back)' : 'reduce'} by the quantity of every item in it. It is removed from lists and stock; the record and its edit history are kept.</Text>

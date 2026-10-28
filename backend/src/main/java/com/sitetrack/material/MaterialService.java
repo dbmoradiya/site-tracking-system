@@ -440,6 +440,7 @@ public class MaterialService {
         long id = jdbc.sql("insert into sales(sale_code,sale_type,sale_date,vendor_id,created_by,updated_by) values(:c,:t,:d,:v,:u,:u) returning id")
                 .param("c", code).param("t", type).param("d", d).param("v", vendor).param("u", user.id()).query(Long.class).single();
         writeSaleItems(id, in.items()); writeSaleSites(id, sites);
+        storeChallan(id, "CREATED", user.id());
         Map<String, Object> out = new LinkedHashMap<>(saleFull(id, null));
         out.put("warnings", shortfalls(materialsOfSale(id)));
         return out;
@@ -470,6 +471,7 @@ public class MaterialService {
             jdbc.sql("update sales set sale_type=:t,sale_date=:d,vendor_id=:v,active_from=date_trunc('second',now()),updated_by=:u where id=:id")
                     .param("t", type).param("d", d).param("v", vendor).param("u", user.id()).param("id", id).update();
             writeSaleItems(id, in.items()); writeSaleSites(id, sites);
+            storeChallan(id, "EDITED", user.id());
             mats.addAll(materialsOfSale(id));
         }
         Map<String, Object> out = new LinkedHashMap<>(saleFull(id, null));
@@ -552,5 +554,75 @@ public class MaterialService {
 
     public List<Map<String, Object>> allSites() {
         return jdbc.sql("select s.id,s.name,s.project_id as project_id,p.name as project_name from sites s join projects p on p.id=s.project_id order by lower(p.name),lower(s.name)").query().listOfRows().stream().map(r -> { Map<String, Object> m = new LinkedHashMap<>(); m.put("id", r.get("id")); m.put("name", r.get("name")); m.put("projectId", r.get("project_id")); m.put("projectName", r.get("project_name")); return m; }).toList();
+    }
+
+    // ---------- stored challans ----------
+    /** Draws the challan from the sale's current data (all sites), stores the PDF and the data it was drawn from. Older PDFs stay. */
+    @Transactional
+    public Map<String, Object> storeChallan(long saleId, String reason, Long userId) {
+        jdbc.sql("select id from sales where id=:id for update").param("id", saleId).query(Long.class).optional(); // one writer per sale keeps seq gap-free
+        Map<String, Object> sale = new LinkedHashMap<>(saleFull(saleId, null));
+        sale.remove("versions");
+        Map<String, Object> vendor = vendors().stream().filter(v -> v.get("name").equals(sale.get("vendor"))).findFirst().orElseThrow();
+        Map<String, Object> company = company();
+        byte[] pdf = ChallanPdf.build(sale, vendor, company);
+        Map<String, Object> snap = new LinkedHashMap<>(); snap.put("sale", sale); snap.put("vendor", vendor); snap.put("company", company);
+        int seq = jdbc.sql("select coalesce(max(seq),0)+1 from sale_challans where sale_id=:id").param("id", saleId).query(Integer.class).single();
+        jdbc.sql("insert into sale_challans(sale_id,seq,reason,created_by,pdf,snapshot) values(:id,:q,:r,:u,:p,cast(:s as jsonb))")
+                .param("id", saleId).param("q", seq).param("r", reason).param("u", userId).param("p", pdf).param("s", toJson(snap)).update();
+        return challanHistory(saleId).get(0);
+    }
+
+    /** Newest first. Admin only at the controller. */
+    public List<Map<String, Object>> challanHistory(long saleId) {
+        return jdbc.sql("select seq,reason,created_at,created_by from sale_challans where sale_id=:id order by seq desc").param("id", saleId).query().listOfRows().stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>(); m.put("seq", r.get("seq")); m.put("reason", r.get("reason")); m.put("createdAt", iso(r.get("created_at"))); return m; }).toList();
+    }
+
+    @Transactional
+    public List<Map<String, Object>> regenerateChallan(long saleId, AppPrincipal user) {
+        if (!user.hasRole("ADMIN")) throw new ApiException(403, "Only an admin can regenerate a challan");
+        saleFull(saleId, null); // 404 for a missing or deleted sale
+        storeChallan(saleId, "REGENERATED", user.id());
+        return challanHistory(saleId);
+    }
+
+    /**
+     * The stored challan. Admin: the stored PDF bytes (latest, or an older one by seq). Coordinator: latest only, drawn again from the
+     * stored data with only the sites of their own projects; 404 when the sale has none of their sites.
+     */
+    @SuppressWarnings("unchecked")
+    public byte[] challanPdf(long saleId, AppPrincipal user, Integer seq) {
+        boolean admin = user.hasRole("ADMIN");
+        Map<String, Object> visible = saleFull(saleId, user); // 404 for a coordinator with no linked site
+        if (!admin && seq != null) throw new ApiException(403, "Not allowed");
+        List<Map<String, Object>> rows = jdbc.sql("select pdf,snapshot::text snap from sale_challans where sale_id=:id and (:q::int is null or seq=:q) order by seq desc limit 1")
+                .param("id", saleId).param("q", seq).query().listOfRows();
+        if (rows.isEmpty()) {
+            if (seq != null) throw new ApiException(404, "Challan version not found");
+            Map<String, Object> sale = new LinkedHashMap<>(visible); // not stored yet (legacy row): draw from current data, nothing is written here
+            Map<String, Object> vendor = vendors().stream().filter(v -> v.get("name").equals(sale.get("vendor"))).findFirst().orElseThrow();
+            return ChallanPdf.build(sale, vendor, company());
+        }
+        if (admin) return (byte[]) rows.get(0).get("pdf");
+        Map<String, Object> snap = fromJson((String) rows.get(0).get("snap"));
+        Map<String, Object> sale = new LinkedHashMap<>((Map<String, Object>) snap.get("sale"));
+        Set<Long> ok = ((List<?>) visible.get("siteIds")).stream().map(x -> ((Number) x).longValue()).collect(Collectors.toSet());
+        sale.put("sites", ((List<Map<String, Object>>) sale.get("sites")).stream().filter(x -> ok.contains(((Number) x.get("id")).longValue())).toList());
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (Map<String, Object> i : (List<Map<String, Object>>) sale.get("items")) {
+            Map<String, Object> m = new LinkedHashMap<>(i);
+            for (String k : new String[]{"qty", "rate", "gst"}) m.put(k, new BigDecimal(String.valueOf(i.get(k))));
+            items.add(m);
+        }
+        sale.put("items", items);
+        return ChallanPdf.build(sale, (Map<String, Object>) snap.get("vendor"), (Map<String, Object>) snap.get("company"));
+    }
+
+    /** One-time catch-up after upgrade: sales saved before challans were stored get a first stored challan from their current data. */
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    public void backfillChallans() {
+        for (Long id : jdbc.sql("select id from sales s where deleted_at is null and not exists(select 1 from sale_challans c where c.sale_id=s.id) order by id").query(Long.class).list())
+            try { storeChallan(id, "BACKFILL", null); } catch (RuntimeException e) { /* another instance made it first (unique sale_id+seq); nothing to do */ }
     }
 }

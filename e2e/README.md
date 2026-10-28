@@ -11,3 +11,6 @@ Needs: JDK 21, Maven, Python 3, Node 20+, Chrome or Chromium (`CHROME_PATH`), `p
 It prints one `OK` or `FAIL` line per step and a total. Screenshots are written to `e2e/e2e-out/`.
 The seeded accounts are local test users only (admin `9000000009`, coordinators, supervisor; the password is the
 dev-only value in `seed.py`). Nothing here is used outside this throwaway database.
+
+Groups: a admin-desktop + purchase-edit-desktop, b admin-mobile + purchase-edit-mobile, c setup-desktop, d setup-mobile,
+e stages, f API scope + coordinator desktop/mobile, g hsn-desktop (HSN + stored challan lifecycle), h hsn-mobile.

@@ -44,6 +44,7 @@ class MaterialFlowTest {
     }
     @LocalServerPort int port;
     @Autowired JdbcClient jdbc;
+    @Autowired com.sitetrack.material.MaterialService svc;
     static final String PW = "SiteTrack123!";
     static String admin, kavita, other, supervisor;
     static long siteA1, siteA2, siteB1, projA, projB;
@@ -53,6 +54,13 @@ class MaterialFlowTest {
     RestClient c() { return RestClient.builder().baseUrl("http://localhost:" + port + "/api").build(); }
     @SuppressWarnings("unchecked") String login(String mobile) {
         return (String) c().post().uri("/auth/login").contentType(MediaType.APPLICATION_JSON).body(Map.of("mobile", mobile, "password", PW)).retrieve().body(Map.class).get("token"); }
+    String pdfText(byte[] pdf) throws Exception {
+        com.lowagie.text.pdf.PdfReader r = new com.lowagie.text.pdf.PdfReader(pdf);
+        StringBuilder sb = new StringBuilder(); com.lowagie.text.pdf.parser.PdfTextExtractor x = new com.lowagie.text.pdf.parser.PdfTextExtractor(r);
+        for (int i = 1; i <= r.getNumberOfPages(); i++) sb.append(x.getTextFromPage(i)).append('\n');
+        return sb.toString();
+    }
+    @SuppressWarnings("unchecked") List<Map<String, Object>> send2(HttpMethod m, String tok, String uri) { return c().method(m).uri(uri).header("Authorization", "Bearer " + tok).retrieve().body(List.class); }
     @SuppressWarnings("unchecked") <T> T get(String tok, String uri, Class<T> t) { return c().get().uri(uri).header("Authorization", "Bearer " + tok).retrieve().body(t); }
     int status(HttpMethod m, String tok, String uri, Object body) {
         try {
@@ -264,6 +272,16 @@ class MaterialFlowTest {
         assertEquals("%PDF", new String(kpdf, 0, 4, StandardCharsets.US_ASCII));
         assertEquals(404, status(HttpMethod.GET, kavita, "/material/sales/" + idB + "/challan", null));
         assertEquals(403, status(HttpMethod.GET, supervisor, "/material/sales/" + idMulti + "/challan", null));
+        // stored challan: the same saved bytes every time, one history row so far, coordinator copy shows only own sites
+        assertArrayEquals(pdf, c().get().uri("/material/sales/" + idMulti + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class), "same stored file each View/Download");
+        List<Map<String, Object>> ch1 = get(admin, "/material/sales/" + idMulti + "/challans", List.class);
+        assertEquals(1, ch1.size()); assertEquals("CREATED", ch1.get(0).get("reason"));
+        assertEquals(2, pdfText(pdf).split("\\|", -1).length - 1, "admin challan lists both sites");
+        assertEquals(1, pdfText(kpdf).split("\\|", -1).length - 1, "coordinator challan lists only own site");
+        assertEquals(403, status(HttpMethod.GET, kavita, "/material/sales/" + idMulti + "/challans", null));
+        assertEquals(403, status(HttpMethod.POST, kavita, "/material/sales/" + idMulti + "/challan/regenerate", null), "coordinator cannot regenerate");
+        assertEquals(403, status(HttpMethod.POST, supervisor, "/material/sales/" + idMulti + "/challan/regenerate", null));
+        assertEquals(403, status(HttpMethod.GET, kavita, "/material/sales/" + idMulti + "/challan?seq=1", null), "coordinator gets latest only");
 
         // sale edit: version, then no-change edit adds none; edit may not change site links silently
         Map<String, Object> edit = saleBody("DEBIT", "Patel Constructions", List.of(siteA1, siteB1), List.of(item("Cement OPC", "Bag", "25", "400", "28"), item("TMT Bar 12mm", "Kg", "100", "70", "18")));
@@ -273,6 +291,20 @@ class MaterialFlowTest {
         assertEquals(s1.get("saleId"), e1.get("saleId"));
         Map<String, Object> e2 = send(HttpMethod.PUT, admin, "/material/sales/" + idMulti, edit);
         assertEquals(1, ((List<?>) e2.get("versions")).size());
+        // edit made a new stored challan, the old one is kept byte for byte; a no-change edit adds none
+        List<Map<String, Object>> ch2 = get(admin, "/material/sales/" + idMulti + "/challans", List.class);
+        assertEquals(2, ch2.size()); assertEquals("EDITED", ch2.get(0).get("reason"));
+        assertArrayEquals(pdf, c().get().uri("/material/sales/" + idMulti + "/challan?seq=1").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class), "old challan kept");
+        byte[] latest = c().get().uri("/material/sales/" + idMulti + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class);
+        assertTrue(pdfText(latest).contains("25 Bag") && !pdfText(pdf).contains("25 Bag"));
+        // master data changed after saving: stored challan does not move until an admin regenerates
+        assertEquals(200, status(HttpMethod.PUT, admin, "/material/company", Map.of("name", "x", "address", "New Address 99", "gst", "", "mobile", "9876543210")));
+        assertArrayEquals(latest, c().get().uri("/material/sales/" + idMulti + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class));
+        assertFalse(pdfText(latest).contains("New Address 99"));
+        List<Map<String, Object>> ch3 = send2(HttpMethod.POST, admin, "/material/sales/" + idMulti + "/challan/regenerate");
+        assertEquals(3, ch3.size()); assertEquals("REGENERATED", ch3.get(0).get("reason"));
+        assertTrue(pdfText(c().get().uri("/material/sales/" + idMulti + "/challan").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class)).contains("New Address 99"));
+        assertArrayEquals(pdf, c().get().uri("/material/sales/" + idMulti + "/challan?seq=1").header("Authorization", "Bearer " + admin).retrieve().body(byte[].class), "history intact after regenerate");
         assertEquals(0, before.subtract(new BigDecimal("25")).subtract(BigDecimal.ONE).compareTo(stockMap().get("Cement OPC")));
         // archive a sale: stock restored, row retained
         assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + idMulti, null));
@@ -286,6 +318,18 @@ class MaterialFlowTest {
         assertEquals(0, ((List<?>) ns.get("siteIds")).size());
         assertEquals(200, status(HttpMethod.GET, admin, "/material/sales/" + idNs + "/challan", null));
         assertEquals(404, status(HttpMethod.GET, kavita, "/material/sales/" + idNs + "/challan", null));
+        // legacy sale without a stored challan: still viewable (drawn from current data, nothing written), backfill creates exactly one and is repeatable
+        jdbc.sql("delete from sale_challans where sale_id=:i").param("i", idNs).update();
+        assertEquals(200, status(HttpMethod.GET, admin, "/material/sales/" + idNs + "/challan", null));
+        assertEquals(0L, jdbc.sql("select count(*) from sale_challans where sale_id=:i").param("i", idNs).query(Long.class).single());
+        svc.backfillChallans(); svc.backfillChallans();
+        assertEquals(List.of("BACKFILL"), jdbc.sql("select reason from sale_challans where sale_id=:i").param("i", idNs).query(String.class).list());
+        // five admins regenerating at once: every call succeeds and the numbering stays 1..n without gaps or duplicates
+        final long fidNs = idNs;
+        List<Integer> codes = java.util.stream.IntStream.range(0, 5).parallel().mapToObj(k -> { try { return status(HttpMethod.POST, admin, "/material/sales/" + fidNs + "/challan/regenerate", null); } catch (Exception e) { return -1; } }).toList();
+        assertEquals(List.of(200, 200, 200, 200, 200), codes);
+        assertEquals(List.of(1, 2, 3, 4, 5, 6), jdbc.sql("select seq from sale_challans where sale_id=:i order by seq").param("i", idNs).query(Integer.class).list());
+        assertEquals(0L, jdbc.sql("select count(*) from sale_challans c join sales s on s.id=c.sale_id where s.deleted_at is not null and c.reason='BACKFILL'").query(Long.class).single(), "archived sales are not backfilled");
         assertEquals(0, ((List<?>) get(kavita, "/projects/" + projA + "/sales", List.class).stream().filter(x -> ((Number) ((Map<?, ?>) x).get("id")).longValue() == idNs).toList()).size());
         assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + idNs, null));
     }
