@@ -242,7 +242,7 @@ export function SaleDialog({ id, onClose, readOnly = false, sale }: { id: number
     </Modal>
     <Modal opened={challan && !!s} onClose={() => setChallan(false)} size="xl" title={s ? `Challan ${s.saleId}${seq ? ` (older, challan ${seq})` : ''}` : 'Challan'} zIndex={400}>
       {s && (challanErr ? <Text size="sm" c="red">{challanErr}</Text> : blob ? <div><ChallanViewer blob={blob} />
-        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">Saved challan: the same file every time. It changes only when the sale is edited or an admin regenerates it.</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div> : <Text size="sm" c="dimmed">Loading challan...</Text>)}
+        <Group justify="space-between" mt={4}><Text size="xs" c="dimmed">{seq ? 'Older saved challan. This file is kept unchanged.' : 'Saved challan: the same file every time. A new challan is made only when the sale is edited or an admin regenerates it.'}</Text><Group gap={6}><Button size="compact-xs" variant="default" onClick={openTab}>Open in new tab</Button><Button size="compact-xs" variant="default" leftSection={<Download size={12} />} onClick={download}>Download PDF</Button></Group></Group></div> : <Text size="sm" c="dimmed">Loading challan...</Text>)}
     </Modal>
     <Modal opened={regen && !!s} onClose={() => setRegen(false)} title="Regenerate challan?" zIndex={400} size="sm">
       <Stack gap="sm"><Text size="sm">A new challan is made from the latest sale, vendor, company and material details (including HSN). The current challan stays in the challan history.</Text>
