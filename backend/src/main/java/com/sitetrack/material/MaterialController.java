@@ -38,12 +38,22 @@ public class MaterialController {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("materialTypes", svc.materialTypes()); m.put("vendors", svc.vendors()); m.put("company", svc.company());
         m.put("purchases", svc.purchases(null)); m.put("sales", svc.sales(null, null, false, null, null));
-        m.put("stock", svc.stock()); m.put("sites", svc.allSites()); return m;
+        m.put("groups", svc.groups()); m.put("stock", svc.stock()); m.put("sites", svc.allSites()); return m;
     }
     @PostMapping("/material/types") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> addType(@RequestBody MaterialTypeIn in) { return svc.saveMaterialType(null, in); }
     @PutMapping("/material/types/{id}") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> editType(@PathVariable long id, @RequestBody MaterialTypeIn in) { return svc.saveMaterialType(id, in); }
+    @GetMapping("/material/groups") @PreAuthorize("hasRole('ADMIN')")
+    public List<Map<String, Object>> groups() { return svc.groups(); }
+    @PostMapping("/material/groups") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> addGroup(@RequestBody GroupIn in) { return svc.saveGroup(null, in); }
+    @PutMapping("/material/groups/{id}") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> editGroup(@PathVariable long id, @RequestBody GroupIn in) { return svc.saveGroup(id, in); }
+    @PostMapping("/material/groups/{id}/archive") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> archiveGroup(@PathVariable long id) { return svc.archiveGroup(id, true); }
+    @PostMapping("/material/groups/{id}/restore") @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> restoreGroup(@PathVariable long id) { return svc.archiveGroup(id, false); }
     @PostMapping("/material/vendors") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> addVendor(@RequestBody VendorIn in) { return svc.saveVendor(null, in); }
     @PutMapping("/material/vendors/{id}") @PreAuthorize("hasRole('ADMIN')")
@@ -100,16 +110,20 @@ public class MaterialController {
         return svc.sales(null, user.employeeId(), !user.hasRole("ADMIN"), null, siteId);
     }
     @GetMapping("/material/sales/{id}/challan")
-    public ResponseEntity<byte[]> challan(@PathVariable long id, @AuthenticationPrincipal AppPrincipal user) {
+    public ResponseEntity<byte[]> challan(@PathVariable long id, @RequestParam(value = "seq", required = false) Integer seq, @AuthenticationPrincipal AppPrincipal user) {
         if (!user.hasRole("ADMIN") && (user.employeeId() == null
                 || jdbc.sql("select count(*) from projects where coordinator_id=:e").param("e", user.employeeId()).query(Long.class).single() == 0))
             throw new ApiException(403, "Not allowed");
-        Map<String, Object> sale = svc.saleFull(id, user); // 404 when a coordinator has no linked site in the sale
-        Map<String, Object> vendor = svc.vendors().stream().filter(v -> v.get("name").equals(sale.get("vendor"))).findFirst().orElseThrow();
-        byte[] pdf = ChallanPdf.build(sale, vendor, svc.company());
+        byte[] pdf = svc.challanPdf(id, user, seq);
+        Map<String, Object> sale = svc.saleFull(id, user);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(sale.get("saleId") + ".pdf").build().toString()).body(pdf);
     }
+
+    @GetMapping("/material/sales/{id}/challans") @PreAuthorize("hasRole('ADMIN')")
+    public List<Map<String, Object>> challans(@PathVariable long id) { svc.saleFull(id, null); return svc.challanHistory(id); }
+    @PostMapping("/material/sales/{id}/challan/regenerate") @PreAuthorize("hasRole('ADMIN')")
+    public List<Map<String, Object>> regenerate(@PathVariable long id, @AuthenticationPrincipal AppPrincipal user) { return svc.regenerateChallan(id, user); }
 
     private void requireCoordinator(AppPrincipal user, String sql, long id) {
         if (user.hasRole("ADMIN")) return;

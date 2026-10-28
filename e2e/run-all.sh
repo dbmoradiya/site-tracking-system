@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Real-app browser suite. Local throwaway embedded PostgreSQL only; never touches any real database.
 # Needs: JDK 21, Maven, Python 3, Node 20+, Google Chrome/Chromium (set CHROME_PATH), poppler (pdftotext).
-# Run from anywhere:  CHROME_PATH=/usr/bin/google-chrome bash e2e/run-all.sh   (ONLY="a b" runs selected groups a-f)
+# Run from anywhere:  CHROME_PATH=/usr/bin/google-chrome bash e2e/run-all.sh   (ONLY="a b" runs selected groups a-h)
 set -u
 cd "$(dirname "$0")"; E2E=$PWD; ROOT=$(cd .. && pwd)
 mkdir -p e2e-out
@@ -33,5 +33,9 @@ want c && { start; run setup-desktop node setup.mjs; }
 want d && { start; run setup-mobile node setup.mjs mobile; }
 want e && { start; run stages node stages.mjs; }
 want f && { start; run api-scope python3 seed-sales.py; run coordinator-desktop node coordinator.mjs; run coordinator-mobile node coordinator.mjs mobile; }
+want g && { start; run hsn-desktop node hsn.mjs; }
+want h && { start; run hsn-mobile node hsn.mjs mobile; }
+want i && { start; run groups-desktop node groups.mjs; }
+want j && { start; run groups-mobile node groups.mjs mobile; }
 echo "TOTAL steps: $TOTAL  FAILED: $FAIL"
 exit $([ $FAIL -eq 0 ] && echo 0 || echo 1)
