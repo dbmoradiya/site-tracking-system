@@ -29,6 +29,12 @@ final class ChallanPdf {
     }
     static String plain(BigDecimal v) { return v.stripTrailingZeros().toPlainString(); }
 
+    private static Image logo() {
+        try (java.io.InputStream in = ChallanPdf.class.getResourceAsStream("/branding/shreeji-logo.png")) {
+            return in == null ? null : Image.getInstance(in.readAllBytes());
+        } catch (Exception e) { return null; }
+    }
+
     @SuppressWarnings("unchecked")
     static byte[] build(Map<String, Object> sale, Map<String, Object> vendor, Map<String, Object> company) {
         try {
@@ -38,9 +44,15 @@ final class ChallanPdf {
             doc.open();
             Font h1 = new Font(Font.HELVETICA, 17, Font.BOLD), b9 = new Font(Font.HELVETICA, 9, Font.BOLD), n9 = new Font(Font.HELVETICA, 9),
                  b10 = new Font(Font.HELVETICA, 10, Font.BOLD), t13 = new Font(Font.HELVETICA, 13, Font.BOLD), b11 = new Font(Font.HELVETICA, 11, Font.BOLD);
-            doc.add(new Paragraph(String.valueOf(company.get("name")), h1));
-            doc.add(new Paragraph(String.valueOf(company.get("address")), n9));
-            doc.add(new Paragraph("GSTIN: " + dash(company.get("gst")) + "    Mobile: " + dash(company.get("mobile")), n9));
+            PdfPTable head = new PdfPTable(new float[]{70, 30}); head.setWidthPercentage(100);
+            PdfPCell left = new PdfPCell(); left.setBorder(Rectangle.NO_BORDER); left.setPadding(0);
+            left.addElement(new Paragraph(String.valueOf(company.get("name")), h1));
+            left.addElement(new Paragraph(String.valueOf(company.get("address")), n9));
+            left.addElement(new Paragraph("GSTIN: " + dash(company.get("gst")) + "    Mobile: " + dash(company.get("mobile")), n9));
+            head.addCell(left);
+            PdfPCell right = new PdfPCell(); right.setBorder(Rectangle.NO_BORDER); right.setPadding(0); right.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            Image logo = logo(); if (logo != null) { logo.scaleToFit(110, 70); logo.setAlignment(Image.ALIGN_RIGHT); right.addElement(logo); }
+            head.addCell(right); doc.add(head);
             doc.add(rule());
             boolean debit = "DEBIT".equals(sale.get("type"));
             doc.add(new Paragraph(debit ? "DELIVERY CHALLAN  (Debit - material given out)" : "MATERIAL RECEIPT CHALLAN  (Credit - material taken in)", t13));

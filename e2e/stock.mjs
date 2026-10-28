@@ -44,6 +44,9 @@ await step('branding: Shreeji Energy in header, login logo, page title, company 
   const co=(await call('GET','/material/bootstrap')).json.company;if(co.name!=='Shreeji Energy')throw new Error('company '+co.name)
   const sales=(await call('GET','/material/sales')).json;const id=(sales.content||sales)[0].id;const x=(await pdfOf(id)).text
   if(!/Shreeji Energy/.test(x)||/Enterprise/i.test(x))throw new Error('pdf: '+x.slice(0,300))
+  const pd=await pdfOf(id);const imgs=execSync('pdfimages -list '+pd.f).toString().trim().split('\n').length-2;if(imgs<1)throw new Error('no logo image in challan PDF')
+  if((await pdfOf(id)).bytes!==pd.bytes)throw new Error('saved challan bytes changed between reads')
+  execSync('pdftoppm -png -r 70 -f 1 -l 1 '+pd.f+` e2e-out/e2e-stk${T}-challan`)
   const l=await (await b.newContext(ctxOpts)).newPage();await l.goto(BASE+'/');await l.waitForTimeout(1200)
   const im=l.locator('img[alt="Shreeji Energy logo"]:visible').first();await im.waitFor();const nat=await im.evaluate(e=>e.naturalWidth);if(nat<500)throw new Error('logo too small '+nat)
   if(/Enterprise/i.test(await l.locator('body').innerText()))throw new Error('login still says Enterprise')
