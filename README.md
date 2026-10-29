@@ -102,3 +102,22 @@ See [requirements v0.4](docs/requirements-v0.4-working-draft.md). Site status
 automatically becomes `COMPLETED` when every Stage is approved or directly completed. Project status
 becomes `COMPLETED` when every Site is completed. Every Stage requires at least
 one successfully uploaded evidence file before completion can be submitted.
+
+## Material Types CSV import
+
+Admins can use **Setup > Material Types > Download CSV template** and **Upload CSV**.
+The UTF-8 CSV template contains `name,uom,hsn` headers and no sample data. Fill one
+material per row. `name` and `uom` are required; `hsn` is optional (it can also be
+omitted from the headers). Maximum: 1 MB / 5000 material rows. Header order may vary.
+Keep HSN cells as text in spreadsheet software to preserve leading zeros.
+
+Import only adds new types. Name matching ignores case and surrounding whitespace.
+For an existing name, a different UOM or HSN is a row error and nothing is updated.
+An identical row is skipped (UOM ignores case; HSN is compared as text). This also
+applies to repeated names within the file: the first valid new row is added, later
+rows are compared with it. Other valid rows are committed independently. Results
+show source CSV row numbers, added/skipped/error counts and conflict details.
+Broken CSV quoting, invalid headers or document limits reject the file before any
+writes. Quoted commas, escaped quotes, quoted newlines and UTF-8 BOM are supported.
+This feature needs no database migration and never edits existing types, stock,
+sale snapshots or stored challans.

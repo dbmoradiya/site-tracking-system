@@ -8,7 +8,7 @@ import java.nio.file.Files;
 /** Local end-to-end helper (test classpath only, never shipped): the real app on a throwaway embedded PostgreSQL. */
 public class DevServer {
     public static void main(String[] args) throws Exception {
-        EmbeddedPostgres pg = EmbeddedPostgres.builder().setPort(54329).start();
+        EmbeddedPostgres pg = EmbeddedPostgres.builder().start();
         System.setProperty("spring.datasource.url", pg.getJdbcUrl("postgres", "postgres"));
         System.setProperty("spring.datasource.username", "postgres");
         System.setProperty("spring.datasource.password", "postgres");

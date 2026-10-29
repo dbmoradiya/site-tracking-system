@@ -24,12 +24,13 @@ import java.util.*;
 public class MaterialController {
     private static final Set<String> INVOICE_TYPES = Set.of("application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif");
     private final MaterialService svc;
+    private final MaterialTypeCsvService csv;
     private final JdbcClient jdbc;
     private final ObjectMapper json;
     private final Path uploadDir;
 
-    public MaterialController(MaterialService svc, JdbcClient jdbc, ObjectMapper json, @Value("${app.upload-dir}") String uploadDir) {
-        this.svc = svc; this.jdbc = jdbc; this.json = json; this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
+    public MaterialController(MaterialService svc, MaterialTypeCsvService csv, JdbcClient jdbc, ObjectMapper json, @Value("${app.upload-dir}") String uploadDir) {
+        this.svc = svc; this.csv = csv; this.jdbc = jdbc; this.json = json; this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
     }
 
     // ----- admin: reference data -----
@@ -42,6 +43,8 @@ public class MaterialController {
     }
     @PostMapping("/material/types") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> addType(@RequestBody MaterialTypeIn in) { return svc.saveMaterialType(null, in); }
+    @PostMapping(value="/material/types/import", consumes=MediaType.MULTIPART_FORM_DATA_VALUE) @PreAuthorize("hasRole('ADMIN')")
+    public MaterialTypeCsvService.ImportResult importTypes(@RequestParam("file") MultipartFile file) { return csv.importFile(file); }
     @PutMapping("/material/types/{id}") @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> editType(@PathVariable long id, @RequestBody MaterialTypeIn in) { return svc.saveMaterialType(id, in); }
     @GetMapping("/material/groups") @PreAuthorize("hasRole('ADMIN')")

@@ -80,3 +80,11 @@ export type GroupDraft = { name: string; items: { material: string; qty: number 
 export async function addGroup(g: GroupDraft) { await api('/material/groups', { method: 'POST', body: JSON.stringify(g) }); await loadMaterial() }
 export async function editGroup(id: number, g: GroupDraft) { await api(`/material/groups/${id}`, { method: 'PUT', body: JSON.stringify(g) }); await loadMaterial() }
 export async function archiveGroup(id: number, archived: boolean) { await api(`/material/groups/${id}/${archived ? 'archive' : 'restore'}`, { method: 'POST' }); await loadMaterial() }
+
+export type MaterialImportResult = { total: number; inserted: number; skipped: number; errors: number; rows: { row: number; name: string; status: 'inserted' | 'skipped' | 'error'; message: string }[] }
+export async function importMaterialTypes(file: File) {
+  const body = new FormData(); body.append('file', file)
+  const result = await api<MaterialImportResult>('/material/types/import', { method: 'POST', body })
+  await loadMaterial()
+  return result
+}

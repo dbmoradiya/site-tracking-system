@@ -466,4 +466,53 @@ class MaterialFlowTest {
         assertEquals(0, mcbBefore.add(new BigDecimal("16")).compareTo(stockMap().get("GMCB")));
         assertEquals(200, status(HttpMethod.DELETE, admin, "/material/sales/" + id2, null));
     }
+
+    @Autowired com.sitetrack.material.MaterialTypeCsvService csv;
+    com.sitetrack.material.MaterialTypeCsvService.ImportResult csv(String text) {
+        return csv.importFile(new org.springframework.mock.web.MockMultipartFile("file", "types.csv", "text/csv", text.getBytes(StandardCharsets.UTF_8)));
+    }
+    @Test @Order(20) void csvPartialSuccessAndNoUpdates() {
+        var result = csv("name,uom,hsn\nCSV Cable,Meter,0012\ncsv cable,Kg,0012\nCSV Cable,Meter,9999\nCSV Box,Nos,\n,Nos,\nCSV Last,Feet,1234\n");
+        assertEquals(3, result.inserted()); assertEquals(3, result.errors());
+        assertEquals("Meter", jdbc.sql("select uom from material_types where name='CSV Cable'").query(String.class).single());
+        assertEquals("0012", jdbc.sql("select hsn from material_types where name='CSV Cable'").query(String.class).single());
+    }
+    @Test @Order(21) void csvDuplicateIdempotenceAndWhitespace() {
+        var result = csv(" name , UOM , hsn\r\n CSV Cable , meter , 0012 \r\nCSV Cable,Meter,0012\r\n");
+        assertEquals(2, result.skipped()); assertEquals(0, result.inserted()); assertEquals(0, result.errors());
+    }
+    @Test @Order(22) void csvBomQuotedUnicodeAndReorderedHeaders() {
+        var result = csv("\uFEFFhsn,uom,name\r\n0034,Nos,\"Box, \"\"large\"\"\"\r\n,Kg,કેબલ\r\n1234,Feet,\"Two\nlines\"\r\n");
+        assertEquals(3, result.inserted()); assertEquals(0, result.errors()); assertEquals(4, result.rows().get(2).row());
+    }
+    @Test @Order(23) void csvOptionalHsnAndFieldLimits() {
+        assertEquals(1, csv("name,uom\nCSV Optional,Nos\n").inserted());
+        var result = csv("name,uom,hsn\nCSV Optional,Nos,1234\nCSV Empty,,\n"+"x".repeat(181)+",Nos,\nCSV Unit,"+"x".repeat(33)+",\nCSV Hsn,Nos,"+"0".repeat(17)+"\nCSV End,Nos,ABC\n");
+        assertEquals(5, result.errors()); assertEquals(1, result.inserted());
+        assertEquals("", jdbc.sql("select hsn from material_types where name='CSV Optional'").query(String.class).single());
+    }
+    @Test @Order(24) void csvBadDocumentMakesNoWrites() {
+        for (String text : List.of("name,uom,hsn\nCSV Must Not Exist,Nos,\n\"unclosed", "wrong,uom\na,Nos", "name,name,uom\na,b,Nos", "name,uom,extra\na,Nos,b", "name,uom\n", ""))
+            assertThrows(com.sitetrack.api.ApiException.class, () -> csv(text));
+        assertEquals(0, jdbc.sql("select count(*) from material_types where name='CSV Must Not Exist'").query(Integer.class).single());
+    }
+    @Test @Order(25) void csvRowShapeErrorsDoNotBlockOthers() {
+        var result = csv("name,uom,hsn\nCSV Short,Nos\nCSV Extra,Nos,,extra\n\nCSV Good Shape,Nos,\n");
+        assertEquals(2, result.errors()); assertEquals(1, result.inserted()); assertEquals(5, result.rows().get(2).row());
+    }
+    @Test @Order(26) void csvSizeEncodingAndRowLimit() {
+        assertThrows(com.sitetrack.api.ApiException.class, () -> csv("name,uom\n"+"a,Nos\n".repeat(5001)));
+        assertThrows(com.sitetrack.api.ApiException.class, () -> csv("x".repeat(1024*1024+1)));
+        assertThrows(com.sitetrack.api.ApiException.class, () -> csv.importFile(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{(byte)0xff})));
+    }
+    @Test @Order(27) void csvHttpAuthorizationAndUpload() {
+        MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
+        parts.add("file", new ByteArrayResource("name,uom,hsn\nCSV HTTP,Nos,1234\n".getBytes(StandardCharsets.UTF_8)) { @Override public String getFilename() { return "types.csv"; } });
+        for (String tok : List.of(kavita, supervisor)) {
+            HttpStatusCodeException e = assertThrows(HttpStatusCodeException.class, () -> c().post().uri("/material/types/import").headers(h -> h.setBearerAuth(tok)).contentType(MediaType.MULTIPART_FORM_DATA).body(parts).retrieve().toBodilessEntity());
+            assertEquals(403, e.getStatusCode().value());
+        }
+        Map result = c().post().uri("/material/types/import").headers(h -> h.setBearerAuth(admin)).contentType(MediaType.MULTIPART_FORM_DATA).body(parts).retrieve().body(Map.class);
+        assertEquals(1, ((Number) result.get("inserted")).intValue());
+    }
 }

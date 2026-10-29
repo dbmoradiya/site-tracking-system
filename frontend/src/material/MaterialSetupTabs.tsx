@@ -1,20 +1,36 @@
-import { Badge, Button, Group, Modal, NativeSelect, NumberInput, Paper, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Badge, Button, FileInput, Group, Modal, NativeSelect, NumberInput, Paper, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { Archive, ArchiveRestore, Pencil, Plus, Save, Trash2 } from 'lucide-react'
+import { Download, Upload, Archive, ArchiveRestore, Pencil, Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { UOMS, num } from './types'
-import { addGroup, addMaterialType, addVendor, archiveGroup, editGroup, editMaterialType, editVendor, findMaterial, findVendor, setCompany, useMaterialStore, type MaterialGroup, type MaterialType, type Vendor } from './materialStore'
+import { importMaterialTypes, type MaterialImportResult, addGroup, addMaterialType, addVendor, archiveGroup, editGroup, editMaterialType, editVendor, findMaterial, findVendor, setCompany, useMaterialStore, type MaterialGroup, type MaterialType, type Vendor } from './materialStore'
 
 // Setup tabs for Material types, Vendors and Company. Material types created in the Purchase form appear here.
 export function MaterialTypesTab() {
   const { materialTypes, purchases, sales } = useMaterialStore()
   const [sel, setSel] = useState<{ old: string; name: string; uom: string; hsn: string } | null>(null)
+  const [importOpen, setImportOpen] = useState(false), [csvFile, setCsvFile] = useState<File | null>(null)
+  const [importBusy, setImportBusy] = useState(false), [importError, setImportError] = useState('')
+  const [importResult, setImportResult] = useState<MaterialImportResult | null>(null)
+  const downloadTemplate = () => {
+    const url = URL.createObjectURL(new Blob(['\uFEFFname,uom,hsn\r\n'], { type: 'text/csv;charset=utf-8' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'material-types-template.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+  const uploadCsv = async () => {
+    if (!csvFile || importBusy) return
+    setImportBusy(true); setImportError(''); setImportResult(null)
+    try { setImportResult(await importMaterialTypes(csvFile)); setCsvFile(null) }
+    catch (e) { setImportError((e as Error).message) }
+    finally { setImportBusy(false) }
+  }
   const dupe = sel && sel.name.trim() && sel.name.trim().toLowerCase() !== sel.old.toLowerCase() && !!findMaterial(sel.name)
   const used = !!sel?.old && (findMaterial(sel.old)?.usedCount ?? 0) > 0
   const save = async () => { if (!sel) return; const next: MaterialType = { name: sel.name.trim(), uom: used ? (findMaterial(sel.old)?.uom ?? sel.uom) : sel.uom, hsn: sel.hsn.trim() }; try { if (sel.old) await editMaterialType(sel.old, next); else await addMaterialType(next); notifications.show({ color: 'green', message: 'Saved' }); setSel(null) } catch (e) { notifications.show({ color: 'red', title: 'Could not save', message: (e as Error).message }) } }
   return <Stack gap="xs">
     <Group justify="space-between"><div><Title order={4}>Material Types</Title><Text size="xs" c="dimmed">{materialTypes.length} types - added automatically from the Purchase form</Text></div>
-      <Button leftSection={<Plus size={14} />} onClick={() => setSel({ old: '', name: '', uom: '', hsn: '' })}>Add Material Type</Button></Group>
+      <Group gap="xs"><Button variant="default" leftSection={<Download size={14}/>} onClick={downloadTemplate}>Download CSV template</Button>
+      <Button variant="light" leftSection={<Upload size={14}/>} onClick={() => { setImportOpen(true); setImportError(''); setImportResult(null); setCsvFile(null) }}>Upload CSV</Button>
+      <Button leftSection={<Plus size={14} />} onClick={() => setSel({ old: '', name: '', uom: '', hsn: '' })}>Add Material Type</Button></Group></Group>
     <Paper withBorder><Table.ScrollContainer minWidth={760}><Table highlightOnHover><Table.Thead><Table.Tr><Table.Th>Material type</Table.Th><Table.Th>UOM</Table.Th><Table.Th>HSN code</Table.Th><Table.Th ta="right">Purchases</Table.Th><Table.Th ta="right">Purchased qty</Table.Th><Table.Th ta="right">Sales</Table.Th><Table.Th ta="right">Sold qty</Table.Th><Table.Th ta="right" w={80}>Edit</Table.Th></Table.Tr></Table.Thead>
       <Table.Tbody>{materialTypes.map(m => <Table.Tr key={m.name}><Table.Td fw={600}>{m.name}</Table.Td><Table.Td>{m.uom}</Table.Td><Table.Td>{m.hsn || '-'}</Table.Td><Table.Td ta="right">{purchases.filter(p => p.items.some(l => l.material === m.name)).length}</Table.Td>
         <Table.Td ta="right">{num(purchases.reduce((t, p) => t + p.items.filter(l => l.material === m.name).reduce((q, l) => q + l.qty, 0), 0))} {m.uom}</Table.Td>
@@ -27,6 +43,23 @@ export function MaterialTypesTab() {
       <div><TextInput size="xs" label="HSN code (optional)" placeholder="e.g. 2523" maxLength={16} value={sel.hsn} onChange={e => setSel({ ...sel, hsn: e.currentTarget.value })} />
         {sel.hsn.trim() && !/^(\d{4}|\d{6}|\d{8})$/.test(sel.hsn.trim()) && <Text size="xs" c="orange.8" mt={2}>HSN is usually 4, 6 or 8 digits. It will still be saved.</Text>}</div>
       <Group justify="flex-end"><Button variant="default" onClick={() => setSel(null)}>Cancel</Button><Button leftSection={<Save size={14} />} disabled={!sel.name.trim() || !sel.uom || !!dupe} onClick={save}>Save changes</Button></Group></Stack>}</Modal>
+    <Modal opened={importOpen} onClose={() => { if (!importBusy) setImportOpen(false) }} closeOnClickOutside={!importBusy} closeOnEscape={!importBusy} withCloseButton={!importBusy} title="Import Material Types" size="lg">
+      <Stack gap="sm">
+        <Text size="sm">Use the CSV template with name, uom and optional hsn. One material per row. Save as UTF-8 CSV (maximum 1 MB, 5000 rows).</Text>
+        <Text size="xs" c="dimmed">New materials are added. Existing names with different UOM or HSN are errors and stay unchanged. Exact matches are skipped. Other valid rows are still added. Names and UOM match without case sensitivity; HSN is compared as text, including leading zeros.</Text>
+        <Button variant="subtle" onClick={downloadTemplate} leftSection={<Download size={14}/>}>Download CSV template</Button>
+        <FileInput label="CSV file" accept=".csv,text/csv" value={csvFile} onChange={setCsvFile} disabled={importBusy} clearable error={csvFile && csvFile.size > 1024 * 1024 ? 'File must be 1 MB or smaller' : undefined}/>
+        {importError && <Alert color="red" title="Import failed">{importError}</Alert>}
+        {importResult && <>
+          <Alert color={importResult.errors ? 'orange' : 'green'} title="Import complete">{importResult.inserted} added, {importResult.skipped} skipped, {importResult.errors} errors ({importResult.total} rows). Existing materials were not changed.</Alert>
+          <Table.ScrollContainer visibleFrom="sm" minWidth={460} maxHeight={340}><Table aria-label="CSV import results"><Table.Thead><Table.Tr><Table.Th>CSV row</Table.Th><Table.Th>Material</Table.Th><Table.Th>Result</Table.Th></Table.Tr></Table.Thead><Table.Tbody>
+            {importResult.rows.map(r => <Table.Tr key={r.row}><Table.Td>{r.row}</Table.Td><Table.Td style={{ overflowWrap: 'anywhere' }}>{r.name || '-'}</Table.Td><Table.Td><Badge color={r.status === 'error' ? 'red' : r.status === 'inserted' ? 'green' : 'gray'}>{r.status}</Badge><Text size="xs">{r.message}</Text></Table.Td></Table.Tr>)}
+          </Table.Tbody></Table></Table.ScrollContainer>
+          <Stack hiddenFrom="sm" gap="xs">{importResult.rows.map(r => <Paper key={r.row} withBorder p="xs"><Group justify="space-between"><Text size="xs" fw={600}>Row {r.row}: {r.name || '-'}</Text><Badge color={r.status === 'error' ? 'red' : r.status === 'inserted' ? 'green' : 'gray'}>{r.status}</Badge></Group><Text size="xs" mt={4} style={{ overflowWrap: 'anywhere' }}>{r.message}</Text></Paper>)}</Stack>
+        </>}
+        <Group justify="flex-end"><Button variant="default" disabled={importBusy} onClick={() => setImportOpen(false)}>Close</Button><Button leftSection={<Upload size={14}/>} loading={importBusy} disabled={!csvFile || csvFile.size > 1024 * 1024} onClick={uploadCsv}>Import CSV</Button></Group>
+      </Stack>
+    </Modal>
     <GroupsSection />
   </Stack>
 }

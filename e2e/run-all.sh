@@ -18,13 +18,16 @@ start() {   # fresh DB each group
   (cd "$ROOT/backend" && exec ${JAVA_HOME:+$JAVA_HOME/bin/}java -cp "target/classes:target/test-classes:$(cat "$E2E/e2e-out/cp.txt")" com.sitetrack.DevServer >"$E2E/e2e-out/backend.log" 2>&1) & PIDS="$!"
   for i in $(seq 60); do grep -q "Started DevServer" e2e-out/backend.log 2>/dev/null && break; sleep 1; done
   python3 proxy.py >e2e-out/proxy.log 2>&1 & PIDS="$PIDS $!"
-  sleep 1; python3 seed.py >/dev/null
+  grep -q "Started DevServer" e2e-out/backend.log || { tail -30 e2e-out/backend.log; exit 2; }
+  sleep 1; python3 seed.py >/dev/null || { echo "seed failed"; exit 2; }
 }
 FAIL=0; TOTAL=0
 run() {  # name, command...
-  n=$1; shift; out=$("$@" 2>&1); echo "$out" | grep -E "^(OK|FAIL)" | sed "s/^/[$n] /"
-  echo "$out" | grep -qE "^(OK|FAIL)" || echo "[$n] NO RESULT: $(echo "$out" | tail -3)"
+  n=$1; shift; out=$("$@" 2>&1); rc=$?; echo "$out" | grep -E "^(OK|FAIL)" | sed "s/^/[$n] /"
+  echo "$out" | grep -qE "^(OK|FAIL)" || echo "[$n] NO RESULT: $(echo "$out" | tail -25)"
   ok=$(echo "$out" | grep -c "^OK"); bad=$(echo "$out" | grep -c "^FAIL"); TOTAL=$((TOTAL+ok+bad)); FAIL=$((FAIL+bad))
+  if [ "$rc" -ne 0 ] && [ "$bad" -eq 0 ]; then echo "[$n] FAIL script exit $rc"; FAIL=$((FAIL+1)); fi
+  if [ "$ok" -eq 0 ] && [ "$bad" -eq 0 ]; then FAIL=$((FAIL+1)); fi
   echo "$out" | grep -E "^errors" | sed "s/^/[$n] /"
 }
 want a && { start; run admin-desktop node admin-desktop.mjs; run purchase-edit-desktop node purchase-edit.mjs; }
@@ -41,5 +44,7 @@ want k && { start; run stock-desktop node stock.mjs; }
 want l && { start; run stock-mobile node stock.mjs mobile; }
 want m && { start; run projects-pagination-desktop node projects-pagination.mjs; }
 want n && { start; run projects-pagination-mobile node projects-pagination.mjs mobile; }
+want o && { start; run material-csv-desktop node material-csv.mjs; }
+want p && { start; run material-csv-mobile node material-csv.mjs mobile; }
 echo "TOTAL steps: $TOTAL  FAILED: $FAIL"
 exit $([ $FAIL -eq 0 ] && echo 0 || echo 1)
